@@ -1,0 +1,6 @@
+.android
+.ios
+.packages
+.dart_tool
+.flutter*
+build
