@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'main.dart';
 import 'dart:math';
 
+const FAIL = -1;
+const SUCCESS = 0;
+
 class Result {
   final int totalPlanks;
   final List<Line> lines = [];
@@ -60,17 +63,54 @@ class Calculation {
 
     final rowLength = direction == Direction.length ? actualLength : actualWidth;
 
-    var planksInFirstRow = calculateFirstRow(rowLength);
-    var totalPlanks = calculateRows(planksInFirstRow, rowLength, false);
-    final variant1 = Result(totalPlanks, lines, pieces, trash);
-    planks = [];
-    trash = [];
-    lines = [];
-    pieces = [];
-    planksInFirstRow = calculateFirstRow(rowLength);
-    totalPlanks = calculateRows(planksInFirstRow, rowLength, true);
-    final variant2 = Result(totalPlanks, lines, pieces, trash);
-    return variant1.totalPlanks < variant2.totalPlanks ? variant1.lines : variant2.lines;
+    final result = <Result>[];
+
+    var planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: false);
+    var totalPlanks = calculateRows(
+      planksInFirstRow,
+      rowLength,
+      cutPieces: false,
+      optimizePieces: false,
+    );
+    result.add(Result(totalPlanks, lines, pieces, trash));
+
+    planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: true);
+    totalPlanks = calculateRows(
+      planksInFirstRow,
+      rowLength,
+      cutPieces: false,
+      optimizePieces: true,
+    );
+    result.add(Result(totalPlanks, lines, pieces, trash));
+
+    planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: false);
+    totalPlanks = calculateRows(
+      planksInFirstRow,
+      rowLength,
+      cutPieces: true,
+      optimizePieces: false,
+    );
+    result.add(Result(totalPlanks, lines, pieces, trash));
+
+    planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: true);
+    totalPlanks = calculateRows(
+      planksInFirstRow,
+      rowLength,
+      cutPieces: true,
+      optimizePieces: true,
+    );
+    result.add(Result(totalPlanks, lines, pieces, trash));
+
+    var min = result[0].totalPlanks;
+    var minIndex = 0;
+    for (int i = 0; i < result.length; i++) {
+      print("variant №${i + 1} ${result[i].totalPlanks}");
+      if (result[i].totalPlanks < min) {
+        min = result[i].totalPlanks;
+        minIndex = i;
+      }
+    }
+    return result[minIndex].lines;
   }
 
   void addPlank(int number, int plankLength, int plankWidth) {
@@ -94,227 +134,200 @@ class Calculation {
     }
   }
 
-  int findPiece(int length, int width, int plankLength, bool exactMatch,
-      {int rowOffset = 0, int prevFirstPlankLength = 0, bool cutPieces = false}) {
-    int index = -1;
-    int minDiff = plankLength;
-    if (exactMatch) {
-      for (int i = 0; i < pieces.length; i++) {
-        if (pieces[i].length == length) {
-          return i;
-        }
-      }
-    } else {
-      for (int i = 0; i < pieces.length; i++) {
-        var canCutPiece = pieces[i].length > (prevFirstPlankLength - rowOffset) &&
-            prevFirstPlankLength - rowOffset > minLength;
-        var diff = pieces[i].length - length;
-        var pieceMatchOffset = (prevFirstPlankLength - pieces[i].length).abs() > rowOffset;
-        if (diff < minDiff && (pieceMatchOffset || (cutPieces && canCutPiece))) {
-          minDiff = pieces[i].length - length;
-          index = i;
-        }
-      }
+  int checkRow(int length, int rowLength, bool optimizePieces) {
+    if (length < minLength) return FAIL;
+    var currentLength = length;
+    while (currentLength + plankLength < rowLength) {
+      currentLength += plankLength;
     }
-    return index;
+    final lastPlankLength = rowLength - currentLength;
+    if (lastPlankLength == 0) {
+      return SUCCESS;
+    }
+    if (lastPlankLength < minLength) {
+      var diff;
+      if (optimizePieces) {
+        diff = minLength;
+      } else {
+        currentLength += minLength;
+        diff = currentLength - rowLength;
+      }
+      if ((length - diff) >= minLength) {
+        return diff;
+      }
+      return FAIL;
+    }
+    return SUCCESS;
   }
 
-  int calculateFirstRow(int rowLength) {
+  int checkPiece(int length, int rowLength, int prevFirstPlankLength, bool optimizePieces) {
+    var diff;
+    var newLength;
+    if ((prevFirstPlankLength - length).abs() >= rowOffset) {
+      diff = checkRow(length, rowLength, optimizePieces);
+      switch (diff) {
+        case SUCCESS:
+        case FAIL:
+          return diff;
+        default:
+          {
+            var extraDiff =
+                checkPiece(length - diff, rowLength, prevFirstPlankLength, optimizePieces);
+            if (extraDiff == FAIL) {
+              return FAIL;
+            }
+            return diff + extraDiff;
+          }
+      }
+    } else {
+      final rowsDiff = (prevFirstPlankLength - length).abs();
+      if (length < prevFirstPlankLength) {
+        newLength = length - (rowOffset - rowsDiff);
+      } else {
+        newLength = length - rowsDiff - rowOffset;
+      }
+      diff = checkRow(newLength, rowLength, optimizePieces);
+      switch (diff) {
+        case SUCCESS:
+          return (length - newLength);
+        case FAIL:
+          return FAIL;
+        default:
+          return (length - newLength) + diff;
+      }
+    }
+  }
+
+  int calculateFirstRow(
+    int rowLength, {
+    bool optimizePieces,
+  }) {
+    planks = [];
+    trash = [];
+    lines = [];
+    pieces = [];
     var currentLength = 0;
     int number = 0;
+    final diff = checkRow(plankLength, rowLength, optimizePieces);
+    final firstPlankLength = plankLength - diff;
+    number++;
+    addPlank(number, firstPlankLength, plankWidth);
+    addPiece(number, diff, plankWidth);
+    currentLength += firstPlankLength;
+
     while (currentLength + plankLength < rowLength) {
       currentLength += plankLength;
       number++;
       addPlank(number, plankLength, plankWidth);
     }
     var lastPlankLength = rowLength - currentLength;
-    if (lastPlankLength > 0 && lastPlankLength < minLength) {
-      number++;
-      addPiece(number, plankLength - minLength, plankWidth);
-      addPlank(number, minLength, plankWidth);
-      currentLength = currentLength - plankLength + minLength;
-      var firstPlankLength = rowLength - currentLength;
-      cutPlank(0, newLength: firstPlankLength);
-
-      /*   cutPlank(0, plankLength - minLength, plankWidth, minLength);
-      lastPlankLength = lastPlankLength + minLength;
-      number++;
-      addPlank(number, lastPlankLength, plankWidth);
-      addPiece(number, plankLength - lastPlankLength, plankWidth, minLength);*/
-    } else {
-      number++;
-      addPiece(number, plankLength - lastPlankLength, plankWidth);
-      addPlank(number, lastPlankLength, plankWidth);
-    }
+    number++;
+    addPlank(number, lastPlankLength, plankWidth);
+    addPiece(number, plankLength - lastPlankLength, plankWidth);
     lines.add(Line(0, planks));
-    print("Row №0");
+//    print("Row №0");
     var res = "";
     lines[0].planks.forEach((element) {
       res += '№${element.number}:${element.length} ';
     });
-    print(res);
+    //print(res);
     return number;
   }
 
-  int calculateRows(int number, int rowLength, bool cutPieces) {
+  int calculateRows(
+    int number,
+    int rowLength, {
+    bool cutPieces,
+    bool optimizePieces,
+  }) {
     for (int i = 1; i < numberOfRows; i++) {
       planks = [];
       var currentLength = 0;
       final prevFirstPlankLength = lines[i - 1].planks.first.length;
-      int firstPlankLength = prevFirstPlankLength - rowOffset;
-
-      if (firstPlankLength < minLength) {
-        //если длина первой доски меньше минимума
-        firstPlankLength = plankLength;
-        var pieceIndex = findPiece(
-          firstPlankLength,
-          plankWidth,
-          plankLength,
-          false,
-          prevFirstPlankLength: prevFirstPlankLength,
-          rowOffset: rowOffset,
-          cutPieces: cutPieces,
-        );
-        if (pieceIndex != -1) {
-          if (!cutPieces || pieces[pieceIndex].length < firstPlankLength) {
-            firstPlankLength = pieces[pieceIndex].length;
-          }
-          addPlank(
-            //кладем кусок
-            pieces[pieceIndex].number,
-            firstPlankLength,
-            pieces[pieceIndex].width,
-          );
-          if (pieces[pieceIndex].length > firstPlankLength) {
-            addPiece(
-              //сохраняем остаток от куска
-              pieces[pieceIndex].number,
-              firstPlankLength - pieces[pieceIndex].length,
-              pieces[pieceIndex].width,
-              //          minLength,
-            );
-          }
-          pieces.removeAt(pieceIndex);
-        } else {
-          firstPlankLength = plankLength;
-          number++;
-          addPlank(number, plankLength, plankWidth); //положить целую доску
+      var index = -1;
+      var minDiff = plankLength;
+      var diff;
+      for (int i = 0; i < pieces.length; i++) {
+        diff = checkPiece(pieces[i].length, rowLength, prevFirstPlankLength, optimizePieces);
+        if (diff == 0) {
+          minDiff = 0;
+          index = i;
+          break;
         }
-      } else {
-        //длина первой доски не меньше минимума
-        var pieceIndex = findPiece(
-          firstPlankLength,
-          plankWidth,
-          plankLength,
-          false,
-          prevFirstPlankLength: prevFirstPlankLength,
-          rowOffset: rowOffset,
-          cutPieces: cutPieces,
-        );
-        if (pieceIndex != -1) {
-          //если нашли подходящий кусок
-          if (!cutPieces || pieces[pieceIndex].length < firstPlankLength) {
-            firstPlankLength = pieces[pieceIndex].length;
-          }
-          addPlank(
-            //кладем кусок
-            pieces[pieceIndex].number,
-            firstPlankLength,
-            pieces[pieceIndex].width,
-          );
-          if (pieces[pieceIndex].length > firstPlankLength) {
-            addPiece(
-              //сохраняем остаток от куска
-              pieces[pieceIndex].number,
-              firstPlankLength - pieces[pieceIndex].length,
-              pieces[pieceIndex].width,
-            );
-          }
-          pieces.removeAt(pieceIndex); //удаляем из остатков
-        } else {
-          //нет подходящих кусков
-          number++;
-          addPlank(
-            //вырезаем из целой доски
-            number,
-            firstPlankLength,
-            plankWidth,
-          );
-          addPiece(
-            //кладем кусок в остатки
-            number,
-            plankLength - firstPlankLength,
-            plankWidth,
-          );
+        if (diff != FAIL && diff < minDiff && cutPieces) {
+          minDiff = diff;
+          index = i;
         }
       }
-      currentLength += firstPlankLength; //положили доску
-      while (currentLength + plankLength < rowLength) {
+      if (index != -1) {
+        if (cutPieces) {
+          currentLength += pieces[index].length - minDiff;
+          pieces[index].length -= minDiff;
+          addPlank(pieces[index].number, pieces[index].length, plankWidth);
+          addPiece(pieces[index].number, minDiff, plankWidth);
+          pieces.removeAt(index);
+        } else {
+          currentLength += pieces[index].length;
+          addPlank(pieces[index].number, pieces[index].length, plankWidth);
+          pieces.removeAt(index);
+        }
+      } else {
+        var diff = checkPiece(plankLength, rowLength, prevFirstPlankLength, optimizePieces);
+        var firstPlankLength = plankLength - diff;
+        currentLength += firstPlankLength;
         number++;
-        addPlank(number, plankLength, plankWidth); //кладем очередную доску
-        currentLength += plankLength;
+        addPlank(number, firstPlankLength, plankWidth);
+        addPiece(number, plankLength - firstPlankLength, plankWidth);
       }
+
+      while (currentLength + plankLength < rowLength) {
+        currentLength += plankLength;
+        number++;
+        addPlank(number, plankLength, plankWidth);
+      }
+
       var lastPlankLength = rowLength - currentLength;
-      if (lastPlankLength > 0 && lastPlankLength < minLength) {
-        //если до конца ряда меньше минимума
-        //
-        var diff = minLength - lastPlankLength;
-        var pieceIndex =
-            findPiece(minLength, plankLength, plankWidth, true); //ищем подходящий кусок
-        if (pieceIndex != -1) {
-          //нашли подходящий
-          addPlank(
-            pieces[pieceIndex].number,
-            minLength,
-            pieces[pieceIndex].width,
-          );
-          addPiece(
-            pieces[pieceIndex].number,
-            pieces[pieceIndex].length - minLength,
-            pieces[pieceIndex].width,
-          ); //берем кусок из остатка
-          pieces.removeAt(pieceIndex);
-          firstPlankLength = firstPlankLength - diff;
-          cutPlank(0, newLength: firstPlankLength);
+      index = -1;
+      minDiff = plankLength;
+      for (int i = 0; i < pieces.length; i++) {
+        if (pieces[i].length >= lastPlankLength) {
+          if (pieces[i].length - lastPlankLength < minDiff) {
+            minDiff = pieces[i].length - lastPlankLength;
+            if (minDiff == 0) {
+              index = i;
+              break;
+            } else if (cutPieces) {
+              index = i;
+            }
+          }
+        }
+      }
+
+      if (index != -1) {
+        if (cutPieces) {
+          currentLength += pieces[index].length - minDiff;
+          pieces[index].length -= minDiff;
+          addPlank(pieces[index].number, pieces[index].length, plankWidth);
+          addPiece(pieces[index].number, minDiff, plankWidth);
+          pieces.removeAt(index);
         } else {
-          lastPlankLength = minLength;
-          firstPlankLength = firstPlankLength - diff;
-          cutPlank(0, newLength: firstPlankLength);
-          number++;
-          addPlank(number, lastPlankLength, plankWidth);
-          addPiece(number, plankLength - lastPlankLength, plankWidth);
+          currentLength += pieces[index].length;
+          addPlank(pieces[index].number, pieces[index].length, plankWidth);
+          pieces.removeAt(index);
         }
       } else {
-        var pieceIndex = findPiece(lastPlankLength, plankWidth, lastPlankLength, true);
-        if (pieceIndex != -1) {
-          addPlank(
-            pieces[pieceIndex].number,
-            lastPlankLength,
-            pieces[pieceIndex].width,
-          );
-          addPiece(
-            pieces[pieceIndex].number,
-            pieces[pieceIndex].length - lastPlankLength,
-            pieces[pieceIndex].width,
-          );
-          pieces.remove(pieces[pieceIndex]);
-        } else {
-          number++;
-          planks.add(Plank(number, lastPlankLength, plankWidth));
-          addPiece(
-            number,
-            plankLength - lastPlankLength,
-            plankWidth,
-          );
-        }
+        number++;
+        addPiece(number, plankLength - lastPlankLength, plankWidth);
+        addPlank(number, lastPlankLength, plankWidth);
       }
+
       lines.add(Line(i, planks));
-      print("Row №$i");
+      //     print("Row №$i");
       var res = "";
       lines[i].planks.forEach((element) {
         res += '№${element.number}:${element.length} ';
       });
-      print(res);
+      //    print(res);
     }
     return number;
   }
