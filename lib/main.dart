@@ -6,6 +6,16 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
+const MIN_LENGTH = 1;
+const MAX_LENGTH = 25; //m
+const MIN_WIDTH = 1;
+const MAX_WIDTH = 16; //m
+const MIN_PLANK_LENGTH = 300; //mm
+const MAX_PLANK_LENGTH = 2000; //mm
+const MIN_PLANK_WIDTH = 90; //mm;
+const MAX_PLANK_WIDTH = 500; //mm;
+const KOEF_COMPRESS = 35;
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -13,17 +23,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: MyHomePage(title: 'Калькулятор ламината'),
+      home: StartPage(title: 'Калькулятор ламината'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+class StartPage extends StatefulWidget {
+  StartPage({Key key, this.title}) : super(key: key);
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _StartPageState createState() => _StartPageState();
 }
 
 enum Direction { length, width }
@@ -47,36 +57,10 @@ extension StringExt on String {
   }
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  final roomLengthController = TextEditingController();
-  final roomWidthController = TextEditingController();
-  final plankLengthController = TextEditingController();
-  final plankWidthController = TextEditingController();
-  final planksInPackController = TextEditingController();
-  final priceController = TextEditingController();
-  final indentController = TextEditingController();
-  final rowOffsetController = TextEditingController();
-  final minLengthController = TextEditingController();
-
-  final roomLengthFocusNode = FocusNode();
-  final roomWidthFocusNode = FocusNode();
-  final plankLengthFocusNode = FocusNode();
-  final plankWidthFocusNode = FocusNode();
-  final planksInPackFocusNode = FocusNode();
-  final priceFocusNode = FocusNode();
-  final indentFocusNode = FocusNode();
-  final rowOffsetFocusNode = FocusNode();
-  final minLengthFocusNode = FocusNode();
-
-  final roomLengthKey = GlobalKey<FormFieldState>();
-  final roomWidthKey = GlobalKey<FormFieldState>();
-  final plankLengthKey = GlobalKey<FormFieldState>();
-  final plankWidthKey = GlobalKey<FormFieldState>();
-  final planksInPackKey = GlobalKey<FormFieldState>();
-  final priceKey = GlobalKey<FormFieldState>();
-  final indentKey = GlobalKey<FormFieldState>();
-  final rowOffsetKey = GlobalKey<FormFieldState>();
-  final minLengthKey = GlobalKey<FormFieldState>();
+class _StartPageState extends State<StartPage> {
+  final controller = <TextEditingController>[];
+  final focusNode = <FocusNode>[];
+  final key = <GlobalKey<FormFieldState>>[];
 
   double roomLength;
   double roomWidth;
@@ -93,6 +77,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
+    for (int i = 0; i < 10; i++) {
+      controller.add(TextEditingController());
+      focusNode.add(FocusNode());
+      key.add(GlobalKey<FormFieldState>());
+    }
     super.initState();
   }
 
@@ -117,12 +106,11 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget textFormField(GlobalKey<FormFieldState> key, FocusNode focusNode, FocusNode nextFocusNode,
-      TextEditingController controller, Function validator, Function callback, String labelText,
+  Widget textFormField(int index, Function validator, Function callback, String labelText,
       {bool isLast = false}) {
     return TextFormField(
-      key: key,
-      focusNode: focusNode,
+      key: key[index],
+      focusNode: focusNode[index],
       decoration: InputDecoration(
         contentPadding: EdgeInsets.symmetric(vertical: 4),
         focusedBorder: UnderlineInputBorder(
@@ -134,37 +122,56 @@ class _MyHomePageState extends State<MyHomePage> {
         labelText: labelText,
         labelStyle: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 16),
       ),
-      controller: controller,
+      controller: controller[index],
       keyboardType: TextInputType.number,
       textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
       validator: (value) => validator(value),
       onChanged: (value) {
-        if (key.currentState.validate()) {
+        if (key[index].currentState.validate()) {
           callback(value);
         }
       },
       onFieldSubmitted: (value) {
-        if (key.currentState.validate()) {
+        if (key[index].currentState.validate()) {
           callback(value);
         }
         if (!isLast) {
-          FocusScope.of(context).requestFocus(nextFocusNode);
+          FocusScope.of(context).requestFocus(focusNode[index + 1]);
         }
       },
     );
   }
 
-  String emptyValidator(String value) {
-    if (value.isEmpty) {
-      return "Обязательное поле";
+  String sizeValidator(String value, int minValue, int maxValue) {
+    var result = emptyValidator(value);
+    if (result != null) {
+      return result;
     }
-    if (double.parse(value.toDouble()) < 0) {
-      return "Некорректное значение";
+    if (double.parse(value.toDouble()) > maxValue) {
+      return ("Не более $maxValue м");
+    }
+    if (double.parse(value.toDouble()) < minValue) {
+      return ("Не менее $minValue м");
     }
     return null;
   }
 
+  String emptyValidator(String value) {
+    try {
+      if (value.isEmpty) {
+        return "Обязательное поле";
+      }
+      if (double.parse(value.toDouble()) < 0) {
+        return "Некорректное значение";
+      }
+      return null;
+    } catch (e) {
+      return "Некорректное значение";
+    }
+  }
+
   Widget parametersScreen() {
+    var i = 0;
     return Stack(
       children: [
         SingleChildScrollView(
@@ -198,22 +205,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         children: [
                           Expanded(
                               child: textFormField(
-                            roomLengthKey,
-                            roomLengthFocusNode,
-                            roomWidthFocusNode,
-                            roomLengthController,
-                            emptyValidator,
+                            i,
+                            (value) => sizeValidator(value, MIN_LENGTH, MAX_LENGTH),
                             (String value) => roomLength = double.parse(value.toDouble()),
                             "Длина (м)",
                           )),
                           SizedBox(width: 40),
                           Expanded(
                               child: textFormField(
-                            roomWidthKey,
-                            roomWidthFocusNode,
-                            plankLengthFocusNode,
-                            roomWidthController,
-                            emptyValidator,
+                            ++i,
+                            (value) => sizeValidator(value, MIN_WIDTH, MAX_WIDTH),
                             (String value) => roomWidth = double.parse(value.toDouble()),
                             "Ширина (м)",
                           ))
@@ -224,48 +225,39 @@ class _MyHomePageState extends State<MyHomePage> {
                       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Expanded(
                           child: textFormField(
-                              plankLengthKey,
-                              plankLengthFocusNode,
-                              plankWidthFocusNode,
-                              plankLengthController,
-                              emptyValidator,
-                              (String value) => plankLength = int.parse(value),
-                              "Длина (мм)"),
+                            ++i,
+                            (value) => sizeValidator(value, MIN_PLANK_LENGTH, MAX_PLANK_LENGTH),
+                            (String value) => plankLength = int.parse(value),
+                            "Длина (мм)",
+                          ),
                         ),
                         SizedBox(width: 40),
                         Expanded(
                           child: textFormField(
-                              plankWidthKey,
-                              plankWidthFocusNode,
-                              planksInPackFocusNode,
-                              plankWidthController,
-                              emptyValidator,
-                              (String value) => plankWidth = int.parse(value),
-                              "Ширина (мм)"),
+                            ++i,
+                            (value) => sizeValidator(value, MIN_PLANK_WIDTH, MAX_PLANK_WIDTH),
+                            (String value) => plankWidth = int.parse(value),
+                            "Ширина (мм)",
+                          ),
                         ),
                       ]),
                       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Expanded(
                           child: textFormField(
-                              planksInPackKey,
-                              planksInPackFocusNode,
-                              priceFocusNode,
-                              planksInPackController,
-                              emptyValidator,
-                              (String value) => planksInPack = int.parse(value),
-                              "В упаковке (шт)"),
+                            ++i,
+                            emptyValidator,
+                            (String value) => planksInPack = int.parse(value),
+                            "В упаковке (шт)",
+                          ),
                         ),
-                        SizedBox(width: 40),
-                        Expanded(
+                        //  SizedBox(width: 40),
+                        /*          Expanded(
                           child: textFormField(
-                              priceKey,
-                              priceFocusNode,
-                              indentFocusNode,
-                              priceController,
+                              ++i,
                               emptyValidator,
                               (String value) => price = double.parse(value.toDouble()),
                               "Цена (руб/уп)"),
-                        ),
+                        ),*/
                       ]),
                       SizedBox(height: 16),
                       titleText("Укладка", Icons.branding_watermark),
@@ -273,14 +265,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: textFormField(
-                                indentKey,
-                                indentFocusNode,
-                                rowOffsetFocusNode,
-                                indentController,
-                                emptyValidator,
-                                (String value) => indent = int.parse(value),
-                                "Отступ от стен (мм)"),
+                            child: textFormField(++i, emptyValidator,
+                                (String value) => indent = int.parse(value), "Отступ от стен (мм)"),
                           ),
                           //    SizedBox(width: MediaQuery.of(context).size.width / 2 - 40),
                         ],
@@ -290,13 +276,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         children: [
                           Expanded(
                             child: textFormField(
-                                rowOffsetKey,
-                                rowOffsetFocusNode,
-                                minLengthFocusNode,
-                                rowOffsetController,
+                                ++i,
                                 emptyValidator,
                                 (String value) => rowOffset = int.parse(value),
-                                "Cмещение рядов (мм)"),
+                                "Cмещение рядов, не менее (мм)"),
                           ),
                           //      SizedBox(width: MediaQuery.of(context).size.width / 2 - 40),
                         ],
@@ -306,13 +289,12 @@ class _MyHomePageState extends State<MyHomePage> {
                         children: [
                           Expanded(
                             child: textFormField(
-                                minLengthKey,
-                                minLengthFocusNode,
-                                null,
-                                minLengthController,
-                                emptyValidator,
-                                (String value) => minLength = int.parse(value),
-                                "Минимальная длина доски (мм)"),
+                              ++i,
+                              emptyValidator,
+                              (String value) => minLength = int.parse(value),
+                              "Минимальная длина доски (мм)",
+                              isLast: true,
+                            ),
                           ),
                           //      SizedBox(width: MediaQuery.of(context).size.width / 2 - 40),
                         ],
@@ -347,7 +329,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             var res = calculation.calculate();
 
                             Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => Draw(res),
+                              builder: (context) => Draw(res, roomLength, roomWidth),
                             ));
                           })
                     ],
@@ -373,9 +355,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
 class Draw extends StatelessWidget {
   final List<Line> lines;
-  Draw(this.lines);
+  final double length;
+  final double width;
+  Draw(this.lines, this.length, this.width);
 
   List<Widget> drawFloor() {
+    double koefLength = MAX_LENGTH / length;
+    double koefWidth = MAX_WIDTH / width;
     List<Widget> result = [];
     List<pw.Widget> pdfResult = [];
     lines.forEach((line) {
@@ -389,26 +375,26 @@ class Draw extends StatelessWidget {
           decoration: BoxDecoration(border: Border.all(color: Colors.black)),
           child: FittedBox(
             child: Text(
-              '${plank.number}  ${plank.length}x${plank.width}',
+              ' ${plank.number}  ${plank.length}x${plank.width} ',
               //   style: TextStyle(fontSize: 12),
             ),
           ),
         ));
         pdfChildren.add(pw.Container(
           alignment: pw.Alignment.center,
-          height: plank.width / 10,
-          width: plank.length / 10,
-          decoration: pw.BoxDecoration(border: pw.Border.all()),
+          height: plank.width / KOEF_COMPRESS * koefWidth,
+          width: plank.length / KOEF_COMPRESS * koefLength,
+          decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
           child: pw.FittedBox(
             child: pw.Text(
-              '${plank.number}  ${plank.length}x${plank.width}',
+              ' ${plank.number}  ${plank.length}x${plank.width} ',
               //   style: TextStyle(fontSize: 12),
             ),
           ),
         ));
       }));
       result.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: children));
-      pdfResult.add(pw.Row(children: pdfChildren));
+      pdfResult.add(pw.Row(mainAxisSize: pw.MainAxisSize.min, children: pdfChildren));
     });
     result.add(Row(
       children: [
@@ -431,7 +417,7 @@ class Draw extends StatelessWidget {
                   pageFormat: PdfPageFormat.a4,
                   orientation: pw.PageOrientation.landscape,
                   build: (pw.Context context) {
-                    return pw.Column(children: pdfResult);
+                    return pw.Column(mainAxisSize: pw.MainAxisSize.min, children: pdfResult);
                   }));
               //     FileStorage fileStorage;
               //
