@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import 'main.dart';
 import 'dart:math';
+import 'models.dart';
 
 const FAIL = -1;
 const SUCCESS = 0;
@@ -54,12 +53,7 @@ class Calculation {
     final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
     numberOfRows =
         (direction == Direction.length ? actualWidth / plankWidth : actualLength / plankWidth)
-            .toInt();
-    double numberRows =
-        direction == Direction.length ? actualWidth / plankWidth : actualLength / plankWidth;
-    if (numberOfRows.toDouble() < numberRows) {
-      numberOfRows++;
-    }
+            .ceil();
 
     final rowLength = direction == Direction.length ? actualLength : actualWidth;
 
