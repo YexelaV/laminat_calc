@@ -1,7 +1,7 @@
+import 'dart:math';
 import 'package:floor_calculator/pages/result_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'scheme_page.dart';
 import '../calculate.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -11,12 +11,6 @@ class StartPage extends StatefulWidget {
 
   @override
   _StartPageState createState() => _StartPageState();
-}
-
-extension StringExt on String {
-  String toDouble() {
-    return this.replaceAll(',', '.');
-  }
 }
 
 class _StartPageState extends State<StartPage> {
@@ -104,7 +98,7 @@ class _StartPageState extends State<StartPage> {
     );
   }
 
-  int rowRemain() {
+  int minLengthMax() {
     if (roomLength == null || roomWidth == null || plankLength == null || rowOffset == null) {
       return 0;
     }
@@ -116,13 +110,46 @@ class _StartPageState extends State<StartPage> {
     while (currentLength + plankLength < rowLength) {
       currentLength += plankLength;
     }
+    var lastPlankLength = rowLength - currentLength;
     var rowRemain = rowLength - currentLength + plankLength;
-    return ((rowRemain - rowOffset) / 2).truncate();
+    if (lastPlankLength <= plankLength / 2) {
+      return ((rowRemain - rowOffset) / 2).truncate();
+    } else {
+      return lastPlankLength - rowOffset;
+    }
   }
 
-  bool rowRemainDisabled() {
-    return roomLength == null || roomWidth == null || plankLength == null || rowOffset == null;
+  /* int rowOffsetMax() {
+    if (roomLength == null || roomWidth == null || plankLength == null || minLength == null) {
+      return 0;
+    }
+    final actualLength = (roomLength * 1000 - indent * 2).toInt();
+    final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
+    // final rowLength = direction == Direction.length ? actualLength : actualWidth;
+    final rowLength = actualLength;
+    var currentLength = 0;
+    while (currentLength + plankLength < rowLength) {
+      currentLength += plankLength;
+    }
+    var rowRemain = rowLength - currentLength;
+    return rowRemain - minLength;
+  }*/
+
+  bool minLengthValidatorDisabled() {
+    return roomLength == null ||
+        roomWidth == null ||
+        plankLength == null ||
+        indent == null ||
+        rowOffset == null;
   }
+
+  /* bool rowOffsetValidatorDisabled() {
+    return roomLength == null ||
+        roomWidth == null ||
+        plankLength == null ||
+        indent == null ||
+        minLength == null;
+  }*/
 
   String sizeValidator(String value, int minValue, int maxValue, String measure,
       {bool disabled = false}) {
@@ -140,10 +167,10 @@ class _StartPageState extends State<StartPage> {
     if (result != null) {
       return result;
     }
-    if (double.parse(value.toDouble()) > maxValue) {
+    if (double.parse(value) > maxValue) {
       return ("Не более $maxValue $measure");
     }
-    if (double.parse(value.toDouble()) < minValue) {
+    if (double.parse(value) < minValue) {
       return ("Не менее $minValue $measure");
     }
     return null;
@@ -154,7 +181,7 @@ class _StartPageState extends State<StartPage> {
       if (value.isEmpty) {
         return "Обязательное поле";
       }
-      if (double.parse(value.toDouble()) < 0) {
+      if (double.parse(value) < 0) {
         return "Некорректное значение";
       }
       return null;
@@ -177,7 +204,7 @@ class _StartPageState extends State<StartPage> {
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.only(left: 20, right: 20, bottom: 80, top: 80),
+              padding: EdgeInsets.only(left: 20, right: 20, bottom: 60, top: 80),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.6),
@@ -200,7 +227,7 @@ class _StartPageState extends State<StartPage> {
                               child: textFormField(
                             i,
                             (value) => sizeValidator(value, MIN_LENGTH, MAX_LENGTH, 'м'),
-                            (String value) => roomLength = double.parse(value.toDouble()),
+                            (String value) => roomLength = double.parse(value),
                             "Длина (м)",
                           )),
                           SizedBox(width: 40),
@@ -208,7 +235,7 @@ class _StartPageState extends State<StartPage> {
                               child: textFormField(
                             ++i,
                             (value) => sizeValidator(value, MIN_WIDTH, MAX_WIDTH, 'м'),
-                            (String value) => roomWidth = double.parse(value.toDouble()),
+                            (String value) => roomWidth = double.parse(value),
                             "Ширина (м)",
                           ))
                         ],
@@ -267,7 +294,6 @@ class _StartPageState extends State<StartPage> {
                               "Отступ от стен (мм)",
                             ),
                           ),
-                          //    SizedBox(width: MediaQuery.of(context).size.width / 2 - 40),
                         ],
                       ),
                       Row(
@@ -276,13 +302,12 @@ class _StartPageState extends State<StartPage> {
                           Expanded(
                             child: textFormField(
                                 ++i,
-                                (value) => sizeValidator(value, MIN_ROW_OFFSET,
-                                    ((plankLength ?? 0) / 2).truncate(), 'мм',
+                                (value) => sizeValidator(
+                                    value, MIN_ROW_OFFSET, (plankLength / 2).floor(), 'мм',
                                     disabled: plankLength == null),
                                 (String value) => rowOffset = int.parse(value),
-                                "Cмещение рядов, не менее (мм)"),
+                                "Cмещение рядов, (мм)"),
                           ),
-                          //      SizedBox(width: MediaQuery.of(context).size.width / 2 - 40),
                         ],
                       ),
                       Row(
@@ -291,14 +316,13 @@ class _StartPageState extends State<StartPage> {
                           Expanded(
                             child: textFormField(
                               ++i,
-                              (value) => sizeValidator(value, MIN_MIN_LENGTH, rowRemain(), 'мм',
-                                  disabled: rowRemainDisabled()),
+                              (value) => sizeValidator(value, MIN_MIN_LENGTH, minLengthMax(), 'мм',
+                                  disabled: minLengthValidatorDisabled()),
                               (String value) => minLength = int.parse(value),
                               "Минимальная длина доски (мм)",
                               isLast: true,
                             ),
                           ),
-                          //      SizedBox(width: MediaQuery.of(context).size.width / 2 - 40),
                         ],
                       ),
                       SizedBox(height: 20),
@@ -319,10 +343,10 @@ class _StartPageState extends State<StartPage> {
                             FocusScope.of(context).unfocus();
                             var validate = true;
                             for (int i = 0; i < key.length; i++) {
-                              //    validate &= key[i].currentState.validate();
+                              validate &= key[i].currentState.validate();
                             }
 
-                            /*    if (validate) {
+                            if (validate) {
                               Calculation calculation = Calculation(
                                 roomLength: roomLength,
                                 roomWidth: roomWidth,
@@ -335,13 +359,11 @@ class _StartPageState extends State<StartPage> {
                                 rowOffset: rowOffset,
                                 direction: Direction.length,
                               );
-                              var res = calculation.calculate();*/
+                              final result = calculation.calculate();
 
-                            Navigator.of(context).push(CupertinoPageRoute(
-                                builder: (context) => ResultPage()
-                                //   SchemePage(res, roomLength, roomWidth, plankLength, plankWidth),
-                                ));
-                            //   }
+                              Navigator.of(context).push(
+                                  CupertinoPageRoute(builder: (context) => ResultPage(result)));
+                            }
                           })
                     ],
                   ),

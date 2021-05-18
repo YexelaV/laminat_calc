@@ -8,19 +8,15 @@ import '../models.dart';
 import '../constants.dart';
 
 class SchemePage extends StatelessWidget {
-  final List<Line> lines;
-  final double length;
-  final double width;
-  final int plankLength;
-  final int plankWidth;
-  SchemePage(this.lines, this.length, this.width, this.plankLength, this.plankWidth);
+  final Result result;
+  SchemePage(this.result);
 
   List<Widget> drawFloor() {
-    double koefLength = MAX_LENGTH / length;
-    double koefWidth = MAX_WIDTH / width;
-    List<Widget> result = [];
+    double koefLength = MAX_LENGTH / result.plankLength;
+    double koefWidth = MAX_WIDTH / result.plankWidth;
+    List<Widget> res = [];
     List<pw.Widget> pdfResult = [];
-    lines.forEach((line) {
+    result.lines.forEach((line) {
       List<Widget> children = [
         Container(
           height: line.planks[0].width / 10,
@@ -65,7 +61,7 @@ class SchemePage extends StatelessWidget {
                 width: plank.length * 2 / 15 - 2,
                 child: FittedBox(
                   alignment: Alignment.center,
-                  child: plank.length < plankLength
+                  child: plank.length < result.plankLength
                       ? Text(
                           ' ${plank.length}',
                           //   style: TextStyle(fontSize: 12),
@@ -101,7 +97,7 @@ class SchemePage extends StatelessWidget {
                 width: plank.length / KOEF_COMPRESS * koefWidth * 0.67 - 2,
                 child: pw.FittedBox(
                   alignment: pw.Alignment.center,
-                  child: plank.length < plankLength
+                  child: plank.length < result.plankLength
                       ? pw.Text(
                           ' ${plank.length}',
                           //   style: TextStyle(fontSize: 12),
@@ -113,10 +109,10 @@ class SchemePage extends StatelessWidget {
           ),
         ));
       }));
-      result.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: children));
+      res.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: children));
       pdfResult.add(pw.Row(mainAxisSize: pw.MainAxisSize.min, children: pdfChildren));
     });
-    result.add(Row(
+    res.add(Row(
       children: [
         TextButton(
             child: Container(
@@ -148,7 +144,7 @@ class SchemePage extends StatelessWidget {
             })
       ],
     ));
-    return result;
+    return res;
   }
 
   Widget build(BuildContext context) {

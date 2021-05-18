@@ -1,21 +1,7 @@
-import 'package:flutter/material.dart';
-import 'dart:math';
 import 'models.dart';
 
 const FAIL = -1;
 const SUCCESS = 0;
-
-class Result {
-  final int totalPlanks;
-  final List<Line> lines = [];
-  final List<Plank> pieces = [];
-  final List<Plank> trash = [];
-  Result(this.totalPlanks, List<Line> lines, List<Plank> pieces, List<Plank> trash) {
-    this.lines.addAll(lines);
-    this.pieces.addAll(pieces);
-    this.trash.addAll(trash);
-  }
-}
 
 class Calculation {
   final double roomLength;
@@ -48,7 +34,7 @@ class Calculation {
   List<Line> lines = [];
   int numberOfRows;
 
-  List<Line> calculate() {
+  List<Result> calculate() {
     final actualLength = (roomLength * 1000 - indent * 2).toInt();
     final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
     numberOfRows =
@@ -66,7 +52,17 @@ class Calculation {
       cutPieces: false,
       optimizePieces: false,
     );
-    result.add(Result(totalPlanks, lines, pieces, trash));
+    result.add(Result(
+      plankLength,
+      plankWidth,
+      roomLength,
+      roomWidth,
+      planksInPack,
+      totalPlanks,
+      lines,
+      pieces,
+      trash,
+    ));
 
     planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: true);
     totalPlanks = calculateRows(
@@ -75,7 +71,17 @@ class Calculation {
       cutPieces: false,
       optimizePieces: true,
     );
-    result.add(Result(totalPlanks, lines, pieces, trash));
+    result.add(Result(
+      plankLength,
+      plankWidth,
+      roomLength,
+      roomWidth,
+      planksInPack,
+      totalPlanks,
+      lines,
+      pieces,
+      trash,
+    ));
 
     planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: false);
     totalPlanks = calculateRows(
@@ -84,7 +90,17 @@ class Calculation {
       cutPieces: true,
       optimizePieces: false,
     );
-    result.add(Result(totalPlanks, lines, pieces, trash));
+    result.add(Result(
+      plankLength,
+      plankWidth,
+      roomLength,
+      roomWidth,
+      planksInPack,
+      totalPlanks,
+      lines,
+      pieces,
+      trash,
+    ));
 
     planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: true);
     totalPlanks = calculateRows(
@@ -93,29 +109,40 @@ class Calculation {
       cutPieces: true,
       optimizePieces: true,
     );
-    result.add(Result(totalPlanks, lines, pieces, trash));
-
-    var min = result[0].totalPlanks;
-    var minIndex = 0;
-    for (int i = 0; i < result.length; i++) {
-      print("variant №${i + 1} ${result[i].totalPlanks}");
-      if (result[i].totalPlanks < min) {
-        min = result[i].totalPlanks;
-        minIndex = i;
+    result.add(Result(
+      plankLength,
+      plankWidth,
+      roomLength,
+      roomWidth,
+      planksInPack,
+      totalPlanks,
+      lines,
+      pieces,
+      trash,
+    ));
+    result.sort((a, b) => a.totalPlanks.compareTo(b.totalPlanks));
+    final totalPacks = (result[0].totalPlanks / result[0].itemsInPack).ceil();
+    final total = totalPacks * planksInPack;
+    result.removeWhere((result) => result.totalPlanks > total);
+    final resultCopy = <Result>[];
+    resultCopy.addAll(result);
+    var i = 0;
+    var count = 0;
+    while (count < resultCopy.length) {
+      var j = i + 1;
+      while (j < result.length) {
+        if (result[i] == result[j]) {
+          result.removeAt(j);
+        }
+        j++;
       }
+      count++;
     }
-    return result[minIndex].lines;
+    return result;
   }
 
   void addPlank(int number, int plankLength, int plankWidth) {
     planks.add(Plank(number, plankLength, plankWidth));
-  }
-
-  void cutPlank(int index, {int newLength = 0, int newWidth = 0}) {
-    var oldLength = planks[index].length;
-    var oldWidth = planks[index].width;
-    planks[index].length = newLength;
-    addPiece(planks[index].number, oldLength - newLength, oldWidth - newWidth);
   }
 
   void addPiece(int number, int pieceLength, int pieceWidth) {
@@ -142,12 +169,21 @@ class Calculation {
       var diff;
       if (optimizePieces) {
         diff = minLength;
+        if (length - diff - rowOffset >= minLength || length - diff + rowOffset <= plankLength) {
+          return diff;
+        } else {
+          currentLength += minLength;
+          diff = currentLength - rowLength;
+        }
       } else {
         currentLength += minLength;
         diff = currentLength - rowLength;
       }
       if ((length - diff) >= minLength) {
         return diff;
+      }
+      if (diff >= length / 2) {
+        return length - diff - rowOffset;
       }
       return FAIL;
     }
@@ -157,6 +193,7 @@ class Calculation {
   int checkPiece(int length, int rowLength, int prevFirstPlankLength, bool optimizePieces) {
     var diff;
     var newLength;
+    if (length < rowOffset) return FAIL;
     if ((prevFirstPlankLength - length).abs() >= rowOffset) {
       diff = checkRow(length, rowLength, optimizePieces);
       switch (diff) {
@@ -187,7 +224,7 @@ class Calculation {
         case FAIL:
           return FAIL;
         default:
-          return (length - newLength) + diff;
+          return (length - newLength) - diff;
       }
     }
   }
