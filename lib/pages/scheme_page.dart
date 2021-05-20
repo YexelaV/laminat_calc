@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -9,17 +10,16 @@ import '../constants.dart';
 
 class SchemePage extends StatelessWidget {
   final Result result;
-  SchemePage(this.result);
+  final int number;
+  SchemePage(this.result, this.number);
 
   List<Widget> drawFloor() {
-    double koefLength = MAX_LENGTH / result.plankLength;
-    double koefWidth = MAX_WIDTH / result.plankWidth;
     List<Widget> res = [];
-    List<pw.Widget> pdfResult = [];
     result.lines.forEach((line) {
       List<Widget> children = [
         Container(
           height: line.planks[0].width / 10,
+          width: 50,
           child: FittedBox(
             child: Text(
               '${line.planks[0].width} ',
@@ -27,19 +27,8 @@ class SchemePage extends StatelessWidget {
           ),
         ),
       ];
-      List<pw.Widget> pdfChildren = [
-        pw.Container(
-          height: line.planks[0].width / KOEF_COMPRESS * koefWidth * 0.8,
-          child: pw.FittedBox(
-            child: pw.Text(
-              '${line.planks[0].width} ',
-            ),
-          ),
-        ),
-      ];
       line.planks.forEach(((plank) {
         children.add(Container(
-          //   alignment: Alignment.centerLeft,
           height: plank.width / 5,
           width: plank.length / 5,
           decoration: BoxDecoration(border: Border.all(color: Colors.black)),
@@ -64,7 +53,6 @@ class SchemePage extends StatelessWidget {
                   child: plank.length < result.plankLength
                       ? Text(
                           ' ${plank.length}',
-                          //   style: TextStyle(fontSize: 12),
                         )
                       : Container(),
                 ),
@@ -73,9 +61,29 @@ class SchemePage extends StatelessWidget {
           ),
         ));
       }));
+      res.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: children));
+    });
+    return res;
+  }
+
+  Future<void> shareResult() async {
+    double koefLength = min(MAX_LENGTH / result.roomLength, MAX_WIDTH / result.roomWidth);
+    double koefWidth = koefLength;
+    List<pw.Widget> pdfResult = [];
+    result.lines.forEach((line) {
+      List<pw.Widget> pdfChildren = [
+        pw.Container(
+          height: line.planks[0].width / KOEF_COMPRESS * koefWidth * 0.5,
+          width: 245,
+          child: pw.FittedBox(
+            child: pw.Text(
+              '${line.planks[0].width} ',
+            ),
+          ),
+        ),
+      ];
       line.planks.forEach(((plank) {
         pdfChildren.add(pw.Container(
-          //   alignment: Alignment.centerLeft,
           height: plank.width / KOEF_COMPRESS * koefWidth,
           width: plank.length / KOEF_COMPRESS * koefLength,
           decoration: pw.BoxDecoration(border: pw.Border.all()),
@@ -83,7 +91,7 @@ class SchemePage extends StatelessWidget {
             children: [
               pw.Container(
                 height: plank.width / KOEF_COMPRESS * koefWidth * 0.8,
-                width: plank.length / KOEF_COMPRESS * koefWidth * 0.33,
+                width: plank.length / KOEF_COMPRESS * koefLength * 0.33,
                 child: pw.FittedBox(
                   alignment: pw.Alignment.centerLeft,
                   child: pw.Text(
@@ -94,13 +102,12 @@ class SchemePage extends StatelessWidget {
               ),
               pw.Container(
                 height: plank.width / KOEF_COMPRESS * koefWidth * 0.8,
-                width: plank.length / KOEF_COMPRESS * koefWidth * 0.67 - 2,
+                width: plank.length / KOEF_COMPRESS * koefLength * 0.67 - 2,
                 child: pw.FittedBox(
                   alignment: pw.Alignment.center,
                   child: plank.length < result.plankLength
                       ? pw.Text(
                           ' ${plank.length}',
-                          //   style: TextStyle(fontSize: 12),
                         )
                       : pw.Container(),
                 ),
@@ -109,55 +116,66 @@ class SchemePage extends StatelessWidget {
           ),
         ));
       }));
-      res.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: children));
       pdfResult.add(pw.Row(mainAxisSize: pw.MainAxisSize.min, children: pdfChildren));
     });
-    res.add(Row(
-      children: [
-        TextButton(
-            child: Container(
-                alignment: Alignment.center,
-                width: 80,
-                height: 32,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: Colors.blue,
-                ),
-                child: Text(
-                  "экспорт",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                )),
-            onPressed: () async {
-              final pdf = pw.Document();
-              pdf.addPage(pw.Page(
-                  pageFormat: PdfPageFormat.a4,
-                  orientation: pw.PageOrientation.landscape,
-                  build: (pw.Context context) {
-                    return pw.Column(mainAxisSize: pw.MainAxisSize.min, children: pdfResult);
-                  }));
-              final dir = await getApplicationDocumentsDirectory();
-              final path = dir.path;
-              final file = File('$path/laminat.pdf');
-              await file.writeAsBytes(await pdf.save());
-              final bytes = await file.readAsBytes();
-              await Share.file("laminat", "laminat.pdf", bytes, 'application/pdf');
-            })
-      ],
-    ));
-    return res;
+    final pdf = pw.Document();
+    pdf.addPage(pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        orientation: pw.PageOrientation.landscape,
+        build: (pw.Context context) {
+          return pw.Column(mainAxisSize: pw.MainAxisSize.min, children: pdfResult);
+        }));
+    final dir = await getApplicationDocumentsDirectory();
+    final path = dir.path;
+    final now = DateTime.now();
+    final file = File('$path/laminat.pdf$now');
+    await file.writeAsBytes(await pdf.save());
+    final bytes = await file.readAsBytes();
+    await Share.file("scheme №$number", "scheme№$number.pdf", bytes, 'application/pdf');
   }
 
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: null,
-        body: InteractiveViewer(
-            constrained: false,
-            minScale: 0.1,
-            child: Padding(
-                padding: EdgeInsets.all(40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: drawFloor(),
-                ))));
+        appBar: AppBar(
+          title:
+              Text("Cхема укладки №$number", style: TextStyle(fontSize: 18, color: Colors.black)),
+          leading: Padding(
+            padding: EdgeInsets.only(left: 12),
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, size: 24, color: Colors.black),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+          elevation: 0,
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          actions: [
+            Padding(
+              padding: EdgeInsets.only(right: 20),
+              child: IconButton(
+                  icon: Icon(Icons.share_rounded, size: 24, color: Colors.black),
+                  onPressed: () async => await shareResult()),
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            Container(
+                color: Colors.white,
+                child: InteractiveViewer(
+                    constrained: false,
+                    minScale: 0.1,
+                    child: Padding(
+                        padding: EdgeInsets.fromLTRB(40, 0, 40, 40),
+                        child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: drawFloor(),
+                            ))))),
+          ],
+        ));
   }
 }

@@ -196,29 +196,17 @@ class _StartPageState extends State<StartPage> {
       children: [
         SingleChildScrollView(
           child: Container(
+            color: Colors.white,
             constraints: BoxConstraints(minHeight: height),
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('lib/assets/floor.png'),
-                fit: BoxFit.fill,
-              ),
-            ),
             child: Padding(
-              padding: EdgeInsets.only(left: 20, right: 20, bottom: 60, top: 80),
+              padding: EdgeInsets.only(left: 20, right: 20, bottom: 60),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                    borderRadius: BorderRadius.circular(20), color: Colors.black.withOpacity(0.05)),
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      Text(
-                        "Калькулятор ламината",
-                        style: TextStyle(fontSize: 24),
-                      ),
-                      SizedBox(height: 16),
                       titleText("Помещение", Icons.home_filled),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,12 +262,12 @@ class _StartPageState extends State<StartPage> {
                         ),
                         //  SizedBox(width: 40),
                         /*          Expanded(
-                          child: textFormField(
-                              ++i,
-                              emptyValidator,
-                              (String value) => price = double.parse(value.toDouble()),
-                              "Цена (руб/уп)"),
-                        ),*/
+                            child: textFormField(
+                                ++i,
+                                emptyValidator,
+                                (String value) => price = double.parse(value.toDouble()),
+                                "Цена (руб/уп)"),
+                          ),*/
                       ]),
                       SizedBox(height: 16),
                       titleText("Укладка", Icons.branding_watermark),
@@ -303,7 +291,7 @@ class _StartPageState extends State<StartPage> {
                             child: textFormField(
                                 ++i,
                                 (value) => sizeValidator(
-                                    value, MIN_ROW_OFFSET, (plankLength / 2).floor(), 'мм',
+                                    value, MIN_ROW_OFFSET, (plankLength ?? 0 / 2).floor(), 'мм',
                                     disabled: plankLength == null),
                                 (String value) => rowOffset = int.parse(value),
                                 "Cмещение рядов, (мм)"),
@@ -337,7 +325,7 @@ class _StartPageState extends State<StartPage> {
                               ),
                               child: Text(
                                 "расчет",
-                                style: TextStyle(color: Colors.white, fontSize: 20),
+                                style: TextStyle(color: Colors.white, fontSize: 18),
                               )),
                           onPressed: () {
                             FocusScope.of(context).unfocus();
@@ -372,15 +360,21 @@ class _StartPageState extends State<StartPage> {
             ),
           ),
         ),
-        //   ),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    height = MediaQuery.of(context).size.height;
+    height = MediaQuery.of(context).size.height - 80;
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Калькулятор ламината", style: TextStyle(fontSize: 18, color: Colors.black)),
+        leading: null,
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: Colors.white,
+      ),
       body: parametersScreen(),
     );
   }

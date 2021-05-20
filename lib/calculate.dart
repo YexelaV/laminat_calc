@@ -34,6 +34,17 @@ class Calculation {
   List<Line> lines = [];
   int numberOfRows;
 
+  bool check(Result result) {
+    for (var i = 0; i < result.lines.length; i++) {
+      for (var j = 0; j < result.lines[i].planks.length; j++) {
+        if (result.lines[i].planks[j].length < minLength) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   List<Result> calculate() {
     final actualLength = (roomLength * 1000 - indent * 2).toInt();
     final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
@@ -120,25 +131,21 @@ class Calculation {
       pieces,
       trash,
     ));
+    //
+    result.removeWhere((result) => check(result) == false);
     result.sort((a, b) => a.totalPlanks.compareTo(b.totalPlanks));
     final totalPacks = (result[0].totalPlanks / result[0].itemsInPack).ceil();
     final total = totalPacks * planksInPack;
     result.removeWhere((result) => result.totalPlanks > total);
     final resultCopy = <Result>[];
-    resultCopy.addAll(result);
-    var i = 0;
-    var count = 0;
-    while (count < resultCopy.length) {
-      var j = i + 1;
-      while (j < result.length) {
-        if (result[i] == result[j]) {
-          result.removeAt(j);
-        }
-        j++;
+    resultCopy.add(result[0]);
+    for (int i = 1; i < result.length; i++) {
+      final res = resultCopy.where((element) => element == result[i]).toList();
+      if (res.isEmpty) {
+        resultCopy.add(result[i]);
       }
-      count++;
     }
-    return result;
+    return resultCopy;
   }
 
   void addPlank(int number, int plankLength, int plankWidth) {
@@ -193,7 +200,7 @@ class Calculation {
   int checkPiece(int length, int rowLength, int prevFirstPlankLength, bool optimizePieces) {
     var diff;
     var newLength;
-    if (length < rowOffset) return FAIL;
+    //  if (length < rowOffset) return FAIL;
     if ((prevFirstPlankLength - length).abs() >= rowOffset) {
       diff = checkRow(length, rowLength, optimizePieces);
       switch (diff) {
@@ -224,7 +231,7 @@ class Calculation {
         case FAIL:
           return FAIL;
         default:
-          return (length - newLength) - diff;
+          return length - (newLength - diff);
       }
     }
   }
@@ -359,6 +366,21 @@ class Calculation {
         res += '№${element.number}:${element.length} ';
       });
       //    print(res);
+    }
+    final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
+    final diffWidth = plankWidth - (plankWidth * lines.length - actualWidth);
+    if (diffWidth >= 50) {
+      lines[lines.length - 1].planks.forEach((plank) {
+        plank.width -= diffWidth;
+      });
+    } else {
+      final newWidth = ((diffWidth + plankWidth) ~/ 2);
+      lines[0].planks.forEach((plank) {
+        plank.width = newWidth;
+      });
+      lines[lines.length - 1].planks.forEach((plank) {
+        plank.width = newWidth;
+      });
     }
     return number;
   }
