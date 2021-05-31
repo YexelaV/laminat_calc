@@ -196,13 +196,13 @@ class _StartPageState extends State<StartPage> {
       children: [
         SingleChildScrollView(
           child: Container(
-            color: Colors.white,
+            //    color: Colors.white,
             constraints: BoxConstraints(minHeight: height),
             child: Padding(
               padding: EdgeInsets.only(left: 20, right: 20, bottom: 60),
               child: Container(
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20), color: Colors.black.withOpacity(0.05)),
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.white),
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -373,7 +373,7 @@ class _StartPageState extends State<StartPage> {
         leading: null,
         elevation: 0,
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
       ),
       body: parametersScreen(),
     );

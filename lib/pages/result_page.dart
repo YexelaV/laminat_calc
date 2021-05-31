@@ -27,14 +27,14 @@ class ResultPage extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
-        elevation: 0,
+        //   elevation: 0,
         centerTitle: true,
         backgroundColor: Colors.white,
       ),
       body: Stack(
         children: [
           Container(
-            color: Colors.white,
+            //color: Colors.transparent,
             child: Padding(
               padding: EdgeInsets.only(left: 20, right: 20, bottom: 60),
               child: Container(

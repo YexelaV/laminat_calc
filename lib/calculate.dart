@@ -368,13 +368,13 @@ class Calculation {
       //    print(res);
     }
     final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
-    final diffWidth = plankWidth - (plankWidth * lines.length - actualWidth);
-    if (diffWidth >= 50) {
+    var newWidth = plankWidth - (plankWidth * lines.length - actualWidth);
+    if (newWidth >= 50) {
       lines[lines.length - 1].planks.forEach((plank) {
-        plank.width -= diffWidth;
+        plank.width = newWidth;
       });
     } else {
-      final newWidth = ((diffWidth + plankWidth) ~/ 2);
+      newWidth = ((newWidth + plankWidth) ~/ 2);
       lines[0].planks.forEach((plank) {
         plank.width = newWidth;
       });

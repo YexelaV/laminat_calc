@@ -89,5 +89,5 @@ flutter:
   # identifiers, which may be completely independent or the same as these.
   module:
     androidX: true
-    androidPackage: com.example.floor_calculator
-    iosBundleIdentifier: com.example.floorCalculator
+    androidPackage: com.floor_calculator
+    iosBundleIdentifier: com.floorCalculator

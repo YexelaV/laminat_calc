@@ -18,8 +18,8 @@ class SchemePage extends StatelessWidget {
     result.lines.forEach((line) {
       List<Widget> children = [
         Container(
-          height: line.planks[0].width / 10,
-          width: 50,
+          height: line.planks[0].width / 20,
+          width: 24,
           child: FittedBox(
             child: Text(
               '${line.planks[0].width} ',
@@ -29,14 +29,14 @@ class SchemePage extends StatelessWidget {
       ];
       line.planks.forEach(((plank) {
         children.add(Container(
-          height: plank.width / 5,
-          width: plank.length / 5,
+          height: plank.width / 10,
+          width: plank.length / 10,
           decoration: BoxDecoration(border: Border.all(color: Colors.black)),
           child: Row(
             children: [
               Container(
-                height: plank.width / 6,
-                width: plank.length / 15,
+                height: plank.width / 12,
+                width: plank.length / 30,
                 child: FittedBox(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -46,8 +46,8 @@ class SchemePage extends StatelessWidget {
                 ),
               ),
               Container(
-                height: plank.width / 6,
-                width: plank.length * 2 / 15 - 2,
+                height: plank.width / 12,
+                width: plank.length / 15 - 2,
                 child: FittedBox(
                   alignment: Alignment.center,
                   child: plank.length < result.plankLength
@@ -146,7 +146,7 @@ class SchemePage extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
-          elevation: 0,
+          //   elevation: 0,
           centerTitle: true,
           backgroundColor: Colors.white,
           actions: [
@@ -166,15 +166,15 @@ class SchemePage extends StatelessWidget {
                     constrained: false,
                     minScale: 0.1,
                     child: Padding(
-                        padding: EdgeInsets.fromLTRB(40, 0, 40, 40),
+                        padding: EdgeInsets.fromLTRB(40, 40, 40, 40),
                         child: Container(
-                            decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(20)),
+                            //    decoration: BoxDecoration(
+                            //      color: Colors.black.withOpacity(0.05),
+                            //    borderRadius: BorderRadius.circular(20)),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: drawFloor(),
-                            ))))),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: drawFloor(),
+                        ))))),
           ],
         ));
   }
