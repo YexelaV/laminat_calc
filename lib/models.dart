@@ -6,8 +6,10 @@ class Plank {
   final int number;
   int length;
   int width;
+  bool hasLeftLock;
+  bool hasRightLock;
 
-  Plank(this.number, this.length, this.width);
+  Plank(this.number, this.length, this.width, {this.hasLeftLock = true, this.hasRightLock = true});
 
   @override
   bool operator ==(Object other) =>

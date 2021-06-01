@@ -74,7 +74,7 @@ class SchemePage extends StatelessWidget {
       List<pw.Widget> pdfChildren = [
         pw.Container(
           height: line.planks[0].width / KOEF_COMPRESS * koefWidth * 0.5,
-          width: 245,
+          width: 24,
           child: pw.FittedBox(
             child: pw.Text(
               '${line.planks[0].width} ',

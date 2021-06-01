@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'models.dart';
 
 const FAIL = -1;
@@ -152,9 +154,11 @@ class Calculation {
     planks.add(Plank(number, plankLength, plankWidth));
   }
 
-  void addPiece(int number, int pieceLength, int pieceWidth) {
+  void addPiece(int number, int pieceLength, int pieceWidth,
+      {bool hasLeftLock = true, bool hasRightLock = true}) {
     if (pieceLength >= minLength) {
-      pieces.add(Plank(number, pieceLength, pieceWidth));
+      pieces.add(Plank(number, pieceLength, pieceWidth,
+          hasLeftLock: hasLeftLock, hasRightLock: hasRightLock));
     } else {
       if (pieceLength > 0) {
         trash.add(Plank(number, pieceLength, pieceWidth));
@@ -250,7 +254,7 @@ class Calculation {
     final firstPlankLength = plankLength - diff;
     number++;
     addPlank(number, firstPlankLength, plankWidth);
-    addPiece(number, diff, plankWidth);
+    addPiece(number, diff, plankWidth, hasRightLock: false);
     currentLength += firstPlankLength;
 
     while (currentLength + plankLength < rowLength) {
@@ -261,7 +265,7 @@ class Calculation {
     var lastPlankLength = rowLength - currentLength;
     number++;
     addPlank(number, lastPlankLength, plankWidth);
-    addPiece(number, plankLength - lastPlankLength, plankWidth);
+    addPiece(number, plankLength - lastPlankLength, plankWidth, hasLeftLock: false);
     lines.add(Line(0, planks));
 //    print("Row №0");
     var res = "";
@@ -286,15 +290,17 @@ class Calculation {
       var minDiff = plankLength;
       var diff;
       for (int i = 0; i < pieces.length; i++) {
-        diff = checkPiece(pieces[i].length, rowLength, prevFirstPlankLength, optimizePieces);
-        if (diff == 0) {
-          minDiff = 0;
-          index = i;
-          break;
-        }
-        if (diff != FAIL && diff < minDiff && cutPieces) {
-          minDiff = diff;
-          index = i;
+        if (pieces[i].hasRightLock) {
+          diff = checkPiece(pieces[i].length, rowLength, prevFirstPlankLength, optimizePieces);
+          if (diff == 0) {
+            minDiff = 0;
+            index = i;
+            break;
+          }
+          if (diff != FAIL && diff < minDiff && cutPieces) {
+            minDiff = diff;
+            index = i;
+          }
         }
       }
       if (index != -1) {
@@ -302,7 +308,7 @@ class Calculation {
           currentLength += pieces[index].length - minDiff;
           pieces[index].length -= minDiff;
           addPlank(pieces[index].number, pieces[index].length, plankWidth);
-          addPiece(pieces[index].number, minDiff, plankWidth);
+          trash.add(Plank(pieces[index].number, minDiff, plankWidth));
           pieces.removeAt(index);
         } else {
           currentLength += pieces[index].length;
@@ -315,7 +321,7 @@ class Calculation {
         currentLength += firstPlankLength;
         number++;
         addPlank(number, firstPlankLength, plankWidth);
-        addPiece(number, plankLength - firstPlankLength, plankWidth);
+        addPiece(number, plankLength - firstPlankLength, plankWidth, hasRightLock: false);
       }
 
       while (currentLength + plankLength < rowLength) {
@@ -328,14 +334,16 @@ class Calculation {
       index = -1;
       minDiff = plankLength;
       for (int i = 0; i < pieces.length; i++) {
-        if (pieces[i].length >= lastPlankLength) {
-          if (pieces[i].length - lastPlankLength < minDiff) {
-            minDiff = pieces[i].length - lastPlankLength;
-            if (minDiff == 0) {
-              index = i;
-              break;
-            } else if (cutPieces) {
-              index = i;
+        if (pieces[i].hasLeftLock) {
+          if (pieces[i].length >= lastPlankLength) {
+            if (pieces[i].length - lastPlankLength < minDiff) {
+              minDiff = pieces[i].length - lastPlankLength;
+              if (minDiff == 0) {
+                index = i;
+                break;
+              } else if (cutPieces) {
+                index = i;
+              }
             }
           }
         }
@@ -346,7 +354,7 @@ class Calculation {
           currentLength += pieces[index].length - minDiff;
           pieces[index].length -= minDiff;
           addPlank(pieces[index].number, pieces[index].length, plankWidth);
-          addPiece(pieces[index].number, minDiff, plankWidth);
+          trash.add(Plank(pieces[index].number, minDiff, plankWidth));
           pieces.removeAt(index);
         } else {
           currentLength += pieces[index].length;
@@ -355,7 +363,7 @@ class Calculation {
         }
       } else {
         number++;
-        addPiece(number, plankLength - lastPlankLength, plankWidth);
+        addPiece(number, plankLength - lastPlankLength, plankWidth, hasLeftLock: false);
         addPlank(number, lastPlankLength, plankWidth);
       }
 
