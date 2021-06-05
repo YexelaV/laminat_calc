@@ -1,6 +1,8 @@
 .android
+iOS
 .ios
 .packages
 .dart_tool
 .flutter*
+.idea
 build
