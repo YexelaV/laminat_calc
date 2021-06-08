@@ -1,7 +1,11 @@
-import 'dart:math';
-import 'package:floor_calculator/pages/result_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/scheduler.dart';
+//import 'package:pdf/widgets.dart' ;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'result_page.dart';
+import '../localization.dart';
 import '../calculate.dart';
 import '../models.dart';
 import '../constants.dart';
@@ -30,15 +34,27 @@ class _StartPageState extends State<StartPage> {
   Direction direction;
 
   double height;
+  bool settingsLoaded = false;
+  bool showSettingsScreen = false;
 
   @override
   void initState() {
+    super.initState();
+    SharedPreferences.getInstance().then((prefs) {
+      final code = prefs.getString('countryCode');
+      if (code != null) {
+        AppLocalizations.preferredLocale = Locale(code);
+      } else {
+        showSettingsScreen = true;
+      }
+      settingsLoaded = true;
+      setState(() {});
+    });
     for (int i = 0; i < 8; i++) {
       controller.add(TextEditingController());
       focusNode.add(FocusNode());
       key.add(GlobalKey<FormFieldState>());
     }
-    super.initState();
   }
 
   Widget titleText(String title, IconData icon) {
@@ -157,21 +173,21 @@ class _StartPageState extends State<StartPage> {
     if (disabled || result != null) {
       return result;
     }
-    if (measure == 'мм' || measure == 'шт') {
+    if (measure == AppLocalizations.of(context).mm || measure == AppLocalizations.of(context).pcs) {
       try {
         int.parse(value);
       } catch (e) {
-        return "Некорректное значение";
+        return AppLocalizations.of(context).incorrect_value;
       }
     }
     if (result != null) {
       return result;
     }
     if (double.parse(value) > maxValue) {
-      return ("Не более $maxValue $measure");
+      return ("${AppLocalizations.of(context).maximum} $maxValue $measure");
     }
     if (double.parse(value) < minValue) {
-      return ("Не менее $minValue $measure");
+      return ("${AppLocalizations.of(context).minimum} $minValue $measure");
     }
     return null;
   }
@@ -179,14 +195,14 @@ class _StartPageState extends State<StartPage> {
   String emptyValidator(String value) {
     try {
       if (value.isEmpty) {
-        return "Обязательное поле";
+        return AppLocalizations.of(context).required_field;
       }
       if (double.parse(value) < 0) {
-        return "Некорректное значение";
+        return AppLocalizations.of(context).incorrect_value;
       }
       return null;
     } catch (e) {
-      return "Некорректное значение";
+      return AppLocalizations.of(context).incorrect_value;
     }
   }
 
@@ -207,46 +223,50 @@ class _StartPageState extends State<StartPage> {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      titleText("Помещение", Icons.home_filled),
+                      titleText(AppLocalizations.of(context).room, Icons.home_filled),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                               child: textFormField(
                             i,
-                            (value) => sizeValidator(value, MIN_LENGTH, MAX_LENGTH, 'м'),
+                            (value) => sizeValidator(
+                                value, MIN_LENGTH, MAX_LENGTH, AppLocalizations.of(context).m),
                             (String value) => roomLength = double.parse(value),
-                            "Длина (м)",
+                            AppLocalizations.of(context).lenth_m,
                           )),
                           SizedBox(width: 40),
                           Expanded(
                               child: textFormField(
                             ++i,
-                            (value) => sizeValidator(value, MIN_WIDTH, MAX_WIDTH, 'м'),
+                            (value) => sizeValidator(
+                                value, MIN_WIDTH, MAX_WIDTH, AppLocalizations.of(context).m),
                             (String value) => roomWidth = double.parse(value),
-                            "Ширина (м)",
+                            AppLocalizations.of(context).width_m,
                           ))
                         ],
                       ),
                       SizedBox(height: 16),
-                      titleText("Ламинат", Icons.horizontal_split_sharp),
+                      titleText(
+                          AppLocalizations.of(context).laminate, Icons.horizontal_split_sharp),
                       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Expanded(
                           child: textFormField(
                             ++i,
-                            (value) =>
-                                sizeValidator(value, MIN_PLANK_LENGTH, MAX_PLANK_LENGTH, 'мм'),
+                            (value) => sizeValidator(value, MIN_PLANK_LENGTH, MAX_PLANK_LENGTH,
+                                AppLocalizations.of(context).mm),
                             (String value) => plankLength = int.parse(value),
-                            "Длина (мм)",
+                            AppLocalizations.of(context).length_mm,
                           ),
                         ),
                         SizedBox(width: 40),
                         Expanded(
                           child: textFormField(
                             ++i,
-                            (value) => sizeValidator(value, MIN_PLANK_WIDTH, MAX_PLANK_WIDTH, 'мм'),
+                            (value) => sizeValidator(value, MIN_PLANK_WIDTH, MAX_PLANK_WIDTH,
+                                AppLocalizations.of(context).mm),
                             (String value) => plankWidth = int.parse(value),
-                            "Ширина (мм)",
+                            AppLocalizations.of(context).width_mm,
                           ),
                         ),
                       ]),
@@ -254,10 +274,10 @@ class _StartPageState extends State<StartPage> {
                         Expanded(
                           child: textFormField(
                             ++i,
-                            (value) =>
-                                sizeValidator(value, MIN_ITEMS_IN_PACK, MAX_ITEMS_IN_PACK, 'шт'),
+                            (value) => sizeValidator(value, MIN_ITEMS_IN_PACK, MAX_ITEMS_IN_PACK,
+                                AppLocalizations.of(context).pcs),
                             (String value) => planksInPack = int.parse(value),
-                            "В упаковке (шт)",
+                            AppLocalizations.of(context).pieces_per_package,
                           ),
                         ),
                         //  SizedBox(width: 40),
@@ -270,16 +290,17 @@ class _StartPageState extends State<StartPage> {
                           ),*/
                       ]),
                       SizedBox(height: 16),
-                      titleText("Укладка", Icons.branding_watermark),
+                      titleText(AppLocalizations.of(context).laying, Icons.branding_watermark),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: textFormField(
                               ++i,
-                              (value) => sizeValidator(value, 0, MAX_INDENT, 'мм'),
+                              (value) => sizeValidator(
+                                  value, 0, MAX_INDENT, AppLocalizations.of(context).mm),
                               (String value) => indent = int.parse(value),
-                              "Отступ от стен (мм)",
+                              AppLocalizations.of(context).expansion_gap_mm,
                             ),
                           ),
                         ],
@@ -290,11 +311,11 @@ class _StartPageState extends State<StartPage> {
                           Expanded(
                             child: textFormField(
                                 ++i,
-                                (value) => sizeValidator(
-                                    value, MIN_ROW_OFFSET, (plankLength ?? 0 / 2).floor(), 'мм',
+                                (value) => sizeValidator(value, MIN_ROW_OFFSET,
+                                    (plankLength ?? 0 / 2).floor(), AppLocalizations.of(context).mm,
                                     disabled: plankLength == null),
                                 (String value) => rowOffset = int.parse(value),
-                                "Cмещение рядов, (мм)"),
+                                AppLocalizations.of(context).joint_offset_mm),
                           ),
                         ],
                       ),
@@ -304,10 +325,11 @@ class _StartPageState extends State<StartPage> {
                           Expanded(
                             child: textFormField(
                               ++i,
-                              (value) => sizeValidator(value, MIN_MIN_LENGTH, minLengthMax(), 'мм',
+                              (value) => sizeValidator(value, MIN_MIN_LENGTH, minLengthMax(),
+                                  AppLocalizations.of(context).mm,
                                   disabled: minLengthValidatorDisabled()),
                               (String value) => minLength = int.parse(value),
-                              "Минимальная длина доски (мм)",
+                              AppLocalizations.of(context).minimal_piece_length,
                               isLast: true,
                             ),
                           ),
@@ -317,14 +339,14 @@ class _StartPageState extends State<StartPage> {
                       TextButton(
                           child: Container(
                               alignment: Alignment.center,
-                              width: 100,
+                              width: 140,
                               height: 40,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(16),
                                 color: Colors.blue,
                               ),
                               child: Text(
-                                "расчет",
+                                AppLocalizations.of(context).calculate,
                                 style: TextStyle(color: Colors.white, fontSize: 18),
                               )),
                           onPressed: () {
@@ -364,18 +386,97 @@ class _StartPageState extends State<StartPage> {
     );
   }
 
+  Future<void> showSettings() async {
+    await showDialog(
+        context: context,
+        builder: (buildContext) {
+          return SimpleDialog(
+            title: Text(
+              AppLocalizations.of(context).language,
+              style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+            titlePadding: EdgeInsets.fromLTRB(20, 8, 20, 8),
+            children: [
+              TextButton(
+                  child: Container(
+                      alignment: Alignment.center,
+                      width: 100,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.blue,
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context).english,
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      )),
+                  onPressed: () {
+                    AppLocalizations.preferredLocale = Locale('en');
+                    SharedPreferences.getInstance().then((prefs) {
+                      prefs.setString('countryCode', 'en');
+                    });
+                    Navigator.of(context).pop();
+                    setState(() {});
+                  }),
+              TextButton(
+                  child: Container(
+                      alignment: Alignment.center,
+                      width: 100,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.blue,
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context).russian,
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      )),
+                  onPressed: () {
+                    AppLocalizations.preferredLocale = Locale('ru');
+                    SharedPreferences.getInstance().then((prefs) {
+                      prefs.setString('countryCode', 'ru');
+                    });
+                    Navigator.of(context).pop();
+                    setState(() {});
+                  }),
+            ],
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     height = MediaQuery.of(context).size.height - 80;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Калькулятор ламината", style: TextStyle(fontSize: 18, color: Colors.black)),
-        leading: null,
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-      ),
-      body: parametersScreen(),
-    );
+    if (settingsLoaded) {
+      if (AppLocalizations.preferredLocale == null && showSettingsScreen) {
+        SchedulerBinding.instance.addPostFrameCallback((_) async {
+          await showSettings();
+        });
+      }
+      return Scaffold(
+        appBar: AppBar(
+            title: Text(AppLocalizations.of(context).title,
+                style: TextStyle(fontSize: 18, color: Colors.black)),
+            leading: null,
+            elevation: 0,
+            centerTitle: true,
+            backgroundColor: Colors.transparent,
+            actions: [
+              Padding(
+                padding: EdgeInsets.only(right: 20),
+                child: IconButton(
+                  icon: Icon(Icons.settings, size: 24, color: Colors.black),
+                  onPressed: () => showSettings(),
+                ),
+              ),
+            ]),
+        body: parametersScreen(),
+      );
+    } else {
+      return Container(
+        color: Colors.white,
+      );
+    }
   }
 }

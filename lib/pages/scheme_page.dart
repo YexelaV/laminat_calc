@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:esys_flutter_share/esys_flutter_share.dart';
+import '../localization.dart';
 import '../models.dart';
 import '../constants.dart';
 
@@ -137,8 +138,8 @@ class SchemePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title:
-              Text("Cхема укладки №$number", style: TextStyle(fontSize: 18, color: Colors.black)),
+          title: Text("${AppLocalizations.of(context).laying_scheme} №$number",
+              style: TextStyle(fontSize: 18, color: Colors.black)),
           leading: Padding(
             padding: EdgeInsets.only(left: 12),
             child: IconButton(

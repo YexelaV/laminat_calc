@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'scheme_page.dart';
+import '../localization.dart';
 import '../models.dart';
 
 class ResultPage extends StatelessWidget {
   final List<Result> result;
   ResultPage(this.result);
 
-  String ending(int number) {
+  String ending(BuildContext context, int number) {
     final str = number.toString();
-    if (str.endsWith('1')) return "панель";
-    if (str.endsWith('2') || str.endsWith('3') || str.endsWith('4')) return "панели";
-    return "панелей";
+    if (str.endsWith('1')) return AppLocalizations.of(context).panel_1;
+    if (str.endsWith('2') || str.endsWith('3') || str.endsWith('4'))
+      return AppLocalizations.of(context).panel_2_3_4;
+    return AppLocalizations.of(context).panel_more;
   }
 
   @override
@@ -19,7 +21,8 @@ class ResultPage extends StatelessWidget {
     final totalPacks = (result[0].totalPlanks / result[0].itemsInPack).ceil();
     return Scaffold(
       appBar: AppBar(
-        title: Text("Результат расчета", style: TextStyle(fontSize: 18, color: Colors.black)),
+        title: Text(AppLocalizations.of(context).result,
+            style: TextStyle(fontSize: 18, color: Colors.black)),
         leading: Padding(
           padding: EdgeInsets.only(left: 12),
           child: IconButton(
@@ -50,7 +53,7 @@ class ResultPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Понадобится упаковок: ",
+                            "${AppLocalizations.of(context).packages_required}: ",
                             style: TextStyle(fontSize: 18),
                           ),
                           Text(
@@ -62,7 +65,7 @@ class ResultPage extends StatelessWidget {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        "Варианты укладки:",
+                        "${AppLocalizations.of(context).laying_variants}:",
                         style: TextStyle(fontSize: 18),
                       ),
                       SizedBox(height: 8),
@@ -83,7 +86,7 @@ class ResultPage extends StatelessWidget {
                                     children: [
                                       Text(
                                         "№${i + 1} - ${result[i].totalPlanks} " +
-                                            ending(result[i].totalPlanks),
+                                            ending(context, result[i].totalPlanks),
                                         style: TextStyle(color: Colors.white, fontSize: 18),
                                       ),
                                     ],
