@@ -1,11 +1,5 @@
-# floor_calculator
+# Laminate Calculator
 
-A new flutter module project.
+Calculating the number of laminate. Laying scheme. Export to PDF
 
-## Getting Started
-
-For help getting started with Flutter, view our online
-[documentation](https://flutter.dev/).
-
-For instructions integrating Flutter modules to your existing applications,
-see the [add-to-app documentation](https://flutter.dev/docs/development/add-to-app).
+https://play.google.com/store/apps/details?id=com.floor_calculator.host
