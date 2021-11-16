@@ -167,8 +167,7 @@ class _StartPageState extends State<StartPage> {
         minLength == null;
   }*/
 
-  String sizeValidator(String value, int minValue, int maxValue, String measure,
-      {bool disabled = false}) {
+  String sizeValidator(String value, minValue, maxValue, String measure, {bool disabled = false}) {
     var result = emptyValidator(value);
     if (disabled || result != null) {
       return result;

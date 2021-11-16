@@ -1,6 +1,6 @@
-const MIN_LENGTH = 1;
+const MIN_LENGTH = 0.5; //m
 const MAX_LENGTH = 24; //m
-const MIN_WIDTH = 1;
+const MIN_WIDTH = 0.5; //m
 const MAX_WIDTH = 16; //m
 const MIN_PLANK_LENGTH = 300; //mm
 const MAX_PLANK_LENGTH = 3000; //mm

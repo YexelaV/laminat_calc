@@ -250,6 +250,13 @@ class Calculation {
     pieces = [];
     var currentLength = 0;
     int number = 0;
+    if (plankLength >= rowLength) {
+      number++;
+      addPlank(number, rowLength, plankWidth);
+      addPiece(number, plankLength - rowLength, plankWidth, hasRightLock: false);
+      lines.add(Line(0, planks));
+      return 1;
+    }
     final diff = checkRow(plankLength, rowLength, optimizePieces);
     final firstPlankLength = plankLength - diff;
     number++;
@@ -284,6 +291,13 @@ class Calculation {
   }) {
     for (int i = 1; i < numberOfRows; i++) {
       planks = [];
+      if (plankLength >= rowLength) {
+        number++;
+        addPlank(number, rowLength, plankWidth);
+        addPiece(number, plankLength - rowLength, plankWidth, hasRightLock: false);
+        lines.add(Line(i, planks));
+        continue;
+      }
       var currentLength = 0;
       final prevFirstPlankLength = lines[i - 1].planks.first.length;
       var index = -1;
