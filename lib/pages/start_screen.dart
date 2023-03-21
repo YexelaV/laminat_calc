@@ -1,23 +1,84 @@
+import 'package:auto_route/auto_route.dart';
+import 'package:floor_calculator/l10n/app_localizations.dart';
+import 'package:floor_calculator/l10n/gen/app_localizations.dart';
+import 'package:floor_calculator/main.dart';
+import 'package:floor_calculator/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 //import 'package:pdf/widgets.dart' ;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 
-import 'result_page.dart';
-import '../localization.dart';
-import '../calculate.dart';
-import '../models.dart';
-import '../constants.dart';
+//import 'result_page.dart';
+//import '../localization.dart';
+//import '../calculate.dart';
+//import '../models.dart';
+//import '../constants.dart';
 
-class StartPage extends StatefulWidget {
-  StartPage({Key key}) : super(key: key);
+class StartScreen extends StatefulWidget {
+  StartScreen({Key? key}) : super(key: key);
 
   @override
-  _StartPageState createState() => _StartPageState();
+  _StartScreenState createState() => _StartScreenState();
 }
 
-class _StartPageState extends State<StartPage> {
+class _StartScreenState extends State<StartScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(AppStrings.of(context).title, style: Theme.of(context).textTheme.headline6),
+      ),
+      body: Center(
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          GestureDetector(
+            onTap: () {
+              MyApp.of(context)?.setLocale(Locale('ru'));
+              context.router.push(RoomAndLaminateParametersRoute());
+            },
+            child: Container(
+              width: 100,
+              height: 100,
+              padding: EdgeInsets.all(15.0),
+              decoration: BoxDecoration(
+                  border: Border.all(),
+                  borderRadius: BorderRadius.circular(20.0),
+                  color: Colors.black12),
+              child: SvgPicture.asset(
+                'assets/ru.svg',
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              MyApp.of(context)?.setLocale(Locale('en'));
+              context.router.push(RoomAndLaminateParametersRoute());
+            },
+            child: Container(
+              width: 100,
+              height: 100,
+              padding: EdgeInsets.all(15.0),
+              decoration: BoxDecoration(
+                  border: Border.all(),
+                  borderRadius: BorderRadius.circular(20.0),
+                  color: Colors.black12),
+              child: SvgPicture.asset(
+                'assets/gb.svg',
+              ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+/*class _StartScreenState extends State<StartScreen> {
   final controller = <TextEditingController>[];
   final focusNode = <FocusNode>[];
   final key = <GlobalKey<FormFieldState>>[];
@@ -43,7 +104,7 @@ class _StartPageState extends State<StartPage> {
     SharedPreferences.getInstance().then((prefs) {
       final code = prefs.getString('countryCode');
       if (code != null) {
-        AppLocalizations.preferredLocale = Locale(code);
+        AppStrings.preferredLocale = Locale(code);
       } else {
         showSettingsScreen = true;
       }
@@ -172,21 +233,21 @@ class _StartPageState extends State<StartPage> {
     if (disabled || result != null) {
       return result;
     }
-    if (measure == AppLocalizations.of(context).mm || measure == AppLocalizations.of(context).pcs) {
+    if (measure == AppStrings.of(context).mm || measure == AppStrings.of(context).pcs) {
       try {
         int.parse(value);
       } catch (e) {
-        return AppLocalizations.of(context).incorrect_value;
+        return AppStrings.of(context).incorrect_value;
       }
     }
     if (result != null) {
       return result;
     }
     if (double.parse(value) > maxValue) {
-      return ("${AppLocalizations.of(context).maximum} $maxValue $measure");
+      return ("${AppStrings.of(context).maximum} $maxValue $measure");
     }
     if (double.parse(value) < minValue) {
-      return ("${AppLocalizations.of(context).minimum} $minValue $measure");
+      return ("${AppStrings.of(context).minimum} $minValue $measure");
     }
     return null;
   }
@@ -194,14 +255,14 @@ class _StartPageState extends State<StartPage> {
   String emptyValidator(String value) {
     try {
       if (value.isEmpty) {
-        return AppLocalizations.of(context).required_field;
+        return AppStrings.of(context).required_field;
       }
       if (double.parse(value) < 0) {
-        return AppLocalizations.of(context).incorrect_value;
+        return AppStrings.of(context).incorrect_value;
       }
       return null;
     } catch (e) {
-      return AppLocalizations.of(context).incorrect_value;
+      return AppStrings.of(context).incorrect_value;
     }
   }
 
@@ -222,7 +283,7 @@ class _StartPageState extends State<StartPage> {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      titleText(AppLocalizations.of(context).room, Icons.home_filled),
+                      titleText(AppStrings.of(context).room, Icons.home_filled),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -230,32 +291,32 @@ class _StartPageState extends State<StartPage> {
                               child: textFormField(
                             i,
                             (value) => sizeValidator(
-                                value, MIN_LENGTH, MAX_LENGTH, AppLocalizations.of(context).m),
+                                value, MIN_LENGTH, MAX_LENGTH, AppStrings.of(context).m),
                             (String value) => roomLength = double.parse(value),
-                            AppLocalizations.of(context).lenth_m,
+                            AppStrings.of(context).lenth_m,
                           )),
                           SizedBox(width: 40),
                           Expanded(
                               child: textFormField(
                             ++i,
                             (value) => sizeValidator(
-                                value, MIN_WIDTH, MAX_WIDTH, AppLocalizations.of(context).m),
+                                value, MIN_WIDTH, MAX_WIDTH, AppStrings.of(context).m),
                             (String value) => roomWidth = double.parse(value),
-                            AppLocalizations.of(context).width_m,
+                            AppStrings.of(context).width_m,
                           ))
                         ],
                       ),
                       SizedBox(height: 16),
                       titleText(
-                          AppLocalizations.of(context).laminate, Icons.horizontal_split_sharp),
+                          AppStrings.of(context).laminate, Icons.horizontal_split_sharp),
                       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Expanded(
                           child: textFormField(
                             ++i,
                             (value) => sizeValidator(value, MIN_PLANK_LENGTH, MAX_PLANK_LENGTH,
-                                AppLocalizations.of(context).mm),
+                                AppStrings.of(context).mm),
                             (String value) => plankLength = int.parse(value),
-                            AppLocalizations.of(context).length_mm,
+                            AppStrings.of(context).length_mm,
                           ),
                         ),
                         SizedBox(width: 40),
@@ -263,9 +324,9 @@ class _StartPageState extends State<StartPage> {
                           child: textFormField(
                             ++i,
                             (value) => sizeValidator(value, MIN_PLANK_WIDTH, MAX_PLANK_WIDTH,
-                                AppLocalizations.of(context).mm),
+                                AppStrings.of(context).mm),
                             (String value) => plankWidth = int.parse(value),
-                            AppLocalizations.of(context).width_mm,
+                            AppStrings.of(context).width_mm,
                           ),
                         ),
                       ]),
@@ -274,9 +335,9 @@ class _StartPageState extends State<StartPage> {
                           child: textFormField(
                             ++i,
                             (value) => sizeValidator(value, MIN_ITEMS_IN_PACK, MAX_ITEMS_IN_PACK,
-                                AppLocalizations.of(context).pcs),
+                                AppStrings.of(context).pcs),
                             (String value) => planksInPack = int.parse(value),
-                            AppLocalizations.of(context).pieces_per_package,
+                            AppStrings.of(context).pieces_per_package,
                           ),
                         ),
                         //  SizedBox(width: 40),
@@ -289,7 +350,7 @@ class _StartPageState extends State<StartPage> {
                           ),*/
                       ]),
                       SizedBox(height: 16),
-                      titleText(AppLocalizations.of(context).laying, Icons.branding_watermark),
+                      titleText(AppStrings.of(context).laying, Icons.branding_watermark),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -297,9 +358,9 @@ class _StartPageState extends State<StartPage> {
                             child: textFormField(
                               ++i,
                               (value) => sizeValidator(
-                                  value, 0, MAX_INDENT, AppLocalizations.of(context).mm),
+                                  value, 0, MAX_INDENT, AppStrings.of(context).mm),
                               (String value) => indent = int.parse(value),
-                              AppLocalizations.of(context).expansion_gap_mm,
+                              AppStrings.of(context).expansion_gap_mm,
                             ),
                           ),
                         ],
@@ -311,10 +372,10 @@ class _StartPageState extends State<StartPage> {
                             child: textFormField(
                                 ++i,
                                 (value) => sizeValidator(value, MIN_ROW_OFFSET,
-                                    (plankLength ?? 0 / 2).floor(), AppLocalizations.of(context).mm,
+                                    (plankLength ?? 0 / 2).floor(), AppStrings.of(context).mm,
                                     disabled: plankLength == null),
                                 (String value) => rowOffset = int.parse(value),
-                                AppLocalizations.of(context).joint_offset_mm),
+                                AppStrings.of(context).joint_offset_mm),
                           ),
                         ],
                       ),
@@ -325,10 +386,10 @@ class _StartPageState extends State<StartPage> {
                             child: textFormField(
                               ++i,
                               (value) => sizeValidator(value, MIN_MIN_LENGTH, minLengthMax(),
-                                  AppLocalizations.of(context).mm,
+                                  AppStrings.of(context).mm,
                                   disabled: minLengthValidatorDisabled()),
                               (String value) => minLength = int.parse(value),
-                              AppLocalizations.of(context).minimal_piece_length,
+                              AppStrings.of(context).minimal_piece_length,
                               isLast: true,
                             ),
                           ),
@@ -345,7 +406,7 @@ class _StartPageState extends State<StartPage> {
                                 color: Colors.blue,
                               ),
                               child: Text(
-                                AppLocalizations.of(context).calculate,
+                                AppStrings.of(context).calculate,
                                 style: TextStyle(color: Colors.white, fontSize: 18),
                               )),
                           onPressed: () {
@@ -391,7 +452,7 @@ class _StartPageState extends State<StartPage> {
         builder: (buildContext) {
           return SimpleDialog(
             title: Text(
-              AppLocalizations.of(context).language,
+              AppStrings.of(context).language,
               style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 18),
               textAlign: TextAlign.center,
             ),
@@ -407,11 +468,11 @@ class _StartPageState extends State<StartPage> {
                         color: Colors.blue,
                       ),
                       child: Text(
-                        AppLocalizations.of(context).english,
+                        AppStrings.of(context).english,
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       )),
                   onPressed: () {
-                    AppLocalizations.preferredLocale = Locale('en');
+                    AppStrings.preferredLocale = Locale('en');
                     SharedPreferences.getInstance().then((prefs) {
                       prefs.setString('countryCode', 'en');
                     });
@@ -428,11 +489,11 @@ class _StartPageState extends State<StartPage> {
                         color: Colors.blue,
                       ),
                       child: Text(
-                        AppLocalizations.of(context).russian,
+                        AppStrings.of(context).russian,
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       )),
                   onPressed: () {
-                    AppLocalizations.preferredLocale = Locale('ru');
+                    AppStrings.preferredLocale = Locale('ru');
                     SharedPreferences.getInstance().then((prefs) {
                       prefs.setString('countryCode', 'ru');
                     });
@@ -448,14 +509,14 @@ class _StartPageState extends State<StartPage> {
   Widget build(BuildContext context) {
     height = MediaQuery.of(context).size.height - 80;
     if (settingsLoaded) {
-      if (AppLocalizations.preferredLocale == null && showSettingsScreen) {
+      if (AppStrings.preferredLocale == null && showSettingsScreen) {
         SchedulerBinding.instance.addPostFrameCallback((_) async {
           await showSettings();
         });
       }
       return Scaffold(
         appBar: AppBar(
-            title: Text(AppLocalizations.of(context).title,
+            title: Text(AppStrings.of(context).title,
                 style: TextStyle(fontSize: 18, color: Colors.black)),
             leading: null,
             elevation: 0,
@@ -478,4 +539,4 @@ class _StartPageState extends State<StartPage> {
       );
     }
   }
-}
+}*/
