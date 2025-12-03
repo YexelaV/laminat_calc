@@ -131,7 +131,6 @@ class Calculation {
       pieces,
       trash,
     ));
-    //
     result.removeWhere((result) => check(result) == false);
     result.sort((a, b) => a.totalPlanks.compareTo(b.totalPlanks));
     final totalPacks = (result[0].totalPlanks / result[0].quantityPerPack).ceil();
@@ -203,7 +202,6 @@ class Calculation {
   int checkPiece(int length, int rowLength, int prevFirstlaminateLength, bool optimizePieces) {
     var diff;
     var newLength;
-    //  if (length < rowOffset) return FAIL;
     if ((prevFirstlaminateLength - length).abs() >= rowOffset) {
       diff = checkRow(length, rowLength, optimizePieces);
       switch (diff) {
@@ -212,8 +210,8 @@ class Calculation {
           return diff;
         default:
           {
-            var extraDiff =
-                checkPiece((length - diff).toInt(), rowLength, prevFirstlaminateLength, optimizePieces);
+            var extraDiff = checkPiece(
+                (length - diff).toInt(), rowLength, prevFirstlaminateLength, optimizePieces);
             if (extraDiff == FAIL) {
               return FAIL;
             }
@@ -273,12 +271,6 @@ class Calculation {
     addPlank(number, lastlaminateLength, laminateWidth);
     addPiece(number, laminateLength - lastlaminateLength, laminateWidth, hasLeftLock: false);
     lines.add(Line(0, planks));
-//    print("Row №0");
-    // var res = "";
-    // lines[0].planks.forEach((element) {
-    //   res += '№${element.number}:${element.length} ';
-    // });
-    //print(res);
     return number;
   }
 
@@ -381,12 +373,6 @@ class Calculation {
       }
 
       lines.add(Line(i, planks));
-      //     print("Row №$i");
-      // var res = "";
-      // lines[i].planks.forEach((element) {
-      //   res += '№${element.number}:${element.length} ';
-      // });
-      //    print(res);
     }
     final actualWidth = (roomWidth * 1000 - indentFromWall * 2).toInt();
     var newWidth = laminateWidth - (laminateWidth * lines.length - actualWidth);

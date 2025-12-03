@@ -36,18 +36,14 @@ class CalculateState extends Equatable {
       laminateLength: laminateLength ?? this.laminateLength,
       laminateWidth: laminateWidth ?? this.laminateWidth,
       quantityPerPack: quantityPerPack ?? this.quantityPerPack,
-      indentFromWall: indentFromWall ?? this.quantityPerPack,
+      indentFromWall: indentFromWall ?? this.indentFromWall,
       rowOffset: rowOffset ?? this.rowOffset,
       minimumLaminateLength: minimumLaminateLength ?? this.minimumLaminateLength,
     );
   }
 
-  bool roomAndLaminateParametersEntered() =>
-      roomLength != null &&
-      roomWidth != null &&
-      laminateLength != null &&
-      laminateWidth != null &&
-      quantityPerPack != null;
+  bool layingParametersEntered() =>
+      indentFromWall != null && rowOffset != null && minimumLaminateLength != null;
 
   @override
   List<Object?> get props => [

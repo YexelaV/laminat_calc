@@ -25,4 +25,16 @@ class CalculateCubit extends Cubit<CalculateState> {
   void setQuantityPerPack(int quantityPerPack) {
     emit(state.copyWith(quantityPerPack: quantityPerPack));
   }
+
+  void setIndentFromWall(int indentFromWall) {
+    emit(state.copyWith(indentFromWall: indentFromWall));
+  }
+
+  void setRowOffset(int rowOffset) {
+    emit(state.copyWith(rowOffset: rowOffset));
+  }
+
+  void setMinimumLaminateLength(int minimumLaminateLength) {
+    emit(state.copyWith(minimumLaminateLength: minimumLaminateLength));
+  }
 }

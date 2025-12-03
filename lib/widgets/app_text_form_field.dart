@@ -1,28 +1,29 @@
 import 'package:flutter/material.dart';
 
 class AppTextFormField extends StatelessWidget {
-  final GlobalKey<FormFieldState> formKey;
   final FocusNode focusNode;
   final String labelText;
   final Function(String?) validator;
   final Function(String) callback;
   final FocusNode? nextFocusNode;
+  final TextEditingController? controller;
 
   const AppTextFormField({
     Key? key,
-    required this.formKey,
     required this.focusNode,
     required this.labelText,
     required this.validator,
     required this.callback,
     this.nextFocusNode,
+    this.controller,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      key: formKey,
+      controller: controller,
       focusNode: focusNode,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         contentPadding: EdgeInsets.symmetric(vertical: 4),
         focusedBorder: UnderlineInputBorder(
@@ -38,10 +39,12 @@ class AppTextFormField extends StatelessWidget {
       textInputAction: nextFocusNode == null ? TextInputAction.done : TextInputAction.next,
       validator: (value) => validator(value),
       onChanged: (value) {
-        formKey.currentState?.validate();
+        if (validator(value) == null && value.isNotEmpty) {
+          callback(value);
+        }
       },
       onFieldSubmitted: (value) {
-        if (formKey.currentState?.validate() ?? false) {
+        if (validator(value) == null && value.isNotEmpty) {
           callback(value);
         }
         if (nextFocusNode != null) {

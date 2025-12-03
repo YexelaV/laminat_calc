@@ -10,10 +10,10 @@ import '../l10n/app_localizations.dart';
 import '../models.dart';
 import '../constants.dart';
 
-class SchemePage extends StatelessWidget {
+class SchemeScreen extends StatelessWidget {
   final Result result;
   final int number;
-  SchemePage(this.result, this.number);
+  SchemeScreen(this.result, this.number);
 
   List<Widget> drawFloor() {
     List<Widget> res = [];
@@ -148,7 +148,6 @@ class SchemePage extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
-          //   elevation: 0,
           centerTitle: true,
           backgroundColor: Colors.white,
           actions: [
@@ -170,9 +169,6 @@ class SchemePage extends StatelessWidget {
                     child: Padding(
                         padding: EdgeInsets.fromLTRB(40, 40, 40, 40),
                         child: Container(
-                            //    decoration: BoxDecoration(
-                            //      color: Colors.black.withOpacity(0.05),
-                            //    borderRadius: BorderRadius.circular(20)),
                             child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: drawFloor(),

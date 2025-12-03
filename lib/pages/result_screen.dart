@@ -1,12 +1,12 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'scheme_page.dart';
+import 'package:floor_calculator/router/app_router.dart';
 import '../l10n/app_localizations.dart';
 import '../models.dart';
 
-class ResultPage extends StatelessWidget {
+class ResultScreen extends StatelessWidget {
   final List<Result> result;
-  ResultPage(this.result);
+  ResultScreen(this.result);
 
   String ending(BuildContext context, int number) {
     final str = number.toString();
@@ -30,20 +30,15 @@ class ResultPage extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
-        //   elevation: 0,
         centerTitle: true,
         backgroundColor: Colors.white,
       ),
       body: Stack(
         children: [
           Container(
-            //color: Colors.transparent,
             child: Padding(
               padding: EdgeInsets.only(left: 20, right: 20, bottom: 60),
               child: Container(
-                // color: Colors.black,
-                //   decoration: BoxDecoration(
-                //     borderRadius: BorderRadius.circular(20), color: Colors.black.withOpacity(0.05)),
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -75,7 +70,6 @@ class ResultPage extends StatelessWidget {
                           return TextButton(
                               child: Container(
                                   alignment: Alignment.center,
-                                  //      width: 100,
                                   height: 60,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16),
@@ -91,8 +85,8 @@ class ResultPage extends StatelessWidget {
                                       ),
                                     ],
                                   )),
-                              onPressed: () => Navigator.of(context).push(CupertinoPageRoute(
-                                  builder: (context) => SchemePage(result[i], i + 1))));
+                              onPressed: () => context.router
+                                  .push(SchemeRoute(result: result[i], number: i + 1)));
                         },
                         shrinkWrap: true,
                       )
@@ -102,7 +96,6 @@ class ResultPage extends StatelessWidget {
               ),
             ),
           ),
-          //   ),
         ],
       ),
     );

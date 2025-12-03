@@ -2,7 +2,6 @@ import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:floor_calculator/router/app_router.dart';
-import 'package:intl/intl.dart';
 
 import 'di/get_it.dart';
 
@@ -20,7 +19,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _appRouter = AppRouter();
-  Locale? _locale = Locale(Intl.defaultLocale ?? 'en');
+  Locale? _locale;
 
   void setLocale(Locale locale) {
     setState(() {
@@ -45,6 +44,25 @@ class _MyAppState extends State<MyApp> {
         Locale('ru', ''),
         Locale('en', ''),
       ],
+      localeResolutionCallback: (deviceLocale, supportedLocales) {
+        if (_locale != null) {
+          return _locale;
+        }
+        
+        if (deviceLocale != null) {
+          for (var supportedLocale in supportedLocales) {
+            if (supportedLocale.languageCode == deviceLocale.languageCode) {
+              return supportedLocale;
+            }
+          }
+        }
+        
+        final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
+        if (systemLocale.languageCode == 'ru') {
+          return const Locale('ru');
+        }
+        return const Locale('en');
+      },
     );
   }
 }

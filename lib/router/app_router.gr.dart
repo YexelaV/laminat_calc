@@ -18,8 +18,7 @@ class _$AppRouter extends RootStackRouter {
   @override
   final Map<String, PageFactory> pagesMap = {
     StartRoute.name: (routeData) {
-      final args = routeData.argsAs<StartRouteArgs>(
-          orElse: () => const StartRouteArgs());
+      final args = routeData.argsAs<StartRouteArgs>(orElse: () => const StartRouteArgs());
       return MaterialPageX<dynamic>(
         routeData: routeData,
         child: StartScreen(key: args.key),
@@ -31,17 +30,49 @@ class _$AppRouter extends RootStackRouter {
         child: RoomAndLaminateParametersScreen(),
       );
     },
+    LayingParametersRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: LayingParametersScreen(),
+      );
+    },
+    ResultRoute.name: (routeData) {
+      final args = routeData.argsAs<ResultRouteArgs>();
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: ResultScreen(args.result),
+      );
+    },
+    SchemeRoute.name: (routeData) {
+      final args = routeData.argsAs<SchemeRouteArgs>();
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: SchemeScreen(args.result, args.number),
+      );
+    },
   };
 
   @override
   List<RouteConfig> get routes => [
         RouteConfig(
-          StartRoute.name,
+          RoomAndLaminateParametersRoute.name,
           path: '/',
         ),
         RouteConfig(
-          RoomAndLaminateParametersRoute.name,
-          path: '/room-and-laminate-parameters-screen',
+          StartRoute.name,
+          path: '/start-screen',
+        ),
+        RouteConfig(
+          LayingParametersRoute.name,
+          path: '/laying-parameters-screen',
+        ),
+        RouteConfig(
+          ResultRoute.name,
+          path: '/result-screen',
+        ),
+        RouteConfig(
+          SchemeRoute.name,
+          path: '/scheme-screen',
         ),
       ];
 }
@@ -52,7 +83,7 @@ class StartRoute extends PageRouteInfo<StartRouteArgs> {
   StartRoute({Key? key})
       : super(
           StartRoute.name,
-          path: '/',
+          path: '/start-screen',
           args: StartRouteArgs(key: key),
         );
 
@@ -76,8 +107,69 @@ class RoomAndLaminateParametersRoute extends PageRouteInfo<void> {
   const RoomAndLaminateParametersRoute()
       : super(
           RoomAndLaminateParametersRoute.name,
-          path: '/room-and-laminate-parameters-screen',
+          path: '/',
         );
 
   static const String name = 'RoomAndLaminateParametersRoute';
+}
+
+/// generated route for
+/// [LayingParametersScreen]
+class LayingParametersRoute extends PageRouteInfo<void> {
+  const LayingParametersRoute()
+      : super(
+          LayingParametersRoute.name,
+          path: '/laying-parameters-screen',
+        );
+
+  static const String name = 'LayingParametersRoute';
+}
+
+/// generated route for
+/// [ResultScreen]
+class ResultRoute extends PageRouteInfo<ResultRouteArgs> {
+  ResultRoute({required List<Result> result})
+      : super(
+          ResultRoute.name,
+          path: '/result-screen',
+          args: ResultRouteArgs(result: result),
+        );
+
+  static const String name = 'ResultRoute';
+}
+
+class ResultRouteArgs {
+  const ResultRouteArgs({required this.result});
+
+  final List<Result> result;
+
+  @override
+  String toString() {
+    return 'ResultRouteArgs{result: $result}';
+  }
+}
+
+/// generated route for
+/// [SchemeScreen]
+class SchemeRoute extends PageRouteInfo<SchemeRouteArgs> {
+  SchemeRoute({required Result result, required int number})
+      : super(
+          SchemeRoute.name,
+          path: '/scheme-screen',
+          args: SchemeRouteArgs(result: result, number: number),
+        );
+
+  static const String name = 'SchemeRoute';
+}
+
+class SchemeRouteArgs {
+  const SchemeRouteArgs({required this.result, required this.number});
+
+  final Result result;
+  final int number;
+
+  @override
+  String toString() {
+    return 'SchemeRouteArgs{result: $result, number: $number}';
+  }
 }
