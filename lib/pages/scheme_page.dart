@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
-import 'package:esys_flutter_share/esys_flutter_share.dart';
-import '../localization.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
+import '../l10n/app_localizations.dart';
 import '../models.dart';
 import '../constants.dart';
 
@@ -51,7 +52,7 @@ class SchemePage extends StatelessWidget {
                 width: plank.length / 15 - 2,
                 child: FittedBox(
                   alignment: Alignment.center,
-                  child: plank.length < result.plankLength
+                  child: plank.length < result.laminateLength
                       ? Text(
                           ' ${plank.length}',
                         )
@@ -106,7 +107,7 @@ class SchemePage extends StatelessWidget {
                 width: plank.length / KOEF_COMPRESS * koefLength * 0.67 - 2,
                 child: pw.FittedBox(
                   alignment: pw.Alignment.center,
-                  child: plank.length < result.plankLength
+                  child: plank.length < result.laminateLength
                       ? pw.Text(
                           ' ${plank.length}',
                         )
@@ -131,14 +132,14 @@ class SchemePage extends StatelessWidget {
     final now = DateTime.now();
     final file = File('$path/laminat.pdf$now');
     await file.writeAsBytes(await pdf.save());
-    final bytes = await file.readAsBytes();
-    await Share.file("scheme №$number", "scheme№$number.pdf", bytes, 'application/pdf');
+    final xFile = XFile(file.path, mimeType: 'application/pdf');
+    await Share.shareXFiles([xFile], text: "scheme №$number");
   }
 
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text("${AppLocalizations.of(context).laying_scheme} №$number",
+          title: Text("${AppStrings.of(context).laying_scheme} №$number",
               style: TextStyle(fontSize: 18, color: Colors.black)),
           leading: Padding(
             padding: EdgeInsets.only(left: 12),

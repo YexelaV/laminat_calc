@@ -1,16 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
-import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
-//import 'package:pdf/widgets.dart' ;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:intl/intl.dart';
 
 //import 'result_page.dart';
 //import '../localization.dart';
@@ -33,7 +27,7 @@ class _StartScreenState extends State<StartScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: Text(AppStrings.of(context).title, style: Theme.of(context).textTheme.headline6),
+        title: Text(AppStrings.of(context).title, style: Theme.of(context).textTheme.titleLarge),
       ),
       body: Center(
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
@@ -85,12 +79,12 @@ class _StartScreenState extends State<StartScreen> {
 
   double roomLength;
   double roomWidth;
-  int plankLength;
-  int plankWidth;
+  int laminateLength;
+  int laminateWidth;
   int planksInPack;
   double price;
-  int indent;
-  int minLength;
+  int indentFromWall;
+  int minimumLaminateLength;
   int rowOffset;
   Direction direction;
 
@@ -175,57 +169,57 @@ class _StartScreenState extends State<StartScreen> {
     );
   }
 
-  int minLengthMax() {
-    if (roomLength == null || roomWidth == null || plankLength == null || rowOffset == null) {
+  int minimumLaminateLengthMax() {
+    if (roomLength == null || roomWidth == null || laminateLength == null || rowOffset == null) {
       return 0;
     }
-    final actualLength = (roomLength * 1000 - indent * 2).toInt();
-    final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
+    final actualLength = (roomLength * 1000 - indentFromWall * 2).toInt();
+    final actualWidth = (roomWidth * 1000 - indentFromWall * 2).toInt();
     // final rowLength = direction == Direction.length ? actualLength : actualWidth;
     final rowLength = actualLength;
     var currentLength = 0;
-    while (currentLength + plankLength < rowLength) {
-      currentLength += plankLength;
+    while (currentLength + laminateLength < rowLength) {
+      currentLength += laminateLength;
     }
-    var lastPlankLength = rowLength - currentLength;
-    var rowRemain = rowLength - currentLength + plankLength;
-    if (lastPlankLength <= plankLength / 2) {
+    var lastlaminateLength = rowLength - currentLength;
+    var rowRemain = rowLength - currentLength + laminateLength;
+    if (lastlaminateLength <= laminateLength / 2) {
       return ((rowRemain - rowOffset) / 2).truncate();
     } else {
-      return lastPlankLength - rowOffset;
+      return lastlaminateLength - rowOffset;
     }
   }
 
   /* int rowOffsetMax() {
-    if (roomLength == null || roomWidth == null || plankLength == null || minLength == null) {
+    if (roomLength == null || roomWidth == null || laminateLength == null || minimumLaminateLength == null) {
       return 0;
     }
-    final actualLength = (roomLength * 1000 - indent * 2).toInt();
-    final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
+    final actualLength = (roomLength * 1000 - indentFromWall * 2).toInt();
+    final actualWidth = (roomWidth * 1000 - indentFromWall * 2).toInt();
     // final rowLength = direction == Direction.length ? actualLength : actualWidth;
     final rowLength = actualLength;
     var currentLength = 0;
-    while (currentLength + plankLength < rowLength) {
-      currentLength += plankLength;
+    while (currentLength + laminateLength < rowLength) {
+      currentLength += laminateLength;
     }
     var rowRemain = rowLength - currentLength;
-    return rowRemain - minLength;
+    return rowRemain - minimumLaminateLength;
   }*/
 
-  bool minLengthValidatorDisabled() {
+  bool minimumLaminateLengthValidatorDisabled() {
     return roomLength == null ||
         roomWidth == null ||
-        plankLength == null ||
-        indent == null ||
+        laminateLength == null ||
+        indentFromWall == null ||
         rowOffset == null;
   }
 
   /* bool rowOffsetValidatorDisabled() {
     return roomLength == null ||
         roomWidth == null ||
-        plankLength == null ||
-        indent == null ||
-        minLength == null;
+        laminateLength == null ||
+        indentFromWall == null ||
+        minimumLaminateLength == null;
   }*/
 
   String sizeValidator(String value, minValue, maxValue, String measure, {bool disabled = false}) {
@@ -315,7 +309,7 @@ class _StartScreenState extends State<StartScreen> {
                             ++i,
                             (value) => sizeValidator(value, MIN_PLANK_LENGTH, MAX_PLANK_LENGTH,
                                 AppStrings.of(context).mm),
-                            (String value) => plankLength = int.parse(value),
+                            (String value) => laminateLength = int.parse(value),
                             AppStrings.of(context).length_mm,
                           ),
                         ),
@@ -325,7 +319,7 @@ class _StartScreenState extends State<StartScreen> {
                             ++i,
                             (value) => sizeValidator(value, MIN_PLANK_WIDTH, MAX_PLANK_WIDTH,
                                 AppStrings.of(context).mm),
-                            (String value) => plankWidth = int.parse(value),
+                            (String value) => laminateWidth = int.parse(value),
                             AppStrings.of(context).width_mm,
                           ),
                         ),
@@ -358,8 +352,8 @@ class _StartScreenState extends State<StartScreen> {
                             child: textFormField(
                               ++i,
                               (value) => sizeValidator(
-                                  value, 0, MAX_INDENT, AppStrings.of(context).mm),
-                              (String value) => indent = int.parse(value),
+                                  value, 0, MAX_indentFromWall, AppStrings.of(context).mm),
+                              (String value) => indentFromWall = int.parse(value),
                               AppStrings.of(context).expansion_gap_mm,
                             ),
                           ),
@@ -372,8 +366,8 @@ class _StartScreenState extends State<StartScreen> {
                             child: textFormField(
                                 ++i,
                                 (value) => sizeValidator(value, MIN_ROW_OFFSET,
-                                    (plankLength ?? 0 / 2).floor(), AppStrings.of(context).mm,
-                                    disabled: plankLength == null),
+                                    (laminateLength ?? 0 / 2).floor(), AppStrings.of(context).mm,
+                                    disabled: laminateLength == null),
                                 (String value) => rowOffset = int.parse(value),
                                 AppStrings.of(context).joint_offset_mm),
                           ),
@@ -385,10 +379,10 @@ class _StartScreenState extends State<StartScreen> {
                           Expanded(
                             child: textFormField(
                               ++i,
-                              (value) => sizeValidator(value, MIN_MIN_LENGTH, minLengthMax(),
+                              (value) => sizeValidator(value, MIN_MIN_LENGTH, minimumLaminateLengthMax(),
                                   AppStrings.of(context).mm,
-                                  disabled: minLengthValidatorDisabled()),
-                              (String value) => minLength = int.parse(value),
+                                  disabled: minimumLaminateLengthValidatorDisabled()),
+                              (String value) => minimumLaminateLength = int.parse(value),
                               AppStrings.of(context).minimal_piece_length,
                               isLast: true,
                             ),
@@ -420,12 +414,12 @@ class _StartScreenState extends State<StartScreen> {
                               Calculation calculation = Calculation(
                                 roomLength: roomLength,
                                 roomWidth: roomWidth,
-                                plankLength: plankLength,
-                                plankWidth: plankWidth,
+                                laminateLength: laminateLength,
+                                laminateWidth: laminateWidth,
                                 planksInPack: planksInPack,
                                 price: price,
-                                indent: indent,
-                                minLength: minLength,
+                                indentFromWall: indentFromWall,
+                                minimumLaminateLength: minimumLaminateLength,
                                 rowOffset: rowOffset,
                                 direction: Direction.length,
                               );

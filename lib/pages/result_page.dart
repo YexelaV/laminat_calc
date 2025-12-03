@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'scheme_page.dart';
-import '../localization.dart';
+import '../l10n/app_localizations.dart';
 import '../models.dart';
 
 class ResultPage extends StatelessWidget {
@@ -10,18 +10,18 @@ class ResultPage extends StatelessWidget {
 
   String ending(BuildContext context, int number) {
     final str = number.toString();
-    if (str.endsWith('1')) return AppLocalizations.of(context).panel_1;
+    if (str.endsWith('1')) return AppStrings.of(context).panel_1;
     if (str.endsWith('2') || str.endsWith('3') || str.endsWith('4'))
-      return AppLocalizations.of(context).panel_2_3_4;
-    return AppLocalizations.of(context).panel_more;
+      return AppStrings.of(context).panel_2_3_4;
+    return AppStrings.of(context).panel_more;
   }
 
   @override
   Widget build(BuildContext context) {
-    final totalPacks = (result[0].totalPlanks / result[0].itemsInPack).ceil();
+    final totalPacks = (result[0].totalPlanks / result[0].quantityPerPack).ceil();
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).result,
+        title: Text(AppStrings.of(context).result,
             style: TextStyle(fontSize: 18, color: Colors.black)),
         leading: Padding(
           padding: EdgeInsets.only(left: 12),
@@ -53,7 +53,7 @@ class ResultPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "${AppLocalizations.of(context).packages_required}: ",
+                            "${AppStrings.of(context).packages_required}: ",
                             style: TextStyle(fontSize: 18),
                           ),
                           Text(
@@ -65,7 +65,7 @@ class ResultPage extends StatelessWidget {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        "${AppLocalizations.of(context).laying_variants}:",
+                        "${AppStrings.of(context).laying_variants}:",
                         style: TextStyle(fontSize: 18),
                       ),
                       SizedBox(height: 8),

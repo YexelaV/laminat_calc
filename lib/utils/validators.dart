@@ -7,7 +7,9 @@ class Validators {
   static String? sizeValidator(
       BuildContext context, String value, minValue, maxValue, String measure,
       {bool disabled = false}) {
-    var result = emptyValidator(context, value);
+    final formattedValue = value.replaceAll(',', '.');
+
+    final result = emptyValidator(context, formattedValue);
     if (disabled || result != null) {
       return result;
     }
@@ -21,10 +23,10 @@ class Validators {
     if (result != null) {
       return result;
     }
-    if (double.parse(value) > maxValue) {
+    if (double.parse(formattedValue) > maxValue) {
       return ("${AppStrings.of(context).maximum} $maxValue $measure");
     }
-    if (double.parse(value) < minValue) {
+    if (double.parse(formattedValue) < minValue) {
       return ("${AppStrings.of(context).minimum} $minValue $measure");
     }
     return null;

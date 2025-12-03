@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'models.dart';
 
 const FAIL = -1;
@@ -8,38 +6,38 @@ const SUCCESS = 0;
 class Calculation {
   final double roomLength;
   final double roomWidth;
-  final int plankLength;
-  final int plankWidth;
+  final int laminateLength;
+  final int laminateWidth;
   final int planksInPack;
   final double price;
-  final int indent;
-  final int minLength;
+  final int indentFromWall;
+  final int minimumLaminateLength;
   final int rowOffset;
   final Direction direction;
 
   Calculation({
-    this.roomLength,
-    this.roomWidth,
-    this.plankLength,
-    this.plankWidth,
-    this.planksInPack,
-    this.price,
-    this.indent,
-    this.minLength,
-    this.rowOffset,
-    this.direction,
+    required this.roomLength,
+    required this.roomWidth,
+    required this.laminateLength,
+    required this.laminateWidth,
+    required this.planksInPack,
+    required this.price,
+    required this.indentFromWall,
+    required this.minimumLaminateLength,
+    required this.rowOffset,
+    required this.direction,
   });
 
   List<Plank> pieces = [];
   List<Plank> trash = [];
   List<Plank> planks = [];
   List<Line> lines = [];
-  int numberOfRows;
+  late int numberOfRows;
 
   bool check(Result result) {
     for (var i = 0; i < result.lines.length; i++) {
       for (var j = 0; j < result.lines[i].planks.length; j++) {
-        if (result.lines[i].planks[j].length < minLength) {
+        if (result.lines[i].planks[j].length < minimumLaminateLength) {
           return false;
         }
       }
@@ -48,10 +46,10 @@ class Calculation {
   }
 
   List<Result> calculate() {
-    final actualLength = (roomLength * 1000 - indent * 2).toInt();
-    final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
+    final actualLength = (roomLength * 1000 - indentFromWall * 2).toInt();
+    final actualWidth = (roomWidth * 1000 - indentFromWall * 2).toInt();
     numberOfRows =
-        (direction == Direction.length ? actualWidth / plankWidth : actualLength / plankWidth)
+        (direction == Direction.length ? actualWidth / laminateWidth : actualLength / laminateWidth)
             .ceil();
 
     final rowLength = direction == Direction.length ? actualLength : actualWidth;
@@ -66,8 +64,8 @@ class Calculation {
       optimizePieces: false,
     );
     result.add(Result(
-      plankLength,
-      plankWidth,
+      laminateLength,
+      laminateWidth,
       roomLength,
       roomWidth,
       planksInPack,
@@ -85,8 +83,8 @@ class Calculation {
       optimizePieces: true,
     );
     result.add(Result(
-      plankLength,
-      plankWidth,
+      laminateLength,
+      laminateWidth,
       roomLength,
       roomWidth,
       planksInPack,
@@ -104,8 +102,8 @@ class Calculation {
       optimizePieces: false,
     );
     result.add(Result(
-      plankLength,
-      plankWidth,
+      laminateLength,
+      laminateWidth,
       roomLength,
       roomWidth,
       planksInPack,
@@ -123,8 +121,8 @@ class Calculation {
       optimizePieces: true,
     );
     result.add(Result(
-      plankLength,
-      plankWidth,
+      laminateLength,
+      laminateWidth,
       roomLength,
       roomWidth,
       planksInPack,
@@ -136,7 +134,7 @@ class Calculation {
     //
     result.removeWhere((result) => check(result) == false);
     result.sort((a, b) => a.totalPlanks.compareTo(b.totalPlanks));
-    final totalPacks = (result[0].totalPlanks / result[0].itemsInPack).ceil();
+    final totalPacks = (result[0].totalPlanks / result[0].quantityPerPack).ceil();
     final total = totalPacks * planksInPack;
     result.removeWhere((result) => result.totalPlanks > total);
     final resultCopy = <Result>[];
@@ -150,13 +148,13 @@ class Calculation {
     return resultCopy;
   }
 
-  void addPlank(int number, int plankLength, int plankWidth) {
-    planks.add(Plank(number, plankLength, plankWidth));
+  void addPlank(int number, int laminateLength, int laminateWidth) {
+    planks.add(Plank(number, laminateLength, laminateWidth));
   }
 
   void addPiece(int number, int pieceLength, int pieceWidth,
       {bool hasLeftLock = true, bool hasRightLock = true}) {
-    if (pieceLength >= minLength) {
+    if (pieceLength >= minimumLaminateLength) {
       pieces.add(Plank(number, pieceLength, pieceWidth,
           hasLeftLock: hasLeftLock, hasRightLock: hasRightLock));
     } else {
@@ -167,45 +165,46 @@ class Calculation {
   }
 
   int checkRow(int length, int rowLength, bool optimizePieces) {
-    if (length < minLength) return FAIL;
+    if (length < minimumLaminateLength) return FAIL;
     var currentLength = length;
-    while (currentLength + plankLength < rowLength) {
-      currentLength += plankLength;
+    while (currentLength + laminateLength < rowLength) {
+      currentLength += laminateLength;
     }
-    final lastPlankLength = rowLength - currentLength;
-    if (lastPlankLength == 0) {
+    final lastlaminateLength = rowLength - currentLength;
+    if (lastlaminateLength == 0) {
       return SUCCESS;
     }
-    if (lastPlankLength < minLength) {
+    if (lastlaminateLength < minimumLaminateLength) {
       var diff;
       if (optimizePieces) {
-        diff = minLength;
-        if (length - diff - rowOffset >= minLength || length - diff + rowOffset <= plankLength) {
+        diff = minimumLaminateLength;
+        if (length - diff - rowOffset >= minimumLaminateLength ||
+            length - diff + rowOffset <= laminateLength) {
           return diff;
         } else {
-          currentLength += minLength;
+          currentLength += minimumLaminateLength;
           diff = currentLength - rowLength;
         }
       } else {
-        currentLength += minLength;
+        currentLength += minimumLaminateLength;
         diff = currentLength - rowLength;
       }
-      if ((length - diff) >= minLength) {
+      if ((length - diff) >= minimumLaminateLength) {
         return diff;
       }
       if (diff >= length / 2) {
-        return length - diff - rowOffset;
+        return (length - diff - rowOffset).toInt();
       }
       return FAIL;
     }
     return SUCCESS;
   }
 
-  int checkPiece(int length, int rowLength, int prevFirstPlankLength, bool optimizePieces) {
+  int checkPiece(int length, int rowLength, int prevFirstlaminateLength, bool optimizePieces) {
     var diff;
     var newLength;
     //  if (length < rowOffset) return FAIL;
-    if ((prevFirstPlankLength - length).abs() >= rowOffset) {
+    if ((prevFirstlaminateLength - length).abs() >= rowOffset) {
       diff = checkRow(length, rowLength, optimizePieces);
       switch (diff) {
         case SUCCESS:
@@ -214,16 +213,16 @@ class Calculation {
         default:
           {
             var extraDiff =
-                checkPiece(length - diff, rowLength, prevFirstPlankLength, optimizePieces);
+                checkPiece((length - diff).toInt(), rowLength, prevFirstlaminateLength, optimizePieces);
             if (extraDiff == FAIL) {
               return FAIL;
             }
-            return diff + extraDiff;
+            return (diff + extraDiff).toInt();
           }
       }
     } else {
-      final rowsDiff = (prevFirstPlankLength - length).abs();
-      if (length < prevFirstPlankLength) {
+      final rowsDiff = (prevFirstlaminateLength - length).abs();
+      if (length < prevFirstlaminateLength) {
         newLength = length - (rowOffset - rowsDiff);
       } else {
         newLength = length - rowsDiff - rowOffset;
@@ -231,18 +230,18 @@ class Calculation {
       diff = checkRow(newLength, rowLength, optimizePieces);
       switch (diff) {
         case SUCCESS:
-          return (length - newLength);
+          return (length - newLength).toInt();
         case FAIL:
           return FAIL;
         default:
-          return length - (newLength - diff);
+          return (length - (newLength - diff)).toInt();
       }
     }
   }
 
   int calculateFirstRow(
     int rowLength, {
-    bool optimizePieces,
+    required bool optimizePieces,
   }) {
     planks = [];
     trash = [];
@@ -250,35 +249,35 @@ class Calculation {
     pieces = [];
     var currentLength = 0;
     int number = 0;
-    if (plankLength >= rowLength) {
+    if (laminateLength >= rowLength) {
       number++;
-      addPlank(number, rowLength, plankWidth);
-      addPiece(number, plankLength - rowLength, plankWidth, hasRightLock: false);
+      addPlank(number, rowLength, laminateWidth);
+      addPiece(number, laminateLength - rowLength, laminateWidth, hasRightLock: false);
       lines.add(Line(0, planks));
       return 1;
     }
-    final diff = checkRow(plankLength, rowLength, optimizePieces);
-    final firstPlankLength = plankLength - diff;
+    final diff = checkRow(laminateLength, rowLength, optimizePieces);
+    final firstlaminateLength = laminateLength - diff;
     number++;
-    addPlank(number, firstPlankLength, plankWidth);
-    addPiece(number, diff, plankWidth, hasRightLock: false);
-    currentLength += firstPlankLength;
+    addPlank(number, firstlaminateLength, laminateWidth);
+    addPiece(number, diff, laminateWidth, hasRightLock: false);
+    currentLength += firstlaminateLength;
 
-    while (currentLength + plankLength < rowLength) {
-      currentLength += plankLength;
+    while (currentLength + laminateLength < rowLength) {
+      currentLength += laminateLength;
       number++;
-      addPlank(number, plankLength, plankWidth);
+      addPlank(number, laminateLength, laminateWidth);
     }
-    var lastPlankLength = rowLength - currentLength;
+    var lastlaminateLength = rowLength - currentLength;
     number++;
-    addPlank(number, lastPlankLength, plankWidth);
-    addPiece(number, plankLength - lastPlankLength, plankWidth, hasLeftLock: false);
+    addPlank(number, lastlaminateLength, laminateWidth);
+    addPiece(number, laminateLength - lastlaminateLength, laminateWidth, hasLeftLock: false);
     lines.add(Line(0, planks));
 //    print("Row №0");
-    var res = "";
-    lines[0].planks.forEach((element) {
-      res += '№${element.number}:${element.length} ';
-    });
+    // var res = "";
+    // lines[0].planks.forEach((element) {
+    //   res += '№${element.number}:${element.length} ';
+    // });
     //print(res);
     return number;
   }
@@ -286,26 +285,26 @@ class Calculation {
   int calculateRows(
     int number,
     int rowLength, {
-    bool cutPieces,
-    bool optimizePieces,
+    required bool cutPieces,
+    required bool optimizePieces,
   }) {
     for (int i = 1; i < numberOfRows; i++) {
       planks = [];
-      if (plankLength >= rowLength) {
+      if (laminateLength >= rowLength) {
         number++;
-        addPlank(number, rowLength, plankWidth);
-        addPiece(number, plankLength - rowLength, plankWidth, hasRightLock: false);
+        addPlank(number, rowLength, laminateWidth);
+        addPiece(number, laminateLength - rowLength, laminateWidth, hasRightLock: false);
         lines.add(Line(i, planks));
         continue;
       }
       var currentLength = 0;
-      final prevFirstPlankLength = lines[i - 1].planks.first.length;
+      final prevFirstlaminateLength = lines[i - 1].planks.first.length;
       var index = -1;
-      var minDiff = plankLength;
+      var minDiff = laminateLength;
       var diff;
       for (int i = 0; i < pieces.length; i++) {
         if (pieces[i].hasRightLock) {
-          diff = checkPiece(pieces[i].length, rowLength, prevFirstPlankLength, optimizePieces);
+          diff = checkPiece(pieces[i].length, rowLength, prevFirstlaminateLength, optimizePieces);
           if (diff == 0) {
             minDiff = 0;
             index = i;
@@ -321,37 +320,37 @@ class Calculation {
         if (cutPieces) {
           currentLength += pieces[index].length - minDiff;
           pieces[index].length -= minDiff;
-          addPlank(pieces[index].number, pieces[index].length, plankWidth);
-          trash.add(Plank(pieces[index].number, minDiff, plankWidth));
+          addPlank(pieces[index].number, pieces[index].length, laminateWidth);
+          trash.add(Plank(pieces[index].number, minDiff, laminateWidth));
           pieces.removeAt(index);
         } else {
           currentLength += pieces[index].length;
-          addPlank(pieces[index].number, pieces[index].length, plankWidth);
+          addPlank(pieces[index].number, pieces[index].length, laminateWidth);
           pieces.removeAt(index);
         }
       } else {
-        var diff = checkPiece(plankLength, rowLength, prevFirstPlankLength, optimizePieces);
-        var firstPlankLength = plankLength - diff;
-        currentLength += firstPlankLength;
+        var diff = checkPiece(laminateLength, rowLength, prevFirstlaminateLength, optimizePieces);
+        var firstlaminateLength = laminateLength - diff;
+        currentLength += firstlaminateLength;
         number++;
-        addPlank(number, firstPlankLength, plankWidth);
-        addPiece(number, plankLength - firstPlankLength, plankWidth, hasRightLock: false);
+        addPlank(number, firstlaminateLength, laminateWidth);
+        addPiece(number, laminateLength - firstlaminateLength, laminateWidth, hasRightLock: false);
       }
 
-      while (currentLength + plankLength < rowLength) {
-        currentLength += plankLength;
+      while (currentLength + laminateLength < rowLength) {
+        currentLength += laminateLength;
         number++;
-        addPlank(number, plankLength, plankWidth);
+        addPlank(number, laminateLength, laminateWidth);
       }
 
-      var lastPlankLength = rowLength - currentLength;
+      var lastlaminateLength = rowLength - currentLength;
       index = -1;
-      minDiff = plankLength;
+      minDiff = laminateLength;
       for (int i = 0; i < pieces.length; i++) {
         if (pieces[i].hasLeftLock) {
-          if (pieces[i].length >= lastPlankLength) {
-            if (pieces[i].length - lastPlankLength < minDiff) {
-              minDiff = pieces[i].length - lastPlankLength;
+          if (pieces[i].length >= lastlaminateLength) {
+            if (pieces[i].length - lastlaminateLength < minDiff) {
+              minDiff = pieces[i].length - lastlaminateLength;
               if (minDiff == 0) {
                 index = i;
                 break;
@@ -367,36 +366,36 @@ class Calculation {
         if (cutPieces) {
           currentLength += pieces[index].length - minDiff;
           pieces[index].length -= minDiff;
-          addPlank(pieces[index].number, pieces[index].length, plankWidth);
-          trash.add(Plank(pieces[index].number, minDiff, plankWidth));
+          addPlank(pieces[index].number, pieces[index].length, laminateWidth);
+          trash.add(Plank(pieces[index].number, minDiff, laminateWidth));
           pieces.removeAt(index);
         } else {
           currentLength += pieces[index].length;
-          addPlank(pieces[index].number, pieces[index].length, plankWidth);
+          addPlank(pieces[index].number, pieces[index].length, laminateWidth);
           pieces.removeAt(index);
         }
       } else {
         number++;
-        addPiece(number, plankLength - lastPlankLength, plankWidth, hasLeftLock: false);
-        addPlank(number, lastPlankLength, plankWidth);
+        addPiece(number, laminateLength - lastlaminateLength, laminateWidth, hasLeftLock: false);
+        addPlank(number, lastlaminateLength, laminateWidth);
       }
 
       lines.add(Line(i, planks));
       //     print("Row №$i");
-      var res = "";
-      lines[i].planks.forEach((element) {
-        res += '№${element.number}:${element.length} ';
-      });
+      // var res = "";
+      // lines[i].planks.forEach((element) {
+      //   res += '№${element.number}:${element.length} ';
+      // });
       //    print(res);
     }
-    final actualWidth = (roomWidth * 1000 - indent * 2).toInt();
-    var newWidth = plankWidth - (plankWidth * lines.length - actualWidth);
+    final actualWidth = (roomWidth * 1000 - indentFromWall * 2).toInt();
+    var newWidth = laminateWidth - (laminateWidth * lines.length - actualWidth);
     if (newWidth >= 50) {
       lines[lines.length - 1].planks.forEach((plank) {
         plank.width = newWidth;
       });
     } else {
-      newWidth = ((newWidth + plankWidth) ~/ 2);
+      newWidth = ((newWidth + laminateWidth) ~/ 2);
       lines[0].planks.forEach((plank) {
         plank.width = newWidth;
       });

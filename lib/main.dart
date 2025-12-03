@@ -4,7 +4,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:floor_calculator/router/app_router.dart';
 import 'package:intl/intl.dart';
 
-void main() => runApp(MyApp());
+import 'di/get_it.dart';
+
+void main() {
+  configureDependencies();
+  runApp(MyApp());
+}
 
 class MyApp extends StatefulWidget {
   @override

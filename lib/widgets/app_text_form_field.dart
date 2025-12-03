@@ -5,7 +5,7 @@ class AppTextFormField extends StatelessWidget {
   final FocusNode focusNode;
   final String labelText;
   final Function(String?) validator;
-  final Function(String?) callback;
+  final Function(String) callback;
   final FocusNode? nextFocusNode;
 
   const AppTextFormField({

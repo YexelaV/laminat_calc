@@ -39,18 +39,18 @@ class Result extends Equatable {
   final List<Line> lines = [];
   final List<Plank> pieces = [];
   final List<Plank> trash = [];
-  final int plankLength;
-  final int plankWidth;
+  final int laminateLength;
+  final int laminateWidth;
   final double roomLength;
   final double roomWidth;
-  final itemsInPack;
+  final quantityPerPack;
 
   Result(
-    this.plankLength,
-    this.plankWidth,
+    this.laminateLength,
+    this.laminateWidth,
     this.roomLength,
     this.roomWidth,
-    this.itemsInPack,
+    this.quantityPerPack,
     this.totalPlanks,
     List<Line> lines,
     List<Plank> pieces,
