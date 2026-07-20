@@ -247,7 +247,16 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                       direction: Direction.length,
                                     );
                                     final result = calculation.calculate();
-                                    context.router.push(ResultRoute(result: result));
+                                    if (result.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              AppStrings.of(context).no_laying_variants),
+                                        ),
+                                      );
+                                    } else {
+                                      context.router.push(ResultRoute(result: result));
+                                    }
                                   }
                                 }
                               : null,

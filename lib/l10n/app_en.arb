@@ -29,5 +29,6 @@
     "language": "Language/Язык",
     "english": "English",
     "russian": "Русский",
-    "next": "Next"
+    "next": "Next",
+    "no_laying_variants": "No laying variant is possible with these parameters. Try changing the joint offset or the minimal piece length"
 }

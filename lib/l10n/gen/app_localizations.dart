@@ -283,6 +283,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Далее'**
   String get next;
+
+  /// No description provided for @no_laying_variants.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укладка с заданными параметрами невозможна. Попробуйте изменить смещение рядов или минимальную длину панели'**
+  String get no_laying_variants;
 }
 
 class _AppLocalizationsDelegate

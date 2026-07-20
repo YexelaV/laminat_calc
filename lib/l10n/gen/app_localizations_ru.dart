@@ -100,4 +100,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get next => 'Далее';
+
+  @override
+  String get no_laying_variants =>
+      'Укладка с заданными параметрами невозможна. Попробуйте изменить смещение рядов или минимальную длину панели';
 }

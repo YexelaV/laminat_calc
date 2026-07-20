@@ -100,4 +100,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get next => 'Next';
+
+  @override
+  String get no_laying_variants =>
+      'No laying variant is possible with these parameters. Try changing the joint offset or the minimal piece length';
 }

@@ -34,20 +34,25 @@ class Calculation {
   List<Line> lines = [];
   late int numberOfRows;
 
-  bool check(Result result) {
-    for (var i = 0; i < result.lines.length; i++) {
-      for (var j = 0; j < result.lines[i].planks.length; j++) {
-        if (result.lines[i].planks[j].length < minimumLaminateLength) {
-          return false;
-        }
+  bool check(Result result, int rowLength) {
+    for (final line in result.lines) {
+      for (final plank in line.planks) {
+        if (plank.length > laminateLength) return false;
+        if (plank.length < minimumLaminateLength && plank.length != rowLength) return false;
       }
+    }
+    for (var i = 1; i < result.lines.length; i++) {
+      final prev = result.lines[i - 1].planks.first.length;
+      final cur = result.lines[i].planks.first.length;
+      if (prev == rowLength || cur == rowLength) continue;
+      if ((prev - cur).abs() < rowOffset) return false;
     }
     return true;
   }
 
   List<Result> calculate() {
-    final actualLength = (roomLength * 1000 - indentFromWall * 2).toInt();
-    final actualWidth = (roomWidth * 1000 - indentFromWall * 2).toInt();
+    final actualLength = (roomLength * 1000).round() - indentFromWall * 2;
+    final actualWidth = (roomWidth * 1000).round() - indentFromWall * 2;
     numberOfRows =
         (direction == Direction.length ? actualWidth / laminateWidth : actualLength / laminateWidth)
             .ceil();
@@ -56,82 +61,32 @@ class Calculation {
 
     final result = <Result>[];
 
-    var planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: false);
-    var totalPlanks = calculateRows(
-      planksInFirstRow,
-      rowLength,
-      cutPieces: false,
-      optimizePieces: false,
-    );
-    result.add(Result(
-      laminateLength,
-      laminateWidth,
-      roomLength,
-      roomWidth,
-      planksInPack,
-      totalPlanks,
-      lines,
-      pieces,
-      trash,
-    ));
-
-    planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: true);
-    totalPlanks = calculateRows(
-      planksInFirstRow,
-      rowLength,
-      cutPieces: false,
-      optimizePieces: true,
-    );
-    result.add(Result(
-      laminateLength,
-      laminateWidth,
-      roomLength,
-      roomWidth,
-      planksInPack,
-      totalPlanks,
-      lines,
-      pieces,
-      trash,
-    ));
-
-    planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: false);
-    totalPlanks = calculateRows(
-      planksInFirstRow,
-      rowLength,
-      cutPieces: true,
-      optimizePieces: false,
-    );
-    result.add(Result(
-      laminateLength,
-      laminateWidth,
-      roomLength,
-      roomWidth,
-      planksInPack,
-      totalPlanks,
-      lines,
-      pieces,
-      trash,
-    ));
-
-    planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: true);
-    totalPlanks = calculateRows(
-      planksInFirstRow,
-      rowLength,
-      cutPieces: true,
-      optimizePieces: true,
-    );
-    result.add(Result(
-      laminateLength,
-      laminateWidth,
-      roomLength,
-      roomWidth,
-      planksInPack,
-      totalPlanks,
-      lines,
-      pieces,
-      trash,
-    ));
-    result.removeWhere((result) => check(result) == false);
+    for (final cutPieces in [false, true]) {
+      for (final optimizePieces in [false, true]) {
+        final planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: optimizePieces);
+        if (planksInFirstRow == FAIL) continue;
+        final totalPlanks = calculateRows(
+          planksInFirstRow,
+          rowLength,
+          cutPieces: cutPieces,
+          optimizePieces: optimizePieces,
+        );
+        if (totalPlanks == FAIL) continue;
+        result.add(Result(
+          laminateLength,
+          laminateWidth,
+          roomLength,
+          roomWidth,
+          planksInPack,
+          totalPlanks,
+          lines,
+          pieces,
+          trash,
+        ));
+      }
+    }
+    result.removeWhere((result) => check(result, rowLength) == false);
+    if (result.isEmpty) return [];
     result.sort((a, b) => a.totalPlanks.compareTo(b.totalPlanks));
     final totalPacks = (result[0].totalPlanks / result[0].quantityPerPack).ceil();
     final total = totalPacks * planksInPack;
@@ -163,78 +118,48 @@ class Calculation {
     }
   }
 
+  // Ищет, сколько нужно отрезать (diff) от доски/куска длиной available,
+  // чтобы получившаяся первая планка ряда была не короче минимума,
+  // отличалась от первой планки предыдущего ряда не менее чем на rowOffset,
+  // а последняя планка ряда не получилась короче минимума.
+  // При optimizePieces предпочитает рез, дающий пригодный к повторному
+  // использованию обрезок (diff >= minimumLaminateLength).
+  int findCut(int available, int rowLength, int? prevFirstLength, bool optimizePieces) {
+    if (optimizePieces) {
+      final noCut = _searchDown(available, available, rowLength, prevFirstLength);
+      if (noCut == 0) return 0;
+      final reusable =
+          _searchDown(available - minimumLaminateLength, available, rowLength, prevFirstLength);
+      if (reusable != FAIL) return reusable;
+    }
+    return _searchDown(available, available, rowLength, prevFirstLength);
+  }
+
+  int _searchDown(int startLength, int available, int rowLength, int? prevFirstLength) {
+    var firstLength = startLength;
+    while (firstLength >= minimumLaminateLength) {
+      if (prevFirstLength != null && (firstLength - prevFirstLength).abs() < rowOffset) {
+        firstLength = prevFirstLength - rowOffset;
+        continue;
+      }
+      final remaining = rowLength - firstLength;
+      final lastLength =
+          remaining % laminateLength == 0 ? laminateLength : remaining % laminateLength;
+      if (lastLength < minimumLaminateLength) {
+        firstLength -= minimumLaminateLength - lastLength;
+        continue;
+      }
+      return available - firstLength;
+    }
+    return FAIL;
+  }
+
   int checkRow(int length, int rowLength, bool optimizePieces) {
-    if (length < minimumLaminateLength) return FAIL;
-    var currentLength = length;
-    while (currentLength + laminateLength < rowLength) {
-      currentLength += laminateLength;
-    }
-    final lastlaminateLength = rowLength - currentLength;
-    if (lastlaminateLength == 0) {
-      return SUCCESS;
-    }
-    if (lastlaminateLength < minimumLaminateLength) {
-      var diff;
-      if (optimizePieces) {
-        diff = minimumLaminateLength;
-        if (length - diff - rowOffset >= minimumLaminateLength ||
-            length - diff + rowOffset <= laminateLength) {
-          return diff;
-        } else {
-          currentLength += minimumLaminateLength;
-          diff = currentLength - rowLength;
-        }
-      } else {
-        currentLength += minimumLaminateLength;
-        diff = currentLength - rowLength;
-      }
-      if ((length - diff) >= minimumLaminateLength) {
-        return diff;
-      }
-      if (diff >= length / 2) {
-        return (length - diff - rowOffset).toInt();
-      }
-      return FAIL;
-    }
-    return SUCCESS;
+    return findCut(length, rowLength, null, optimizePieces);
   }
 
   int checkPiece(int length, int rowLength, int prevFirstlaminateLength, bool optimizePieces) {
-    var diff;
-    var newLength;
-    if ((prevFirstlaminateLength - length).abs() >= rowOffset) {
-      diff = checkRow(length, rowLength, optimizePieces);
-      switch (diff) {
-        case SUCCESS:
-        case FAIL:
-          return diff;
-        default:
-          {
-            var extraDiff = checkPiece(
-                (length - diff).toInt(), rowLength, prevFirstlaminateLength, optimizePieces);
-            if (extraDiff == FAIL) {
-              return FAIL;
-            }
-            return (diff + extraDiff).toInt();
-          }
-      }
-    } else {
-      final rowsDiff = (prevFirstlaminateLength - length).abs();
-      if (length < prevFirstlaminateLength) {
-        newLength = length - (rowOffset - rowsDiff);
-      } else {
-        newLength = length - rowsDiff - rowOffset;
-      }
-      diff = checkRow(newLength, rowLength, optimizePieces);
-      switch (diff) {
-        case SUCCESS:
-          return (length - newLength).toInt();
-        case FAIL:
-          return FAIL;
-        default:
-          return (length - (newLength - diff)).toInt();
-      }
-    }
+    return findCut(length, rowLength, prevFirstlaminateLength, optimizePieces);
   }
 
   int calculateFirstRow(
@@ -255,6 +180,7 @@ class Calculation {
       return 1;
     }
     final diff = checkRow(laminateLength, rowLength, optimizePieces);
+    if (diff == FAIL) return FAIL;
     final firstlaminateLength = laminateLength - diff;
     number++;
     addPlank(number, firstlaminateLength, laminateWidth);
@@ -313,7 +239,9 @@ class Calculation {
           currentLength += pieces[index].length - minDiff;
           pieces[index].length -= minDiff;
           addPlank(pieces[index].number, pieces[index].length, laminateWidth);
-          trash.add(Plank(pieces[index].number, minDiff, laminateWidth));
+          if (minDiff > 0) {
+            trash.add(Plank(pieces[index].number, minDiff, laminateWidth));
+          }
           pieces.removeAt(index);
         } else {
           currentLength += pieces[index].length;
@@ -322,6 +250,7 @@ class Calculation {
         }
       } else {
         var diff = checkPiece(laminateLength, rowLength, prevFirstlaminateLength, optimizePieces);
+        if (diff == FAIL) return FAIL;
         var firstlaminateLength = laminateLength - diff;
         currentLength += firstlaminateLength;
         number++;
@@ -359,7 +288,9 @@ class Calculation {
           currentLength += pieces[index].length - minDiff;
           pieces[index].length -= minDiff;
           addPlank(pieces[index].number, pieces[index].length, laminateWidth);
-          trash.add(Plank(pieces[index].number, minDiff, laminateWidth));
+          if (minDiff > 0) {
+            trash.add(Plank(pieces[index].number, minDiff, laminateWidth));
+          }
           pieces.removeAt(index);
         } else {
           currentLength += pieces[index].length;
@@ -374,7 +305,7 @@ class Calculation {
 
       lines.add(Line(i, planks));
     }
-    final actualWidth = (roomWidth * 1000 - indentFromWall * 2).toInt();
+    final actualWidth = (roomWidth * 1000).round() - indentFromWall * 2;
     var newWidth = laminateWidth - (laminateWidth * lines.length - actualWidth);
     if (newWidth >= 50) {
       lines[lines.length - 1].planks.forEach((plank) {
