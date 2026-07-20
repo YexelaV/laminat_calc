@@ -118,12 +118,12 @@ class Calculation {
     }
   }
 
-  // Ищет, сколько нужно отрезать (diff) от доски/куска длиной available,
-  // чтобы получившаяся первая планка ряда была не короче минимума,
-  // отличалась от первой планки предыдущего ряда не менее чем на rowOffset,
-  // а последняя планка ряда не получилась короче минимума.
-  // При optimizePieces предпочитает рез, дающий пригодный к повторному
-  // использованию обрезок (diff >= minimumLaminateLength).
+  // Finds how much to cut off (diff) from a plank/piece of length `available`
+  // so that the resulting first plank of the row is not shorter than the minimum,
+  // differs from the first plank of the previous row by at least rowOffset,
+  // and the last plank of the row does not end up shorter than the minimum.
+  // With optimizePieces, prefers a cut that produces a reusable
+  // offcut (diff >= minimumLaminateLength).
   int findCut(int available, int rowLength, int? prevFirstLength, bool optimizePieces) {
     if (optimizePieces) {
       final noCut = _searchDown(available, available, rowLength, prevFirstLength);

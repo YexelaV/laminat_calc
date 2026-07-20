@@ -1,5 +1,5 @@
-// Стресс-тест алгоритма расчёта: прогоняет много конфигураций и проверяет
-// инварианты результата. Запуск: dart test/stress_test.dart
+// Stress test for the calculation algorithm: runs many configurations and
+// checks result invariants. Run: dart test/stress_test.dart
 import 'dart:math';
 
 import '../lib/calculate.dart';
@@ -18,43 +18,43 @@ void main() {
   var runs = 0;
 
   void checkResult(String cfg, Calculation c, Result r, int rowLength) {
-    // 1. Каждая планка в схеме не короче минимальной
+    // 1. Every plank in the layout is not shorter than the minimum
     for (final line in r.lines) {
       for (final p in line.planks) {
         if (p.length < c.minimumLaminateLength) {
           violations.add(Violation(cfg,
-              'ряд ${line.number}: планка ${p.length} мм < мин ${c.minimumLaminateLength} мм'));
+              'row ${line.number}: plank ${p.length} mm < min ${c.minimumLaminateLength} mm'));
         }
         if (p.length > c.laminateLength) {
           violations.add(Violation(cfg,
-              'ряд ${line.number}: планка ${p.length} мм > длины ламината ${c.laminateLength} мм'));
+              'row ${line.number}: plank ${p.length} mm > laminate length ${c.laminateLength} mm'));
         }
         if (p.length <= 0) {
-          violations.add(Violation(cfg, 'ряд ${line.number}: планка длиной ${p.length} мм'));
+          violations.add(Violation(cfg, 'row ${line.number}: plank of length ${p.length} mm'));
         }
       }
     }
-    // 2. Сумма длин планок в ряду == длине ряда
+    // 2. Sum of plank lengths in a row == row length
     for (final line in r.lines) {
       final sum = line.planks.fold<int>(0, (s, p) => s + p.length);
       if (sum != rowLength) {
         violations.add(Violation(
-            cfg, 'ряд ${line.number}: сумма ${sum} мм != длина ряда ${rowLength} мм'));
+            cfg, 'row ${line.number}: sum ${sum} mm != row length ${rowLength} mm'));
       }
     }
-    // 3. Смещение швов между соседними рядами
+    // 3. Joint offset between adjacent rows
     for (var i = 1; i < r.lines.length; i++) {
       final prev = r.lines[i - 1].planks.first.length;
       final cur = r.lines[i].planks.first.length;
-      final prevFull = prev >= rowLength; // ряд из одной планки
+      final prevFull = prev >= rowLength; // single-plank row
       final curFull = cur >= rowLength;
       if (prevFull || curFull) continue;
       if ((prev - cur).abs() < c.rowOffset) {
         violations.add(Violation(cfg,
-            'ряды ${i - 1}/${i}: смещение швов ${(prev - cur).abs()} мм < ${c.rowOffset} мм'));
+            'rows ${i - 1}/${i}: joint offset ${(prev - cur).abs()} mm < ${c.rowOffset} mm'));
       }
     }
-    // 4. Баланс материала: планки * длина == уложено + куски + отходы
+    // 4. Material balance: planks * length == laid + pieces + waste
     final used = r.lines.fold<int>(
         0, (s, l) => s + l.planks.fold<int>(0, (s2, p) => s2 + p.length));
     final leftPieces = r.pieces.fold<int>(0, (s, p) => s + p.length);
@@ -62,7 +62,7 @@ void main() {
     final bought = r.totalPlanks * c.laminateLength;
     if (used + leftPieces + leftTrash != bought) {
       violations.add(Violation(cfg,
-          'баланс: уложено $used + куски $leftPieces + отходы $leftTrash = ${used + leftPieces + leftTrash} != куплено $bought (${r.totalPlanks} планок)'));
+          'balance: laid $used + pieces $leftPieces + waste $leftTrash = ${used + leftPieces + leftTrash} != bought $bought (${r.totalPlanks} planks)'));
     }
   }
 
@@ -70,7 +70,7 @@ void main() {
       int pack, int indent, int minLen, int offset) {
     runs++;
     final cfg =
-        'room=${roomLength}x${roomWidth}м, ламинат=${lamLength}x${lamWidth}мм, мин=$minLen, смещение=$offset, отступ=$indent';
+        'room=${roomLength}x${roomWidth}m, laminate=${lamLength}x${lamWidth}mm, min=$minLen, offset=$offset, indent=$indent';
     final c = Calculation(
       roomLength: roomLength,
       roomWidth: roomWidth,
@@ -87,7 +87,7 @@ void main() {
     try {
       final results = c.calculate();
       if (results.isEmpty) {
-        violations.add(Violation(cfg, 'пустой результат'));
+        violations.add(Violation(cfg, 'empty result'));
         return;
       }
       for (final r in results) {
@@ -95,21 +95,21 @@ void main() {
       }
     } catch (e) {
       crashes++;
-      violations.add(Violation(cfg, 'КРАШ: $e'));
+      violations.add(Violation(cfg, 'CRASH: $e'));
     }
   }
 
-  // Типовые ручные случаи
+  // Typical manual cases
   run(5.0, 4.0, 1380, 190, 8, 10, 300, 300);
   run(4.1, 3.2, 1380, 190, 8, 10, 300, 300);
   run(3.0, 2.5, 1285, 192, 8, 10, 300, 300);
   run(6.0, 4.5, 1380, 190, 8, 10, 400, 300);
   run(2.8, 2.0, 1380, 190, 8, 10, 300, 300);
 
-  // Случайные конфигурации
+  // Random configurations
   for (var i = 0; i < 3000; i++) {
-    final roomLength = (rnd.nextInt(220) + 20) / 10.0; // 2.0 - 24.0 м
-    final roomWidth = (rnd.nextInt(140) + 20) / 10.0; // 2.0 - 16.0 м
+    final roomLength = (rnd.nextInt(220) + 20) / 10.0; // 2.0 - 24.0 m
+    final roomWidth = (rnd.nextInt(140) + 20) / 10.0; // 2.0 - 16.0 m
     final lamLength = 600 + rnd.nextInt(25) * 50; // 600 - 1800
     final lamWidth = 100 + rnd.nextInt(10) * 15;
     final minLen = 200 + rnd.nextInt(5) * 50; // 200 - 400
@@ -118,14 +118,14 @@ void main() {
     run(roomLength, roomWidth, lamLength, lamWidth, 8, indent, minLen, offset);
   }
 
-  print('Прогонов: $runs, крашей: $crashes, нарушений: ${violations.length}');
+  print('Runs: $runs, crashes: $crashes, violations: ${violations.length}');
   final byType = <String, List<Violation>>{};
   for (final v in violations) {
     final key = v.message.split(':').first.replaceAll(RegExp(r'\d+'), 'N');
     byType.putIfAbsent(key, () => []).add(v);
   }
   byType.forEach((type, list) {
-    print('\n=== $type — ${list.length} шт. Примеры:');
+    print('\n=== $type — ${list.length} pcs. Examples:');
     for (final v in list.take(3)) {
       print('  [${v.config}]');
       print('    ${v.message}');
