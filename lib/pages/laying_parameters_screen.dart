@@ -50,10 +50,10 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
 
     final appStrings = AppStrings.of(context);
     final indentFromWallValid = Validators.sizeValidator(
-            context, indentFromWallValue, 0, MAX_indentFromWall, appStrings.mm) ==
+            context, indentFromWallValue, 0, MAX_INDENT_FROM_WALL, appStrings.mm) ==
         null;
-    final rowOffsetValid = Validators.sizeValidator(context, rowOffsetValue, MIN_ROW_OFFSET,
-            ((state.laminateLength ?? 0) / 2).floor(), appStrings.mm,
+    final rowOffsetValid = Validators.sizeValidator(
+            context, rowOffsetValue, MIN_ROW_OFFSET, rowOffsetMax(state), appStrings.mm,
             disabled: state.laminateLength == null) ==
         null;
     final minimumLaminateLengthValid = Validators.sizeValidator(context, minimumLaminateLengthValue,
@@ -78,41 +78,44 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     );
   }
 
+  int? rowLength(CalculateState state) {
+    final along = state.direction == Direction.length ? state.roomLength : state.roomWidth;
+    final indentFromWall = state.indentFromWall;
+    if (along == null || indentFromWall == null) return null;
+    return (along * 1000 - indentFromWall * 2).toInt();
+  }
+
+  int rowOffsetMax(CalculateState state) {
+    final laminateLength = state.laminateLength;
+    if (laminateLength == null) return 0;
+    final length = rowLength(state);
+    if (length == null) return laminateLength ~/ 2;
+    return maxRowOffset(length, laminateLength, MIN_MIN_LENGTH);
+  }
+
   int minimumLaminateLengthMax(CalculateState state) {
-    final roomLength = state.roomLength;
-    final roomWidth = state.roomWidth;
     final laminateLength = state.laminateLength;
     final rowOffset = state.rowOffset;
-    final indentFromWall = state.indentFromWall;
+    final length = rowLength(state);
 
-    if (roomLength == null ||
-        roomWidth == null ||
-        laminateLength == null ||
-        rowOffset == null ||
-        indentFromWall == null) {
+    if (laminateLength == null || rowOffset == null || length == null) {
       return 0;
     }
-    final actualLength = (roomLength * 1000 - indentFromWall * 2).toInt();
-    final rowLength = actualLength;
-    var currentLength = 0;
-    while (currentLength + laminateLength < rowLength) {
-      currentLength += laminateLength;
-    }
-    var lastlaminateLength = rowLength - currentLength;
-    var rowRemain = rowLength - currentLength + laminateLength;
-    if (lastlaminateLength <= laminateLength / 2) {
-      return ((rowRemain - rowOffset) / 2).truncate();
-    } else {
-      return lastlaminateLength - rowOffset;
-    }
+    return maxMinimumLaminateLength(length, laminateLength, rowOffset);
   }
 
   bool minimumLaminateLengthValidatorDisabled(CalculateState state) {
-    return state.roomLength == null ||
+    final rowOffset = state.rowOffset;
+    if (state.roomLength == null ||
         state.roomWidth == null ||
         state.laminateLength == null ||
         state.indentFromWall == null ||
-        state.rowOffset == null;
+        rowOffset == null) {
+      return true;
+    }
+    // While the row offset itself is out of range its dependent bounds are
+    // meaningless, so skip the min/max check until the offset is fixed.
+    return rowOffset < MIN_ROW_OFFSET || rowOffset > rowOffsetMax(state);
   }
 
   @override
@@ -137,6 +140,31 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         titleText(AppStrings.of(context).laying, Icons.branding_watermark),
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Text(
+                              appStrings.laying_direction,
+                              style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 16),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        SegmentedButton<Direction>(
+                          segments: [
+                            ButtonSegment(
+                              value: Direction.length,
+                              label: Text(appStrings.along_length),
+                            ),
+                            ButtonSegment(
+                              value: Direction.width,
+                              label: Text(appStrings.along_width),
+                            ),
+                          ],
+                          selected: {state.direction},
+                          onSelectionChanged: (selection) =>
+                              context.read<CalculateCubit>().setDirection(selection.first),
+                        ),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -147,7 +175,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                 nextFocusNode: rowOffsetFocusNode,
                                 labelText: appStrings.expansion_gap_mm,
                                 validator: (value) => Validators.sizeValidator(context, value ?? '',
-                                    0, MAX_indentFromWall, AppStrings.of(context).mm),
+                                    0, MAX_INDENT_FROM_WALL, AppStrings.of(context).mm),
                                 callback: (value) => context
                                     .read<CalculateCubit>()
                                     .setIndentFromWall(int.parse(value)),
@@ -164,12 +192,8 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                 focusNode: rowOffsetFocusNode,
                                 nextFocusNode: minimumLaminateLengthFocusNode,
                                 labelText: appStrings.joint_offset_mm,
-                                validator: (value) => Validators.sizeValidator(
-                                    context,
-                                    value ?? '',
-                                    MIN_ROW_OFFSET,
-                                    ((state.laminateLength ?? 0) / 2).floor(),
-                                    AppStrings.of(context).mm,
+                                validator: (value) => Validators.sizeValidator(context, value ?? '',
+                                    MIN_ROW_OFFSET, rowOffsetMax(state), AppStrings.of(context).mm,
                                     disabled: state.laminateLength == null),
                                 callback: (value) =>
                                     context.read<CalculateCubit>().setRowOffset(int.parse(value)),
@@ -244,14 +268,13 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                       indentFromWall: indentFromWall,
                                       minimumLaminateLength: minimumLaminateLength,
                                       rowOffset: rowOffset,
-                                      direction: Direction.length,
+                                      direction: state.direction,
                                     );
                                     final result = calculation.calculate();
                                     if (result.isEmpty) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          content: Text(
-                                              AppStrings.of(context).no_laying_variants),
+                                          content: Text(AppStrings.of(context).no_laying_variants),
                                         ),
                                       );
                                     } else {

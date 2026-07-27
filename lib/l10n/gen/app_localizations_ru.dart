@@ -45,6 +45,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get laying => 'Укладка';
 
   @override
+  String get laying_direction => 'Направление укладки';
+
+  @override
+  String get along_length => 'По длине';
+
+  @override
+  String get along_width => 'По ширине';
+
+  @override
   String get expansion_gap_mm => 'Отступ от стен (мм)';
 
   @override

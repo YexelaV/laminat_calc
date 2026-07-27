@@ -45,6 +45,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get laying => 'Laying';
 
   @override
+  String get laying_direction => 'Laying direction';
+
+  @override
+  String get along_length => 'Along length';
+
+  @override
+  String get along_width => 'Along width';
+
+  @override
   String get expansion_gap_mm => 'Expansion gap (mm)';
 
   @override

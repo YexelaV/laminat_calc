@@ -125,7 +125,13 @@ class SchemeScreen extends StatelessWidget {
         pageFormat: PdfPageFormat.a4,
         orientation: pw.PageOrientation.landscape,
         build: (pw.Context context) {
-          return pw.Column(mainAxisSize: pw.MainAxisSize.min, children: pdfResult);
+          final scheme = pw.Column(mainAxisSize: pw.MainAxisSize.min, children: pdfResult);
+          if (result.direction == Direction.width) {
+            // Rows run along the room width: rotate so the room keeps its
+            // orientation (length horizontal, width vertical).
+            return pw.Transform.rotateBox(angle: -pi / 2, child: scheme);
+          }
+          return scheme;
         }));
     final dir = await getApplicationDocumentsDirectory();
     final path = dir.path;
@@ -137,6 +143,10 @@ class SchemeScreen extends StatelessWidget {
   }
 
   Widget build(BuildContext context) {
+    final scheme = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: drawFloor(),
+    );
     return Scaffold(
         appBar: AppBar(
           title: Text("${AppStrings.of(context).laying_scheme} №$number",
@@ -169,10 +179,9 @@ class SchemeScreen extends StatelessWidget {
                     child: Padding(
                         padding: EdgeInsets.fromLTRB(40, 40, 40, 40),
                         child: Container(
-                            child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: drawFloor(),
-                        ))))),
+                            child: result.direction == Direction.width
+                                ? RotatedBox(quarterTurns: 1, child: scheme)
+                                : scheme)))),
           ],
         ));
   }

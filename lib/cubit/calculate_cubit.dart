@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:floor_calculator/models.dart';
 import 'calculate_state.dart';
 
 @lazySingleton
@@ -36,5 +37,9 @@ class CalculateCubit extends Cubit<CalculateState> {
 
   void setMinimumLaminateLength(int minimumLaminateLength) {
     emit(state.copyWith(minimumLaminateLength: minimumLaminateLength));
+  }
+
+  void setDirection(Direction direction) {
+    emit(state.copyWith(direction: direction));
   }
 }

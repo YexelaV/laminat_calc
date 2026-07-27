@@ -3,6 +3,49 @@ import 'models.dart';
 const FAIL = -1;
 const SUCCESS = 0;
 
+// Length of the last plank in a row laid with whole planks from the start.
+int lastPlankLength(int rowLength, int laminateLength) {
+  var currentLength = 0;
+  while (currentLength + laminateLength < rowLength) {
+    currentLength += laminateLength;
+  }
+  return rowLength - currentLength;
+}
+
+// Upper bound for the minimum piece length such that a laying variant
+// satisfying the row offset still exists. For a first plank of length f the
+// last plank of the row is (last + L - f) mod L, so two adjacent rows can use
+// first planks f_hi/f_lo that differ by rowOffset while keeping first and
+// last planks at least (L + last - rowOffset) / 2. When rowOffset is larger
+// than L - last, the second row must wrap and the bound becomes last / 2
+// (first plank last - m, last plank m, both at least m for m <= last / 2).
+int maxMinimumLaminateLength(int rowLength, int laminateLength, int rowOffset) {
+  if (laminateLength >= rowLength) {
+    // Single-plank rows: every plank equals the row length and the
+    // minimum length constraint never applies.
+    return laminateLength;
+  }
+  final last = lastPlankLength(rowLength, laminateLength);
+  if (rowOffset <= laminateLength - last) {
+    return (laminateLength + last - rowOffset) ~/ 2;
+  }
+  return last ~/ 2;
+}
+
+// Upper bound for the row offset such that a minimum piece length of at
+// least minimumLength remains achievable (keeps maxMinimumLaminateLength
+// from dropping below minimumLength).
+int maxRowOffset(int rowLength, int laminateLength, int minimumLength) {
+  final base = laminateLength ~/ 2;
+  if (laminateLength >= rowLength) return base;
+  final last = lastPlankLength(rowLength, laminateLength);
+  if (last ~/ 2 >= minimumLength) return base;
+  var cap = laminateLength - last;
+  final balanced = laminateLength + last - 2 * minimumLength;
+  if (balanced < cap) cap = balanced;
+  return cap < base ? cap : base;
+}
+
 class Calculation {
   final double roomLength;
   final double roomWidth;
@@ -82,6 +125,7 @@ class Calculation {
           lines,
           pieces,
           trash,
+          direction: direction,
         ));
       }
     }
@@ -305,7 +349,10 @@ class Calculation {
 
       lines.add(Line(i, planks));
     }
-    final actualWidth = (roomWidth * 1000).round() - indentFromWall * 2;
+    // The dimension across the rows: room width when laying along the
+    // length, room length when laying along the width.
+    final acrossSize = (direction == Direction.length ? roomWidth : roomLength) * 1000;
+    final actualWidth = acrossSize.round() - indentFromWall * 2;
     var newWidth = laminateWidth - (laminateWidth * lines.length - actualWidth);
     if (newWidth >= 50) {
       lines[lines.length - 1].planks.forEach((plank) {

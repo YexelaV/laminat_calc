@@ -170,6 +170,24 @@ abstract class AppLocalizations {
   /// **'Укладка'**
   String get laying;
 
+  /// No description provided for @laying_direction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Направление укладки'**
+  String get laying_direction;
+
+  /// No description provided for @along_length.
+  ///
+  /// In ru, this message translates to:
+  /// **'По длине'**
+  String get along_length;
+
+  /// No description provided for @along_width.
+  ///
+  /// In ru, this message translates to:
+  /// **'По ширине'**
+  String get along_width;
+
   /// No description provided for @expansion_gap_mm.
   ///
   /// In ru, this message translates to:
