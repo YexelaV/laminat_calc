@@ -5,8 +5,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
+import 'app_localizations_fr.dart';
+import 'app_localizations_pt.dart';
 import 'app_localizations_ru.dart';
+import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
 
@@ -94,8 +99,13 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('de'),
     Locale('en'),
-    Locale('ru')
+    Locale('es'),
+    Locale('fr'),
+    Locale('pt'),
+    Locale('ru'),
+    Locale('zh')
   ];
 
   /// No description provided for @title.
@@ -122,6 +132,36 @@ abstract class AppLocalizations {
   /// **'шт'**
   String get pcs;
 
+  /// No description provided for @ft.
+  ///
+  /// In ru, this message translates to:
+  /// **'фут'**
+  String get ft;
+
+  /// No description provided for @inch.
+  ///
+  /// In ru, this message translates to:
+  /// **'дюйм'**
+  String get inch;
+
+  /// No description provided for @units.
+  ///
+  /// In ru, this message translates to:
+  /// **'Система измерений'**
+  String get units;
+
+  /// No description provided for @metric_units.
+  ///
+  /// In ru, this message translates to:
+  /// **'м / мм'**
+  String get metric_units;
+
+  /// No description provided for @imperial_units.
+  ///
+  /// In ru, this message translates to:
+  /// **'фут / дюйм'**
+  String get imperial_units;
+
   /// No description provided for @room.
   ///
   /// In ru, this message translates to:
@@ -139,6 +179,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ширина (м)'**
   String get width_m;
+
+  /// No description provided for @length.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина'**
+  String get length;
+
+  /// No description provided for @width.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина'**
+  String get width;
+
+  /// No description provided for @length_in.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина (дюйм)'**
+  String get length_in;
+
+  /// No description provided for @width_in.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина (дюйм)'**
+  String get width_in;
 
   /// No description provided for @laminate.
   ///
@@ -205,6 +269,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Минимальная длина панели (мм)'**
   String get minimal_piece_length;
+
+  /// No description provided for @expansion_gap_in.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отступ от стен (дюйм)'**
+  String get expansion_gap_in;
+
+  /// No description provided for @joint_offset_in.
+  ///
+  /// In ru, this message translates to:
+  /// **'Смещение рядов (дюйм)'**
+  String get joint_offset_in;
+
+  /// No description provided for @minimal_piece_length_in.
+  ///
+  /// In ru, this message translates to:
+  /// **'Минимальная длина панели (дюйм)'**
+  String get minimal_piece_length_in;
 
   /// No description provided for @required_field.
   ///
@@ -278,12 +360,6 @@ abstract class AppLocalizations {
   /// **'Схема укладки'**
   String get laying_scheme;
 
-  /// No description provided for @language.
-  ///
-  /// In ru, this message translates to:
-  /// **'Language/Язык'**
-  String get language;
-
   /// No description provided for @english.
   ///
   /// In ru, this message translates to:
@@ -319,8 +395,15 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'ru'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+        'de',
+        'en',
+        'es',
+        'fr',
+        'pt',
+        'ru',
+        'zh'
+      ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -329,10 +412,20 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'de':
+      return AppLocalizationsDe();
     case 'en':
       return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
+    case 'fr':
+      return AppLocalizationsFr();
+    case 'pt':
+      return AppLocalizationsPt();
     case 'ru':
       return AppLocalizationsRu();
+    case 'zh':
+      return AppLocalizationsZh();
   }
 
   throw FlutterError(

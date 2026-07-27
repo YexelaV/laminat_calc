@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/utils/units.dart';
 
 class CalculateState extends Equatable {
   final double? roomLength;
@@ -11,6 +12,7 @@ class CalculateState extends Equatable {
   final int? rowOffset;
   final int? minimumLaminateLength;
   final Direction direction;
+  final MeasurementSystem system;
 
   CalculateState(
       {this.roomLength,
@@ -21,7 +23,8 @@ class CalculateState extends Equatable {
       this.indentFromWall,
       this.rowOffset,
       this.minimumLaminateLength,
-      this.direction = Direction.length});
+      this.direction = Direction.length,
+      this.system = MeasurementSystem.metric});
 
   CalculateState copyWith({
     final double? roomLength,
@@ -33,6 +36,7 @@ class CalculateState extends Equatable {
     final int? rowOffset,
     final int? minimumLaminateLength,
     final Direction? direction,
+    final MeasurementSystem? system,
   }) {
     return CalculateState(
       roomLength: roomLength ?? this.roomLength,
@@ -44,6 +48,7 @@ class CalculateState extends Equatable {
       rowOffset: rowOffset ?? this.rowOffset,
       minimumLaminateLength: minimumLaminateLength ?? this.minimumLaminateLength,
       direction: direction ?? this.direction,
+      system: system ?? this.system,
     );
   }
 
@@ -61,5 +66,6 @@ class CalculateState extends Equatable {
         rowOffset,
         minimumLaminateLength,
         direction,
+        system,
       ];
 }

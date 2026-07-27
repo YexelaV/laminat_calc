@@ -55,12 +55,12 @@ class _$AppRouter extends RootStackRouter {
   @override
   List<RouteConfig> get routes => [
         RouteConfig(
-          RoomAndLaminateParametersRoute.name,
+          StartRoute.name,
           path: '/',
         ),
         RouteConfig(
-          StartRoute.name,
-          path: '/start-screen',
+          RoomAndLaminateParametersRoute.name,
+          path: '/room-and-laminate-parameters-screen',
         ),
         RouteConfig(
           LayingParametersRoute.name,
@@ -83,7 +83,7 @@ class StartRoute extends PageRouteInfo<StartRouteArgs> {
   StartRoute({Key? key})
       : super(
           StartRoute.name,
-          path: '/start-screen',
+          path: '/',
           args: StartRouteArgs(key: key),
         );
 
@@ -107,7 +107,7 @@ class RoomAndLaminateParametersRoute extends PageRouteInfo<void> {
   const RoomAndLaminateParametersRoute()
       : super(
           RoomAndLaminateParametersRoute.name,
-          path: '/',
+          path: '/room-and-laminate-parameters-screen',
         );
 
   static const String name = 'RoomAndLaminateParametersRoute';

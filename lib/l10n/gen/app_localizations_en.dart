@@ -21,6 +21,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pcs => 'pcs';
 
   @override
+  String get ft => 'ft';
+
+  @override
+  String get inch => 'in';
+
+  @override
+  String get units => 'Measurement system';
+
+  @override
+  String get metric_units => 'm / mm';
+
+  @override
+  String get imperial_units => 'ft / in';
+
+  @override
   String get room => 'Room';
 
   @override
@@ -28,6 +43,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get width_m => 'Width (m)';
+
+  @override
+  String get length => 'Length';
+
+  @override
+  String get width => 'Width';
+
+  @override
+  String get length_in => 'Length (in)';
+
+  @override
+  String get width_in => 'Width (in)';
 
   @override
   String get laminate => 'Laminate';
@@ -61,6 +88,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get minimal_piece_length => 'Minimal piece length (mm)';
+
+  @override
+  String get expansion_gap_in => 'Expansion gap (in)';
+
+  @override
+  String get joint_offset_in => 'Joint offset (in)';
+
+  @override
+  String get minimal_piece_length_in => 'Minimal piece length (in)';
 
   @override
   String get required_field => 'Required';
@@ -97,9 +133,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get laying_scheme => 'Laying scheme';
-
-  @override
-  String get language => 'Language/Язык';
 
   @override
   String get english => 'English';

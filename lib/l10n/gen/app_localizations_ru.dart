@@ -21,6 +21,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pcs => 'шт';
 
   @override
+  String get ft => 'фут';
+
+  @override
+  String get inch => 'дюйм';
+
+  @override
+  String get units => 'Система измерений';
+
+  @override
+  String get metric_units => 'м / мм';
+
+  @override
+  String get imperial_units => 'фут / дюйм';
+
+  @override
   String get room => 'Помещение';
 
   @override
@@ -28,6 +43,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get width_m => 'Ширина (м)';
+
+  @override
+  String get length => 'Длина';
+
+  @override
+  String get width => 'Ширина';
+
+  @override
+  String get length_in => 'Длина (дюйм)';
+
+  @override
+  String get width_in => 'Ширина (дюйм)';
 
   @override
   String get laminate => 'Ламинат';
@@ -61,6 +88,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get minimal_piece_length => 'Минимальная длина панели (мм)';
+
+  @override
+  String get expansion_gap_in => 'Отступ от стен (дюйм)';
+
+  @override
+  String get joint_offset_in => 'Смещение рядов (дюйм)';
+
+  @override
+  String get minimal_piece_length_in => 'Минимальная длина панели (дюйм)';
 
   @override
   String get required_field => 'Обязательное поле';
@@ -97,9 +133,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get laying_scheme => 'Схема укладки';
-
-  @override
-  String get language => 'Language/Язык';
 
   @override
   String get english => 'English';

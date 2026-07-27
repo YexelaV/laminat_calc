@@ -12,8 +12,8 @@ part 'app_router.gr.dart';
 @MaterialAutoRouter(
   replaceInRouteName: 'Screen,Route',
   routes: <AutoRoute>[
-    AutoRoute(page: RoomAndLaminateParametersScreen, initial: true),
-    AutoRoute(page: StartScreen),
+    AutoRoute(page: StartScreen, initial: true),
+    AutoRoute(page: RoomAndLaminateParametersScreen),
     AutoRoute(page: LayingParametersScreen),
     AutoRoute(page: ResultScreen),
     AutoRoute(page: SchemeScreen),

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/utils/units.dart';
 import 'calculate_state.dart';
 
 @lazySingleton
@@ -41,5 +42,9 @@ class CalculateCubit extends Cubit<CalculateState> {
 
   void setDirection(Direction direction) {
     emit(state.copyWith(direction: direction));
+  }
+
+  void setMeasurementSystem(MeasurementSystem system) {
+    emit(state.copyWith(system: system));
   }
 }

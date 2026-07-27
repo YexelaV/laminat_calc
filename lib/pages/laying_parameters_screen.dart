@@ -7,6 +7,7 @@ import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/router/app_router.dart';
+import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/utils/validators.dart';
 import 'package:floor_calculator/widgets/app_text_form_field.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,43 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     super.dispose();
   }
 
+  String? indentFromWallValidator(BuildContext context, CalculateState state, String value) {
+    final appStrings = AppStrings.of(context);
+    return state.system == MeasurementSystem.metric
+        ? Validators.sizeValidator(context, value, 0, MAX_INDENT_FROM_WALL, appStrings.mm)
+        : Validators.sizeValidator(
+            context, value, 0, floorInch(MAX_INDENT_FROM_WALL), appStrings.inch);
+  }
+
+  String? rowOffsetValidator(BuildContext context, CalculateState state, String value) {
+    final appStrings = AppStrings.of(context);
+    final disabled = state.laminateLength == null;
+    return state.system == MeasurementSystem.metric
+        ? Validators.sizeValidator(context, value, MIN_ROW_OFFSET, rowOffsetMax(state),
+            appStrings.mm,
+            disabled: disabled)
+        : Validators.sizeValidator(context, value, ceilInch(MIN_ROW_OFFSET),
+            floorInch(rowOffsetMax(state)), appStrings.inch,
+            disabled: disabled);
+  }
+
+  String? minimumLaminateLengthValidator(
+      BuildContext context, CalculateState state, String value) {
+    final appStrings = AppStrings.of(context);
+    final disabled = minimumLaminateLengthValidatorDisabled(state);
+    return state.system == MeasurementSystem.metric
+        ? Validators.sizeValidator(context, value, MIN_MIN_LENGTH, minimumLaminateLengthMax(state),
+            appStrings.mm,
+            disabled: disabled)
+        : Validators.sizeValidator(context, value, ceilInch(MIN_MIN_LENGTH),
+            floorInch(minimumLaminateLengthMax(state)), appStrings.inch,
+            disabled: disabled);
+  }
+
+  int parseSize(CalculateState state, String value) => state.system == MeasurementSystem.metric
+      ? int.parse(value)
+      : inchToMm(double.parse(value.replaceAll(',', '.')));
+
   bool areAllFieldsValid(BuildContext context, CalculateState state) {
     final indentFromWallValue = indentFromWallController.text.trim();
     final rowOffsetValue = rowOffsetController.text.trim();
@@ -48,20 +86,9 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
       return false;
     }
 
-    final appStrings = AppStrings.of(context);
-    final indentFromWallValid = Validators.sizeValidator(
-            context, indentFromWallValue, 0, MAX_INDENT_FROM_WALL, appStrings.mm) ==
-        null;
-    final rowOffsetValid = Validators.sizeValidator(
-            context, rowOffsetValue, MIN_ROW_OFFSET, rowOffsetMax(state), appStrings.mm,
-            disabled: state.laminateLength == null) ==
-        null;
-    final minimumLaminateLengthValid = Validators.sizeValidator(context, minimumLaminateLengthValue,
-            MIN_MIN_LENGTH, minimumLaminateLengthMax(state), appStrings.mm,
-            disabled: minimumLaminateLengthValidatorDisabled(state)) ==
-        null;
-
-    return indentFromWallValid && rowOffsetValid && minimumLaminateLengthValid;
+    return indentFromWallValidator(context, state, indentFromWallValue) == null &&
+        rowOffsetValidator(context, state, rowOffsetValue) == null &&
+        minimumLaminateLengthValidator(context, state, minimumLaminateLengthValue) == null;
   }
 
   Widget titleText(String title, IconData icon) {
@@ -150,20 +177,23 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                           ],
                         ),
                         SizedBox(height: 8),
-                        SegmentedButton<Direction>(
-                          segments: [
-                            ButtonSegment(
-                              value: Direction.length,
-                              label: Text(appStrings.along_length),
-                            ),
-                            ButtonSegment(
-                              value: Direction.width,
-                              label: Text(appStrings.along_width),
-                            ),
-                          ],
-                          selected: {state.direction},
-                          onSelectionChanged: (selection) =>
-                              context.read<CalculateCubit>().setDirection(selection.first),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: SegmentedButton<Direction>(
+                            segments: [
+                              ButtonSegment(
+                                value: Direction.length,
+                                label: Text(appStrings.along_length),
+                              ),
+                              ButtonSegment(
+                                value: Direction.width,
+                                label: Text(appStrings.along_width),
+                              ),
+                            ],
+                            selected: {state.direction},
+                            onSelectionChanged: (selection) =>
+                                context.read<CalculateCubit>().setDirection(selection.first),
+                          ),
                         ),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,12 +203,14 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                 controller: indentFromWallController,
                                 focusNode: indentFromWallFocusNode,
                                 nextFocusNode: rowOffsetFocusNode,
-                                labelText: appStrings.expansion_gap_mm,
-                                validator: (value) => Validators.sizeValidator(context, value ?? '',
-                                    0, MAX_INDENT_FROM_WALL, AppStrings.of(context).mm),
+                                labelText: state.system == MeasurementSystem.metric
+                                    ? appStrings.expansion_gap_mm
+                                    : appStrings.expansion_gap_in,
+                                validator: (value) =>
+                                    indentFromWallValidator(context, state, value ?? ''),
                                 callback: (value) => context
                                     .read<CalculateCubit>()
-                                    .setIndentFromWall(int.parse(value)),
+                                    .setIndentFromWall(parseSize(state, value)),
                               ),
                             ),
                           ],
@@ -191,12 +223,14 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                 controller: rowOffsetController,
                                 focusNode: rowOffsetFocusNode,
                                 nextFocusNode: minimumLaminateLengthFocusNode,
-                                labelText: appStrings.joint_offset_mm,
-                                validator: (value) => Validators.sizeValidator(context, value ?? '',
-                                    MIN_ROW_OFFSET, rowOffsetMax(state), AppStrings.of(context).mm,
-                                    disabled: state.laminateLength == null),
-                                callback: (value) =>
-                                    context.read<CalculateCubit>().setRowOffset(int.parse(value)),
+                                labelText: state.system == MeasurementSystem.metric
+                                    ? appStrings.joint_offset_mm
+                                    : appStrings.joint_offset_in,
+                                validator: (value) =>
+                                    rowOffsetValidator(context, state, value ?? ''),
+                                callback: (value) => context
+                                    .read<CalculateCubit>()
+                                    .setRowOffset(parseSize(state, value)),
                               ),
                             ),
                           ],
@@ -208,17 +242,14 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                               child: AppTextFormField(
                                 controller: minimumLaminateLengthController,
                                 focusNode: minimumLaminateLengthFocusNode,
-                                labelText: appStrings.minimal_piece_length,
-                                validator: (value) => Validators.sizeValidator(
-                                    context,
-                                    value ?? '',
-                                    MIN_MIN_LENGTH,
-                                    minimumLaminateLengthMax(state),
-                                    AppStrings.of(context).mm,
-                                    disabled: minimumLaminateLengthValidatorDisabled(state)),
+                                labelText: state.system == MeasurementSystem.metric
+                                    ? appStrings.minimal_piece_length
+                                    : appStrings.minimal_piece_length_in,
+                                validator: (value) =>
+                                    minimumLaminateLengthValidator(context, state, value ?? ''),
                                 callback: (value) => context
                                     .read<CalculateCubit>()
-                                    .setMinimumLaminateLength(int.parse(value)),
+                                    .setMinimumLaminateLength(parseSize(state, value)),
                               ),
                             ),
                           ],

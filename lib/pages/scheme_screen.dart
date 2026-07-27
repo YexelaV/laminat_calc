@@ -6,14 +6,22 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cross_file/cross_file.dart';
+import '../cubit/calculate_cubit.dart';
+import '../di/get_it.dart';
 import '../l10n/app_localizations.dart';
 import '../models.dart';
 import '../constants.dart';
+import '../utils/units.dart';
 
 class SchemeScreen extends StatelessWidget {
   final Result result;
   final int number;
   SchemeScreen(this.result, this.number);
+
+  MeasurementSystem get system => getIt.get<CalculateCubit>().state.system;
+
+  String sizeLabel(num mm) =>
+      system == MeasurementSystem.imperial ? formatFeetInches(mm) : '$mm';
 
   List<Widget> drawFloor() {
     List<Widget> res = [];
@@ -24,7 +32,7 @@ class SchemeScreen extends StatelessWidget {
           width: 24,
           child: FittedBox(
             child: Text(
-              '${line.planks[0].width} ',
+              '${sizeLabel(line.planks[0].width)} ',
             ),
           ),
         ),
@@ -54,7 +62,7 @@ class SchemeScreen extends StatelessWidget {
                   alignment: Alignment.center,
                   child: plank.length < result.laminateLength
                       ? Text(
-                          ' ${plank.length}',
+                          ' ${sizeLabel(plank.length)}',
                         )
                       : Container(),
                 ),
@@ -79,7 +87,7 @@ class SchemeScreen extends StatelessWidget {
           width: 24,
           child: pw.FittedBox(
             child: pw.Text(
-              '${line.planks[0].width} ',
+              '${sizeLabel(line.planks[0].width)} ',
             ),
           ),
         ),
@@ -109,7 +117,7 @@ class SchemeScreen extends StatelessWidget {
                   alignment: pw.Alignment.center,
                   child: plank.length < result.laminateLength
                       ? pw.Text(
-                          ' ${plank.length}',
+                          ' ${sizeLabel(plank.length)}',
                         )
                       : pw.Container(),
                 ),
