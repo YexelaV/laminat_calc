@@ -68,7 +68,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
         return;
       }
       if (system == MeasurementSystem.metric) {
-        main.text = meters.toStringAsFixed(2);
+        main.text = '${(meters * 1000).round()}';
       } else {
         final totalInches = meters * 1000 / MM_PER_INCH;
         final feet = totalInches ~/ 12;
@@ -126,11 +126,12 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     final bool laminateLengthValid;
     final bool laminateWidthValid;
     if (system == MeasurementSystem.metric) {
-      lengthValid =
-          Validators.sizeValidator(context, lengthValue, MIN_LENGTH, MAX_LENGTH, appStrings.m) ==
-              null;
-      widthValid =
-          Validators.sizeValidator(context, widthValue, MIN_WIDTH, MAX_WIDTH, appStrings.m) == null;
+      lengthValid = Validators.sizeValidator(
+              context, lengthValue, MIN_ROOM_MM, MAX_LENGTH_MM, appStrings.mm) ==
+          null;
+      widthValid = Validators.sizeValidator(
+              context, widthValue, MIN_ROOM_MM, MAX_WIDTH_MM, appStrings.mm) ==
+          null;
       laminateLengthValid = Validators.sizeValidator(
               context, laminateLengthValue, MIN_PLANK_LENGTH, MAX_PLANK_LENGTH, appStrings.mm) ==
           null;
@@ -280,13 +281,13 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                                 controller: lengthController,
                                 focusNode: lengthFocusNode,
                                 nextFocusNode: widthFocusNode,
-                                labelText: appStrings.length_m,
+                                labelText: appStrings.length_mm,
                                 validator: (value) => Validators.sizeValidator(context, value ?? '',
-                                    MIN_LENGTH, MAX_LENGTH, AppStrings.of(context).m),
+                                    MIN_ROOM_MM, MAX_LENGTH_MM, AppStrings.of(context).mm),
                                 callback: (value) {
                                   context
                                       .read<CalculateCubit>()
-                                      .setRoomLength(double.parse(value.replaceAll(',', '.')));
+                                      .setRoomLength(int.parse(value) / 1000);
                                 },
                               ),
                             ),
@@ -296,13 +297,13 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                                 controller: widthController,
                                 focusNode: widthFocusNode,
                                 nextFocusNode: laminateLengthFocusNode,
-                                labelText: appStrings.width_m,
+                                labelText: appStrings.width_mm,
                                 validator: (value) => Validators.sizeValidator(context, value ?? '',
-                                    MIN_WIDTH, MAX_WIDTH, AppStrings.of(context).m),
+                                    MIN_ROOM_MM, MAX_WIDTH_MM, AppStrings.of(context).mm),
                                 callback: (value) {
                                   context
                                       .read<CalculateCubit>()
-                                      .setRoomWidth(double.parse(value.replaceAll(',', '.')));
+                                      .setRoomWidth(int.parse(value) / 1000);
                                 },
                               ),
                             ),

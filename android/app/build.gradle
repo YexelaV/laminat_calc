@@ -32,8 +32,8 @@ android {
         applicationId "com.floor_calculator.host"
         minSdkVersion 26
         targetSdkVersion 36
-        versionCode 11
-        versionName "1.4.0"
+        versionCode 12
+        versionName "1.4.1"
     }
 
    signingConfigs {

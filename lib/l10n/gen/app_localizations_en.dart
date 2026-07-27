@@ -12,9 +12,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get title => 'Laminate Calculator';
 
   @override
-  String get m => 'm';
-
-  @override
   String get mm => 'mm';
 
   @override
@@ -30,19 +27,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get units => 'Measurement system';
 
   @override
-  String get metric_units => 'm / mm';
+  String get metric_units => 'mm';
 
   @override
   String get imperial_units => 'ft / in';
 
   @override
   String get room => 'Room';
-
-  @override
-  String get length_m => 'Length (m)';
-
-  @override
-  String get width_m => 'Width (m)';
 
   @override
   String get length => 'Length';

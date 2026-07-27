@@ -12,9 +12,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get title => 'Калькулятор Ламината';
 
   @override
-  String get m => 'м';
-
-  @override
   String get mm => 'мм';
 
   @override
@@ -30,19 +27,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get units => 'Система измерений';
 
   @override
-  String get metric_units => 'м / мм';
+  String get metric_units => 'мм';
 
   @override
   String get imperial_units => 'фут / дюйм';
 
   @override
   String get room => 'Помещение';
-
-  @override
-  String get length_m => 'Длина (м)';
-
-  @override
-  String get width_m => 'Ширина (м)';
 
   @override
   String get length => 'Длина';

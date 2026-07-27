@@ -114,12 +114,6 @@ abstract class AppLocalizations {
   /// **'Калькулятор Ламината'**
   String get title;
 
-  /// No description provided for @m.
-  ///
-  /// In ru, this message translates to:
-  /// **'м'**
-  String get m;
-
   /// No description provided for @mm.
   ///
   /// In ru, this message translates to:
@@ -153,7 +147,7 @@ abstract class AppLocalizations {
   /// No description provided for @metric_units.
   ///
   /// In ru, this message translates to:
-  /// **'м / мм'**
+  /// **'мм'**
   String get metric_units;
 
   /// No description provided for @imperial_units.
@@ -167,18 +161,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Помещение'**
   String get room;
-
-  /// No description provided for @length_m.
-  ///
-  /// In ru, this message translates to:
-  /// **'Длина (м)'**
-  String get length_m;
-
-  /// No description provided for @width_m.
-  ///
-  /// In ru, this message translates to:
-  /// **'Ширина (м)'**
-  String get width_m;
 
   /// No description provided for @length.
   ///

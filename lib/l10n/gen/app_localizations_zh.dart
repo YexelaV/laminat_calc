@@ -12,9 +12,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get title => '强化地板计算器';
 
   @override
-  String get m => '米';
-
-  @override
   String get mm => '毫米';
 
   @override
@@ -30,19 +27,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get units => '度量系统';
 
   @override
-  String get metric_units => '米 / 毫米';
+  String get metric_units => '毫米';
 
   @override
   String get imperial_units => '英尺 / 英寸';
 
   @override
   String get room => '房间';
-
-  @override
-  String get length_m => '长度（米）';
-
-  @override
-  String get width_m => '宽度（米）';
 
   @override
   String get length => '长度';
