@@ -21,6 +21,8 @@
     "along_length": "No comprimento",
     "along_width": "Na largura",
     "expansion_gap_mm": "Junta de dilatação (mm)",
+    "joint_offset": "Desalinhamento das juntas",
+    "exact_offset": "exato",
     "joint_offset_mm": "Desalinhamento das juntas (mm)",
     "minimal_piece_length": "Comprimento mínimo da régua (mm)",
     "expansion_gap_in": "Junta de dilatação (in)",

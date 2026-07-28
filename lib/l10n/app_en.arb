@@ -21,6 +21,8 @@
     "along_length": "Along length",
     "along_width": "Along width",
     "expansion_gap_mm": "Expansion gap (mm)",
+    "joint_offset": "Joint offset",
+    "exact_offset": "exact",
     "joint_offset_mm": "Joint offset (mm)",
     "minimal_piece_length": "Minimal piece length (mm)",
     "expansion_gap_in": "Expansion gap (in)",

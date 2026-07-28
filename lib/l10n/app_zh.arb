@@ -21,6 +21,8 @@
     "along_length": "沿长度",
     "along_width": "沿宽度",
     "expansion_gap_mm": "伸缩缝（毫米）",
+    "joint_offset": "接缝错位",
+    "exact_offset": "精确",
     "joint_offset_mm": "接缝错位（毫米）",
     "minimal_piece_length": "地板最短长度（毫米）",
     "expansion_gap_in": "伸缩缝（英寸）",

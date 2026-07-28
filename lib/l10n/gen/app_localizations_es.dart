@@ -75,6 +75,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get expansion_gap_mm => 'Junta de dilatación (mm)';
 
   @override
+  String get joint_offset => 'Desfase de juntas';
+
+  @override
+  String get exact_offset => 'exacto';
+
+  @override
   String get joint_offset_mm => 'Desplazamiento de juntas (mm)';
 
   @override

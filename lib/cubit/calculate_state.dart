@@ -12,6 +12,7 @@ class CalculateState extends Equatable {
   final int? rowOffset;
   final int? minimumLaminateLength;
   final Direction direction;
+  final OffsetMode offsetMode;
   final MeasurementSystem system;
 
   CalculateState(
@@ -24,6 +25,7 @@ class CalculateState extends Equatable {
       this.rowOffset,
       this.minimumLaminateLength,
       this.direction = Direction.length,
+      this.offsetMode = OffsetMode.half,
       this.system = MeasurementSystem.metric});
 
   CalculateState copyWith({
@@ -36,6 +38,7 @@ class CalculateState extends Equatable {
     final int? rowOffset,
     final int? minimumLaminateLength,
     final Direction? direction,
+    final OffsetMode? offsetMode,
     final MeasurementSystem? system,
   }) {
     return CalculateState(
@@ -48,6 +51,7 @@ class CalculateState extends Equatable {
       rowOffset: rowOffset ?? this.rowOffset,
       minimumLaminateLength: minimumLaminateLength ?? this.minimumLaminateLength,
       direction: direction ?? this.direction,
+      offsetMode: offsetMode ?? this.offsetMode,
       system: system ?? this.system,
     );
   }
@@ -66,6 +70,7 @@ class CalculateState extends Equatable {
         rowOffset,
         minimumLaminateLength,
         direction,
+        offsetMode,
         system,
       ];
 }

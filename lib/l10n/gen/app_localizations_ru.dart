@@ -75,6 +75,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get expansion_gap_mm => 'Отступ от стен (мм)';
 
   @override
+  String get joint_offset => 'Смещение стыков';
+
+  @override
+  String get exact_offset => 'точно';
+
+  @override
   String get joint_offset_mm => 'Смещение рядов (мм)';
 
   @override

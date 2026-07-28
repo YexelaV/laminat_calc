@@ -75,6 +75,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expansion_gap_mm => 'Expansion gap (mm)';
 
   @override
+  String get joint_offset => 'Joint offset';
+
+  @override
+  String get exact_offset => 'exact';
+
+  @override
   String get joint_offset_mm => 'Joint offset (mm)';
 
   @override

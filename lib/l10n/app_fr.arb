@@ -21,6 +21,8 @@
     "along_length": "Dans la longueur",
     "along_width": "Dans la largeur",
     "expansion_gap_mm": "Joint de dilatation (mm)",
+    "joint_offset": "Décalage des joints",
+    "exact_offset": "exact",
     "joint_offset_mm": "Décalage des joints (mm)",
     "minimal_piece_length": "Longueur minimale de lame (mm)",
     "expansion_gap_in": "Joint de dilatation (in)",

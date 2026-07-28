@@ -75,6 +75,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expansion_gap_mm => '伸缩缝（毫米）';
 
   @override
+  String get joint_offset => '接缝错位';
+
+  @override
+  String get exact_offset => '精确';
+
+  @override
   String get joint_offset_mm => '接缝错位（毫米）';
 
   @override

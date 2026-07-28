@@ -8,9 +8,10 @@ A Flutter app that calculates how much laminate flooring you need for a room and
 
 - Calculates the number of planks and packs required for a room
 - Builds several laying layout options, minimizing waste by reusing offcuts
-- Respects laying constraints: expansion gap from walls, minimum joint offset between rows, minimum plank length
+- Respects laying constraints: expansion gap from walls, exact joint offset between rows, minimum plank length
+- Plank offset level selection: 1/2, 1/3, 1/4 of the plank length or an exact value
 - Laying direction selection: along the room length or width
-- Metric and imperial measurement systems (meters/millimeters or feet/inches)
+- Metric and imperial measurement systems (millimeters or feet/inches)
 - Visual laying scheme with plank numbering
 - Export of the laying scheme to PDF and sharing
 - Language selection on first launch (persisted): English, Russian, German, Spanish, French, Portuguese, Chinese
@@ -19,9 +20,10 @@ A Flutter app that calculates how much laminate flooring you need for a room and
 
 Given the room size, plank dimensions, and laying parameters, the algorithm (`lib/calculate.dart`) lays out the floor row by row:
 
-1. The first plank of each row is cut so that it is not shorter than the minimum plank length, the joint offset relative to the previous row is at least the configured value, and the last plank of the row also stays above the minimum.
-2. Offcuts with an intact lock are kept and reused at the start or end of later rows.
-3. Several strategies are tried (with/without cutting offcuts, with/without offcut optimization); invalid layouts are filtered out and the remaining options are sorted by total plank count.
+1. Rows follow an exact staircase pattern: each row's first plank is exactly the configured offset (1/2, 1/3, 1/4 of the plank length or a custom value) shorter than the previous one; when the next step would drop below the minimum plank length, the pattern restarts from the first row's length.
+2. The pattern start is chosen so that in every row both the first and the last plank stay at or above the minimum plank length.
+3. Offcuts with an intact lock are kept and reused at the start or end of later rows.
+4. Several strategies are tried (with/without cutting offcuts, with/without offcut optimization); invalid layouts are filtered out and the remaining options are sorted by total plank count.
 
 ## Project structure
 

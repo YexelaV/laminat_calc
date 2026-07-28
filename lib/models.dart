@@ -2,6 +2,23 @@ import 'package:equatable/equatable.dart';
 
 enum Direction { length, width }
 
+enum OffsetMode { half, third, quarter, exact }
+
+extension OffsetModeFraction on OffsetMode {
+  int? get divisor {
+    switch (this) {
+      case OffsetMode.half:
+        return 2;
+      case OffsetMode.third:
+        return 3;
+      case OffsetMode.quarter:
+        return 4;
+      case OffsetMode.exact:
+        return null;
+    }
+  }
+}
+
 class Plank {
   final int number;
   int length;

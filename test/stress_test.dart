@@ -42,16 +42,19 @@ void main() {
             cfg, 'row ${line.number}: sum ${sum} mm != row length ${rowLength} mm'));
       }
     }
-    // 3. Joint offset between adjacent rows
+    // 3. Exact staircase offset between adjacent rows: one step down by
+    // exactly rowOffset, or a pattern restart (jump up by a multiple of it)
     for (var i = 1; i < r.lines.length; i++) {
       final prev = r.lines[i - 1].planks.first.length;
       final cur = r.lines[i].planks.first.length;
       final prevFull = prev >= rowLength; // single-plank row
       final curFull = cur >= rowLength;
       if (prevFull || curFull) continue;
-      if ((prev - cur).abs() < c.rowOffset) {
+      final stepDown = prev - cur == c.rowOffset;
+      final restart = cur > prev && (cur - prev) % c.rowOffset == 0;
+      if (!stepDown && !restart) {
         violations.add(Violation(cfg,
-            'rows ${i - 1}/${i}: joint offset ${(prev - cur).abs()} mm < ${c.rowOffset} mm'));
+            'rows ${i - 1}/${i}: first planks $prev -> $cur mm do not follow exact offset ${c.rowOffset} mm'));
       }
     }
     // 4. Material balance: planks * length == laid + pieces + waste
@@ -84,11 +87,18 @@ void main() {
       direction: Direction.length,
     );
     final rowLength = (roomLength * 1000 - indent * 2).toInt();
+    final rows = ((roomWidth * 1000 - indent * 2) / lamWidth).ceil();
+    final feasible = exactOffsetFeasible(rowLength, lamLength, offset, minLen, rows);
     try {
       final results = c.calculate();
       if (results.isEmpty) {
-        violations.add(Violation(cfg, 'empty result'));
+        if (feasible) {
+          violations.add(Violation(cfg, 'empty result but bound says feasible'));
+        }
         return;
+      }
+      if (!feasible) {
+        violations.add(Violation(cfg, 'result found but bound says infeasible'));
       }
       for (final r in results) {
         checkResult(cfg, c, r, rowLength);
@@ -106,14 +116,28 @@ void main() {
   run(6.0, 4.5, 1380, 190, 8, 10, 400, 300);
   run(2.8, 2.0, 1380, 190, 8, 10, 300, 300);
 
-  // Random configurations
+  // Random configurations; offsets mix the fraction presets (1/2, 1/3, 1/4
+  // of the plank length) with free values like the exact mode allows
   for (var i = 0; i < 3000; i++) {
     final roomLength = (rnd.nextInt(220) + 20) / 10.0; // 2.0 - 24.0 m
     final roomWidth = (rnd.nextInt(140) + 20) / 10.0; // 2.0 - 16.0 m
     final lamLength = 600 + rnd.nextInt(25) * 50; // 600 - 1800
     final lamWidth = 100 + rnd.nextInt(10) * 15;
     final minLen = 200 + rnd.nextInt(5) * 50; // 200 - 400
-    final offset = 200 + rnd.nextInt(5) * 50; // 200 - 400
+    final int offset;
+    switch (rnd.nextInt(4)) {
+      case 0:
+        offset = (lamLength / 2).round();
+        break;
+      case 1:
+        offset = (lamLength / 3).round();
+        break;
+      case 2:
+        offset = (lamLength / 4).round();
+        break;
+      default:
+        offset = 200 + rnd.nextInt(5) * 50; // 200 - 400
+    }
     final indent = rnd.nextInt(3) * 5; // 0/5/10
     run(roomLength, roomWidth, lamLength, lamWidth, 8, indent, minLen, offset);
   }

@@ -3,47 +3,81 @@ import 'models.dart';
 const FAIL = -1;
 const SUCCESS = 0;
 
-// Length of the last plank in a row laid with whole planks from the start.
-int lastPlankLength(int rowLength, int laminateLength) {
-  var currentLength = 0;
-  while (currentLength + laminateLength < rowLength) {
-    currentLength += laminateLength;
-  }
-  return rowLength - currentLength;
-}
-
-// Upper bound for the minimum piece length such that a laying variant
-// satisfying the row offset still exists. For a first plank of length f the
-// last plank of the row is (last + L - f) mod L, so two adjacent rows can use
-// first planks f_hi/f_lo that differ by rowOffset while keeping first and
-// last planks at least (L + last - rowOffset) / 2. When rowOffset is larger
-// than L - last, the second row must wrap and the bound becomes last / 2
-// (first plank last - m, last plank m, both at least m for m <= last / 2).
-int maxMinimumLaminateLength(int rowLength, int laminateLength, int rowOffset) {
+// The exact-offset laying pattern is a staircase: each row's first plank is
+// exactly rowOffset shorter than the previous one; when the next step would
+// drop below the minimum piece length the pattern restarts from the first
+// row's length f0. So for a given minimum m the pattern consists of
+// k = (f0 - m) ~/ rowOffset + 1 distinct first lengths f0, f0-d, ..., f0-(k-1)d.
+//
+// Upper bound for the minimum piece length such that some pattern start f0
+// keeps every first AND last plank of the used rows at least that long.
+// For each f0 and pattern size k the admissible m lie in (f_k - d, f_k]
+// (that range is what makes the restart happen after exactly k rows), and
+// m is also capped by the shortest first/last plank among the used rows.
+int maxMinimumLaminateLengthExact(
+    int rowLength, int laminateLength, int rowOffset, int numberOfRows) {
   if (laminateLength >= rowLength) {
     // Single-plank rows: every plank equals the row length and the
     // minimum length constraint never applies.
     return laminateLength;
   }
-  final last = lastPlankLength(rowLength, laminateLength);
-  if (rowOffset <= laminateLength - last) {
-    return (laminateLength + last - rowOffset) ~/ 2;
+  if (rowOffset <= 0 || numberOfRows <= 0) return 0;
+  int lastOf(int first) {
+    final remaining = rowLength - first;
+    return remaining % laminateLength == 0 ? laminateLength : remaining % laminateLength;
   }
-  return last ~/ 2;
+
+  var best = 0;
+  for (var f0 = laminateLength; f0 > best; f0--) {
+    var bound = laminateLength;
+    for (var k = 1;; k++) {
+      final fk = f0 - (k - 1) * rowOffset;
+      if (fk < 1) break;
+      if (k <= numberOfRows) {
+        if (fk < bound) bound = fk;
+        final last = lastOf(fk);
+        if (last < bound) bound = last;
+      }
+      // A pattern of a single row length means aligned joints on every row.
+      if (k == 1 && numberOfRows > 1) continue;
+      final candidate = bound < fk ? bound : fk;
+      if (candidate > fk - rowOffset && candidate > best) best = candidate;
+    }
+  }
+  return best;
 }
 
-// Upper bound for the row offset such that a minimum piece length of at
-// least minimumLength remains achievable (keeps maxMinimumLaminateLength
-// from dropping below minimumLength).
-int maxRowOffset(int rowLength, int laminateLength, int minimumLength) {
-  final base = laminateLength ~/ 2;
-  if (laminateLength >= rowLength) return base;
-  final last = lastPlankLength(rowLength, laminateLength);
-  if (last ~/ 2 >= minimumLength) return base;
-  var cap = laminateLength - last;
-  final balanced = laminateLength + last - 2 * minimumLength;
-  if (balanced < cap) cap = balanced;
-  return cap < base ? cap : base;
+// Whether a laying variant exists for the given exact offset and minimum
+// piece length. Feasibility is NOT monotone in the minimum: a larger minimum
+// shortens the staircase, which can avoid row starts whose last plank would
+// be too short. So the value must be checked exactly, not against a bound.
+bool exactOffsetFeasible(int rowLength, int laminateLength, int rowOffset, int minimumLength,
+    int numberOfRows) {
+  if (laminateLength >= rowLength) return true;
+  if (rowOffset <= 0 || minimumLength < 1 || numberOfRows <= 0) return false;
+  int lastOf(int first) {
+    final remaining = rowLength - first;
+    return remaining % laminateLength == 0 ? laminateLength : remaining % laminateLength;
+  }
+
+  for (var f0 = laminateLength; f0 >= minimumLength; f0--) {
+    var f = f0;
+    var ok = true;
+    for (var i = 0; i < numberOfRows; i++) {
+      if (lastOf(f) < minimumLength) {
+        ok = false;
+        break;
+      }
+      f -= rowOffset;
+      if (f < minimumLength) {
+        // Restarting right after the first row would align the joints.
+        if (i == 0 && numberOfRows > 1) ok = false;
+        break;
+      }
+    }
+    if (ok) return true;
+  }
+  return false;
 }
 
 class Calculation {
@@ -76,6 +110,9 @@ class Calculation {
   List<Plank> planks = [];
   List<Line> lines = [];
   late int numberOfRows;
+  // First plank length of the first row; the staircase pattern restarts
+  // from this value.
+  int _patternStart = 0;
 
   bool check(Result result, int rowLength) {
     for (final line in result.lines) {
@@ -88,7 +125,34 @@ class Calculation {
       final prev = result.lines[i - 1].planks.first.length;
       final cur = result.lines[i].planks.first.length;
       if (prev == rowLength || cur == rowLength) continue;
-      if ((prev - cur).abs() < rowOffset) return false;
+      // Exact staircase: either one step down or a restart of the pattern
+      // (a jump up by a whole number of steps).
+      final stepDown = prev - cur == rowOffset;
+      final restart = cur > prev && (cur - prev) % rowOffset == 0;
+      if (!stepDown && !restart) return false;
+    }
+    return true;
+  }
+
+  int _lastOf(int firstLength, int rowLength) {
+    final remaining = rowLength - firstLength;
+    return remaining % laminateLength == 0 ? laminateLength : remaining % laminateLength;
+  }
+
+  // A pattern start f0 is feasible when every used row of the staircase
+  // f0, f0-d, ... (restarting from f0 below the minimum) keeps its last
+  // plank at least the minimum long. Values repeat after a restart, so
+  // checking until the first restart is enough.
+  bool _patternFeasible(int f0, int rowLength) {
+    var f = f0;
+    for (var i = 0; i < numberOfRows; i++) {
+      if (_lastOf(f, rowLength) < minimumLaminateLength) return false;
+      f -= rowOffset;
+      if (f < minimumLaminateLength) {
+        // Restarting right after the first row would align the joints.
+        if (i == 0 && numberOfRows > 1) return false;
+        break;
+      }
     }
     return true;
   }
@@ -163,11 +227,11 @@ class Calculation {
   }
 
   // Finds how much to cut off (diff) from a plank/piece of length `available`
-  // so that the resulting first plank of the row is not shorter than the minimum,
-  // differs from the first plank of the previous row by at least rowOffset,
-  // and the last plank of the row does not end up shorter than the minimum.
-  // With optimizePieces, prefers a cut that produces a reusable
-  // offcut (diff >= minimumLaminateLength).
+  // so that the resulting first plank of the row fits the exact staircase
+  // pattern. For the first row (prevFirstLength == null) the pattern start f0
+  // is searched from the top down; for subsequent rows the first length is
+  // fully determined by the pattern. With optimizePieces, prefers a cut that
+  // produces a reusable offcut (diff >= minimumLaminateLength).
   int findCut(int available, int rowLength, int? prevFirstLength, bool optimizePieces) {
     if (optimizePieces) {
       final noCut = _searchDown(available, available, rowLength, prevFirstLength);
@@ -180,20 +244,16 @@ class Calculation {
   }
 
   int _searchDown(int startLength, int available, int rowLength, int? prevFirstLength) {
-    var firstLength = startLength;
-    while (firstLength >= minimumLaminateLength) {
-      if (prevFirstLength != null && (firstLength - prevFirstLength).abs() < rowOffset) {
-        firstLength = prevFirstLength - rowOffset;
-        continue;
-      }
-      final remaining = rowLength - firstLength;
-      final lastLength =
-          remaining % laminateLength == 0 ? laminateLength : remaining % laminateLength;
-      if (lastLength < minimumLaminateLength) {
-        firstLength -= minimumLaminateLength - lastLength;
-        continue;
-      }
-      return available - firstLength;
+    if (prevFirstLength != null) {
+      var required = prevFirstLength - rowOffset;
+      if (required < minimumLaminateLength) required = _patternStart;
+      if (required == prevFirstLength) return FAIL;
+      if (required > startLength || required < minimumLaminateLength) return FAIL;
+      if (_lastOf(required, rowLength) < minimumLaminateLength) return FAIL;
+      return available - required;
+    }
+    for (var f0 = startLength; f0 >= minimumLaminateLength; f0--) {
+      if (_patternFeasible(f0, rowLength)) return available - f0;
     }
     return FAIL;
   }
@@ -217,6 +277,7 @@ class Calculation {
     var currentLength = 0;
     int number = 0;
     if (laminateLength >= rowLength) {
+      _patternStart = rowLength;
       number++;
       addPlank(number, rowLength, laminateWidth);
       addPiece(number, laminateLength - rowLength, laminateWidth, hasRightLock: false);
@@ -226,6 +287,7 @@ class Calculation {
     final diff = checkRow(laminateLength, rowLength, optimizePieces);
     if (diff == FAIL) return FAIL;
     final firstlaminateLength = laminateLength - diff;
+    _patternStart = firstlaminateLength;
     number++;
     addPlank(number, firstlaminateLength, laminateWidth);
     addPiece(number, diff, laminateWidth, hasRightLock: false);

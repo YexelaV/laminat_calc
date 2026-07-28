@@ -240,6 +240,18 @@ abstract class AppLocalizations {
   /// **'Отступ от стен (мм)'**
   String get expansion_gap_mm;
 
+  /// No description provided for @joint_offset.
+  ///
+  /// In ru, this message translates to:
+  /// **'Смещение стыков'**
+  String get joint_offset;
+
+  /// No description provided for @exact_offset.
+  ///
+  /// In ru, this message translates to:
+  /// **'точно'**
+  String get exact_offset;
+
   /// No description provided for @joint_offset_mm.
   ///
   /// In ru, this message translates to:

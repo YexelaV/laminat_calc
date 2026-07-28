@@ -49,26 +49,48 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
   String? rowOffsetValidator(BuildContext context, CalculateState state, String value) {
     final appStrings = AppStrings.of(context);
     final disabled = state.laminateLength == null;
-    return state.system == MeasurementSystem.metric
+    final rangeError = state.system == MeasurementSystem.metric
         ? Validators.sizeValidator(context, value, MIN_ROW_OFFSET, rowOffsetMax(state),
             appStrings.mm,
             disabled: disabled)
         : Validators.sizeValidator(context, value, ceilInch(MIN_ROW_OFFSET),
             floorInch(rowOffsetMax(state)), appStrings.inch,
             disabled: disabled);
+    if (rangeError != null || disabled) return rangeError;
+    final length = rowLength(state);
+    final rows = numberOfRowsFor(state);
+    final laminateLength = state.laminateLength;
+    if (length == null || rows == null || laminateLength == null) return null;
+    final offset = parseSize(state, value);
+    if (maxMinimumLaminateLengthExact(length, laminateLength, offset, rows) < MIN_MIN_LENGTH) {
+      return appStrings.incorrect_value;
+    }
+    return null;
   }
 
   String? minimumLaminateLengthValidator(
       BuildContext context, CalculateState state, String value) {
     final appStrings = AppStrings.of(context);
     final disabled = minimumLaminateLengthValidatorDisabled(state);
-    return state.system == MeasurementSystem.metric
+    final rangeError = state.system == MeasurementSystem.metric
         ? Validators.sizeValidator(context, value, MIN_MIN_LENGTH, minimumLaminateLengthMax(state),
             appStrings.mm,
             disabled: disabled)
         : Validators.sizeValidator(context, value, ceilInch(MIN_MIN_LENGTH),
             floorInch(minimumLaminateLengthMax(state)), appStrings.inch,
             disabled: disabled);
+    if (rangeError != null || disabled) return rangeError;
+    final length = rowLength(state);
+    final rows = numberOfRowsFor(state);
+    final laminateLength = state.laminateLength;
+    final offset = effectiveRowOffset(state);
+    if (length == null || rows == null || laminateLength == null || offset == null) return null;
+    // Feasibility is not monotone in the minimum length, so a value inside
+    // the min/max range can still be impossible to lay.
+    if (!exactOffsetFeasible(length, laminateLength, offset, parseSize(state, value), rows)) {
+      return appStrings.incorrect_value;
+    }
+    return null;
   }
 
   int parseSize(CalculateState state, String value) => state.system == MeasurementSystem.metric
@@ -80,15 +102,25 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     final rowOffsetValue = rowOffsetController.text.trim();
     final minimumLaminateLengthValue = minimumLaminateLengthController.text.trim();
 
-    if (indentFromWallValue.isEmpty ||
-        rowOffsetValue.isEmpty ||
-        minimumLaminateLengthValue.isEmpty) {
+    if (indentFromWallValue.isEmpty || minimumLaminateLengthValue.isEmpty) {
+      return false;
+    }
+    if (state.offsetMode == OffsetMode.exact &&
+        (rowOffsetValue.isEmpty || rowOffsetValidator(context, state, rowOffsetValue) != null)) {
       return false;
     }
 
     return indentFromWallValidator(context, state, indentFromWallValue) == null &&
-        rowOffsetValidator(context, state, rowOffsetValue) == null &&
         minimumLaminateLengthValidator(context, state, minimumLaminateLengthValue) == null;
+  }
+
+  String offsetValueText(BuildContext context, CalculateState state) {
+    final appStrings = AppStrings.of(context);
+    final offset = effectiveRowOffset(state);
+    if (offset == null) return '';
+    return state.system == MeasurementSystem.metric
+        ? '= $offset ${appStrings.mm}'
+        : '= ${(offset / MM_PER_INCH).toStringAsFixed(1)} ${appStrings.inch}';
   }
 
   Widget titleText(String title, IconData icon) {
@@ -112,37 +144,58 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     return (along * 1000 - indentFromWall * 2).toInt();
   }
 
+  int? numberOfRowsFor(CalculateState state) {
+    final across = state.direction == Direction.length ? state.roomWidth : state.roomLength;
+    final laminateWidth = state.laminateWidth;
+    final indentFromWall = state.indentFromWall;
+    if (across == null || laminateWidth == null || indentFromWall == null) return null;
+    return ((across * 1000 - indentFromWall * 2) / laminateWidth).ceil();
+  }
+
+  // The exact offset in mm: derived from the plank length for the fraction
+  // modes, entered by the user in the exact mode.
+  int? effectiveRowOffset(CalculateState state) {
+    final divisor = state.offsetMode.divisor;
+    if (divisor == null) return state.rowOffset;
+    final laminateLength = state.laminateLength;
+    if (laminateLength == null) return null;
+    return (laminateLength / divisor).round();
+  }
+
   int rowOffsetMax(CalculateState state) {
     final laminateLength = state.laminateLength;
     if (laminateLength == null) return 0;
-    final length = rowLength(state);
-    if (length == null) return laminateLength ~/ 2;
-    return maxRowOffset(length, laminateLength, MIN_MIN_LENGTH);
+    return laminateLength ~/ 2;
   }
 
   int minimumLaminateLengthMax(CalculateState state) {
     final laminateLength = state.laminateLength;
-    final rowOffset = state.rowOffset;
+    final rowOffset = effectiveRowOffset(state);
     final length = rowLength(state);
+    final rows = numberOfRowsFor(state);
 
-    if (laminateLength == null || rowOffset == null || length == null) {
+    if (laminateLength == null || rowOffset == null || length == null || rows == null) {
       return 0;
     }
-    return maxMinimumLaminateLength(length, laminateLength, rowOffset);
+    return maxMinimumLaminateLengthExact(length, laminateLength, rowOffset, rows);
   }
 
   bool minimumLaminateLengthValidatorDisabled(CalculateState state) {
-    final rowOffset = state.rowOffset;
+    final rowOffset = effectiveRowOffset(state);
     if (state.roomLength == null ||
         state.roomWidth == null ||
         state.laminateLength == null ||
+        state.laminateWidth == null ||
         state.indentFromWall == null ||
         rowOffset == null) {
       return true;
     }
-    // While the row offset itself is out of range its dependent bounds are
-    // meaningless, so skip the min/max check until the offset is fixed.
-    return rowOffset < MIN_ROW_OFFSET || rowOffset > rowOffsetMax(state);
+    // While the offset itself is out of range, or no minimum length works at
+    // all for this offset, the min/max bounds are meaningless, so skip the
+    // check (the final calculation reports infeasible configurations).
+    return rowOffset < MIN_ROW_OFFSET ||
+        rowOffset > rowOffsetMax(state) ||
+        minimumLaminateLengthMax(state) < MIN_MIN_LENGTH;
   }
 
   @override
@@ -202,7 +255,9 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                               child: AppTextFormField(
                                 controller: indentFromWallController,
                                 focusNode: indentFromWallFocusNode,
-                                nextFocusNode: rowOffsetFocusNode,
+                                nextFocusNode: state.offsetMode == OffsetMode.exact
+                                    ? rowOffsetFocusNode
+                                    : minimumLaminateLengthFocusNode,
                                 labelText: state.system == MeasurementSystem.metric
                                     ? appStrings.expansion_gap_mm
                                     : appStrings.expansion_gap_in,
@@ -215,26 +270,66 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                             ),
                           ],
                         ),
+                        SizedBox(height: 16),
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: AppTextFormField(
-                                controller: rowOffsetController,
-                                focusNode: rowOffsetFocusNode,
-                                nextFocusNode: minimumLaminateLengthFocusNode,
-                                labelText: state.system == MeasurementSystem.metric
-                                    ? appStrings.joint_offset_mm
-                                    : appStrings.joint_offset_in,
-                                validator: (value) =>
-                                    rowOffsetValidator(context, state, value ?? ''),
-                                callback: (value) => context
-                                    .read<CalculateCubit>()
-                                    .setRowOffset(parseSize(state, value)),
-                              ),
+                            Text(
+                              appStrings.joint_offset,
+                              style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 16),
                             ),
                           ],
                         ),
+                        SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: SegmentedButton<OffsetMode>(
+                            segments: [
+                              ButtonSegment(value: OffsetMode.half, label: Text('1/2')),
+                              ButtonSegment(value: OffsetMode.third, label: Text('1/3')),
+                              ButtonSegment(value: OffsetMode.quarter, label: Text('1/4')),
+                              ButtonSegment(
+                                value: OffsetMode.exact,
+                                label: Text(appStrings.exact_offset),
+                              ),
+                            ],
+                            selected: {state.offsetMode},
+                            onSelectionChanged: (selection) =>
+                                context.read<CalculateCubit>().setOffsetMode(selection.first),
+                          ),
+                        ),
+                        if (state.offsetMode == OffsetMode.exact)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: AppTextFormField(
+                                  controller: rowOffsetController,
+                                  focusNode: rowOffsetFocusNode,
+                                  nextFocusNode: minimumLaminateLengthFocusNode,
+                                  labelText: state.system == MeasurementSystem.metric
+                                      ? appStrings.joint_offset_mm
+                                      : appStrings.joint_offset_in,
+                                  validator: (value) =>
+                                      rowOffsetValidator(context, state, value ?? ''),
+                                  callback: (value) => context
+                                      .read<CalculateCubit>()
+                                      .setRowOffset(parseSize(state, value)),
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Padding(
+                            padding: EdgeInsets.only(top: 8),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                offsetValueText(context, state),
+                                style:
+                                    TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 14),
+                              ),
+                            ),
+                          ),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -278,7 +373,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                   final laminateWidth = state.laminateWidth;
                                   final quantityPerPack = state.quantityPerPack;
                                   final indentFromWall = state.indentFromWall;
-                                  final rowOffset = state.rowOffset;
+                                  final rowOffset = effectiveRowOffset(state);
                                   final minimumLaminateLength = state.minimumLaminateLength;
 
                                   if (roomLength != null &&

@@ -44,6 +44,10 @@ class CalculateCubit extends Cubit<CalculateState> {
     emit(state.copyWith(direction: direction));
   }
 
+  void setOffsetMode(OffsetMode offsetMode) {
+    emit(state.copyWith(offsetMode: offsetMode));
+  }
+
   void setMeasurementSystem(MeasurementSystem system) {
     emit(state.copyWith(system: system));
   }

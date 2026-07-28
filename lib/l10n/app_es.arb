@@ -21,6 +21,8 @@
     "along_length": "A lo largo",
     "along_width": "A lo ancho",
     "expansion_gap_mm": "Junta de dilatación (mm)",
+    "joint_offset": "Desfase de juntas",
+    "exact_offset": "exacto",
     "joint_offset_mm": "Desplazamiento de juntas (mm)",
     "minimal_piece_length": "Longitud mínima del panel (mm)",
     "expansion_gap_in": "Junta de dilatación (in)",

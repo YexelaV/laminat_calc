@@ -21,6 +21,8 @@
     "along_length": "Längs",
     "along_width": "Quer",
     "expansion_gap_mm": "Wandabstand (mm)",
+    "joint_offset": "Fugenversatz",
+    "exact_offset": "genau",
     "joint_offset_mm": "Fugenversatz (mm)",
     "minimal_piece_length": "Minimale Paneellänge (mm)",
     "expansion_gap_in": "Wandabstand (in)",

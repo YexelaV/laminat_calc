@@ -75,6 +75,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expansion_gap_mm => 'Wandabstand (mm)';
 
   @override
+  String get joint_offset => 'Fugenversatz';
+
+  @override
+  String get exact_offset => 'genau';
+
+  @override
   String get joint_offset_mm => 'Fugenversatz (mm)';
 
   @override
