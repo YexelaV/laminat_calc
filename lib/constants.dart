@@ -1,7 +1,3 @@
-const MIN_LENGTH = 0.5; //m
-const MAX_LENGTH = 24; //m
-const MIN_WIDTH = 0.5; //m
-const MAX_WIDTH = 16; //m
 const MIN_ROOM_MM = 500;
 const MAX_LENGTH_MM = 24000;
 const MAX_WIDTH_MM = 16000;

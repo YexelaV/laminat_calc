@@ -14,7 +14,7 @@ A Flutter app that calculates how much laminate flooring you need for a room and
 - Metric and imperial measurement systems (millimeters or feet/inches)
 - Visual laying scheme with plank numbering
 - Export of the laying scheme to PDF and sharing
-- Language selection on first launch (persisted): English, Russian, German, Spanish, French, Portuguese, Chinese
+- Language selection on first launch (persisted): English, Russian, German, Spanish, French, Italian, Polish, Portuguese, Turkish, Chinese
 
 ## How the calculation works
 
@@ -35,10 +35,14 @@ lib/
   pages/              # Screens: language selection, parameters input, result, laying scheme
   router/             # auto_route navigation
   di/                 # get_it / injectable dependency injection
-  l10n/               # Localization (en, ru, de, es, fr, pt, zh)
+  l10n/               # Localization (ru template, plus en, de, es, fr, it, pl, pt, tr, zh)
   utils/, widgets/    # Unit conversion, form validators, shared widgets
 test/
-  stress_test.dart    # Randomized stress test of algorithm invariants
+  stress_test.dart       # Randomized stress test of algorithm invariants
+  row_geometry_test.dart # The geometry the validators derive must match what the algorithm lays out
+  l10n_test.dart         # .arb key parity, CLDR plural categories, unit-label collisions
+  golden_test.dart       # Rendered result and scheme screens, plural forms, language picker
+  goldens/               # Reference images for the golden tests
 ```
 
 ## Tech stack
@@ -51,9 +55,18 @@ Flutter, flutter_bloc, auto_route, get_it + injectable, pdf, share_plus, shared_
 flutter pub get
 flutter run
 
-# Regenerate code (routes, DI, localization)
+# Regenerate code (routes, DI)
 flutter pub run build_runner build --delete-conflicting-outputs
 
-# Run the algorithm stress test
+# Regenerate localizations (settings come from l10n.yaml, so pass no arguments)
+flutter gen-l10n
+
+# Run every test
+flutter test
+
+# Update the reference images after an intentional visual change
+flutter test --update-goldens test/golden_test.dart
+
+# The stress test also runs standalone, without the Flutter test harness
 dart test/stress_test.dart
 ```

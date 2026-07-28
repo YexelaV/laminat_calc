@@ -6,3 +6,7 @@ iOS
 .flutter*
 .idea
 build
+*.iml
+.DS_Store
+# Diff images written by a failing golden test.
+test/failures/

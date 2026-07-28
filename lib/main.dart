@@ -18,15 +18,15 @@ void main() async {
 class MyApp extends StatefulWidget {
   final String? savedLocaleCode;
 
-  MyApp({Key? key, this.savedLocaleCode}) : super(key: key);
+  const MyApp({super.key, required this.savedLocaleCode});
 
   @override
-  _MyAppState createState() => _MyAppState();
+  MyAppState createState() => MyAppState();
 
-  static _MyAppState? of(BuildContext context) => context.findAncestorStateOfType<_MyAppState>();
+  static MyAppState? of(BuildContext context) => context.findAncestorStateOfType<MyAppState>();
 }
 
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   final _appRouter = AppRouter();
   Locale? _locale;
 
@@ -61,15 +61,7 @@ class _MyAppState extends State<MyApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       locale: _locale,
-      supportedLocales: const [
-        Locale('ru', ''),
-        Locale('en', ''),
-        Locale('de', ''),
-        Locale('es', ''),
-        Locale('fr', ''),
-        Locale('pt', ''),
-        Locale('zh', ''),
-      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       localeResolutionCallback: (deviceLocale, supportedLocales) {
         if (_locale != null) {
           return _locale;

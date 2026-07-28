@@ -1,24 +1,14 @@
 name: floor_calculator
-description: A new flutter module project.
+description: Laminate flooring layout calculator.
 
-# The following defines the version and build number for your application.
-# A version number is three numbers separated by dots, like 1.2.43
-# followed by an optional build number separated by a +.
-# Both the version and the builder number may be overridden in flutter
-# build by specifying --build-name and --build-number, respectively.
-# In Android, build-name is used as versionName while build-number used as versionCode.
-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-# In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
-# Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-#
-# This version is used _only_ for the Runner app, which is used if you just do
-# a `flutter run` or a `flutter make-host-app-editable`. It has no impact
-# on any other native host app that you embed your Flutter project into.
-version: 1.5.0+0
+# The single source of truth for the app version: android/app/build.gradle reads
+# the build number as versionCode and the name as versionName. Google Play
+# rejects an upload whose versionCode is not higher than the last published one,
+# so the build number must be bumped for every release.
+version: 1.6.0+14
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: ">=2.18.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -32,14 +22,11 @@ dependencies:
   injectable: 2.1.0
   get_it: 7.6.0
   pdf: ^3.11.0
-  archive: ^4.0.0
   path_provider: ^2.1.5
   equatable: ^2.0.5
   intl: 0.20.2
-  share_plus: ^4.5.3
-  cross_file: ^0.3.3
+  share_plus: ^11.1.0
   shared_preferences: ^2.5.3
-  url_launcher: ^6.3.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -51,14 +38,7 @@ dev_dependencies:
   auto_route_generator: ^5.0.1
   build_runner:
   injectable_generator: 2.1.0
-
-flutter_gen:
-  # settings
-  output: lib/gen/
-  line_length: 100
-  # assets
-  assets:
-    enabled: true
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

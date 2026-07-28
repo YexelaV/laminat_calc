@@ -9,8 +9,11 @@ import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
 import 'app_localizations_fr.dart';
+import 'app_localizations_it.dart';
+import 'app_localizations_pl.dart';
 import 'app_localizations_pt.dart';
 import 'app_localizations_ru.dart';
+import 'app_localizations_tr.dart';
 import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
@@ -103,8 +106,11 @@ abstract class AppLocalizations {
     Locale('en'),
     Locale('es'),
     Locale('fr'),
+    Locale('it'),
+    Locale('pl'),
     Locale('pt'),
     Locale('ru'),
+    Locale('tr'),
     Locale('zh')
   ];
 
@@ -330,41 +336,17 @@ abstract class AppLocalizations {
   /// **'Варианты укладки'**
   String get laying_variants;
 
-  /// No description provided for @panel_1.
+  /// No description provided for @panels.
   ///
   /// In ru, this message translates to:
-  /// **'панель'**
-  String get panel_1;
-
-  /// No description provided for @panel_2_3_4.
-  ///
-  /// In ru, this message translates to:
-  /// **'панели'**
-  String get panel_2_3_4;
-
-  /// No description provided for @panel_more.
-  ///
-  /// In ru, this message translates to:
-  /// **'панелей'**
-  String get panel_more;
+  /// **'{count, plural, one{панель} few{панели} many{панелей} other{панели}}'**
+  String panels(int count);
 
   /// No description provided for @laying_scheme.
   ///
   /// In ru, this message translates to:
   /// **'Схема укладки'**
   String get laying_scheme;
-
-  /// No description provided for @english.
-  ///
-  /// In ru, this message translates to:
-  /// **'English'**
-  String get english;
-
-  /// No description provided for @russian.
-  ///
-  /// In ru, this message translates to:
-  /// **'Русский'**
-  String get russian;
 
   /// No description provided for @next.
   ///
@@ -394,8 +376,11 @@ class _AppLocalizationsDelegate
         'en',
         'es',
         'fr',
+        'it',
+        'pl',
         'pt',
         'ru',
+        'tr',
         'zh'
       ].contains(locale.languageCode);
 
@@ -414,10 +399,16 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEs();
     case 'fr':
       return AppLocalizationsFr();
+    case 'it':
+      return AppLocalizationsIt();
+    case 'pl':
+      return AppLocalizationsPl();
     case 'pt':
       return AppLocalizationsPt();
     case 'ru':
       return AppLocalizationsRu();
+    case 'tr':
+      return AppLocalizationsTr();
     case 'zh':
       return AppLocalizationsZh();
   }

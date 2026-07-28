@@ -45,7 +45,7 @@ class Line extends Equatable {
   final int number;
   final List<Plank> planks;
 
-  Line(this.number, this.planks);
+  const Line(this.number, this.planks);
 
   @override
   List<Object> get props => [number, planks];
@@ -57,15 +57,13 @@ class Result extends Equatable {
   final List<Plank> pieces = [];
   final List<Plank> trash = [];
   final int laminateLength;
-  final int laminateWidth;
-  final double roomLength;
-  final double roomWidth;
-  final quantityPerPack;
+  final int roomLength;
+  final int roomWidth;
+  final int quantityPerPack;
   final Direction direction;
 
   Result(
     this.laminateLength,
-    this.laminateWidth,
     this.roomLength,
     this.roomWidth,
     this.quantityPerPack,
@@ -73,7 +71,7 @@ class Result extends Equatable {
     List<Line> lines,
     List<Plank> pieces,
     List<Plank> trash, {
-    this.direction = Direction.length,
+    required this.direction,
   }) {
     this.lines.addAll(lines);
     this.pieces.addAll(pieces);

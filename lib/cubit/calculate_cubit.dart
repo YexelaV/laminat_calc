@@ -8,11 +8,11 @@ import 'calculate_state.dart';
 class CalculateCubit extends Cubit<CalculateState> {
   CalculateCubit() : super(CalculateState());
 
-  void setRoomLength(double roomLength) {
+  void setRoomLength(int roomLength) {
     emit(state.copyWith(roomLength: roomLength));
   }
 
-  void setRoomWidth(double roomWidth) {
+  void setRoomWidth(int roomWidth) {
     emit(state.copyWith(roomWidth: roomWidth));
   }
 

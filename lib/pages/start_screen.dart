@@ -20,14 +20,17 @@ const _languages = [
   _Language('es', 'assets/es.svg', 'Español'),
   _Language('fr', 'assets/fr.svg', 'Français'),
   _Language('pt', 'assets/pt.svg', 'Português'),
+  _Language('pl', 'assets/pl.svg', 'Polski'),
+  _Language('it', 'assets/it.svg', 'Italiano'),
+  _Language('tr', 'assets/tr.svg', 'Türkçe'),
   _Language('zh', 'assets/cn.svg', '中文'),
 ];
 
 class StartScreen extends StatefulWidget {
-  StartScreen({Key? key}) : super(key: key);
+  const StartScreen({super.key});
 
   @override
-  _StartScreenState createState() => _StartScreenState();
+  State<StartScreen> createState() => _StartScreenState();
 }
 
 class _StartScreenState extends State<StartScreen> {
@@ -79,7 +82,7 @@ class _StartScreenState extends State<StartScreen> {
                           ),
                           borderRadius: BorderRadius.circular(20.0),
                           color: lang.code == selected
-                              ? Colors.blue.withOpacity(0.15)
+                              ? Colors.blue.withValues(alpha: 0.15)
                               : Colors.black12,
                         ),
                         child: Column(
@@ -113,13 +116,14 @@ class _StartScreenState extends State<StartScreen> {
                   ),
                 ),
                 onPressed: () async {
+                  final router = context.router;
                   final code = _selectedCode ?? _detectedCode;
                   if (code != null) {
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setString(LOCALE_PREF_KEY, code);
                   }
                   if (!mounted) return;
-                  context.router.replace(RoomAndLaminateParametersRoute());
+                  router.replace(RoomAndLaminateParametersRoute());
                 },
               ),
             ],

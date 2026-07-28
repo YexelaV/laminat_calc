@@ -120,22 +120,20 @@ class AppLocalizationsRu extends AppLocalizations {
   String get laying_variants => 'Варианты укладки';
 
   @override
-  String get panel_1 => 'панель';
-
-  @override
-  String get panel_2_3_4 => 'панели';
-
-  @override
-  String get panel_more => 'панелей';
+  String panels(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'панели',
+      many: 'панелей',
+      few: 'панели',
+      one: 'панель',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get laying_scheme => 'Схема укладки';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get russian => 'Русский';
 
   @override
   String get next => 'Далее';

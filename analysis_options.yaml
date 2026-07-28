@@ -1,0 +1,12 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - lib/**/*.g.dart
+    - lib/l10n/gen/**
+
+linter:
+  rules:
+    # The dimension limits and unit factors are SCREAMING_CAPS throughout;
+    # renaming them is churn across every call site with no behaviour change.
+    constant_identifier_names: false

@@ -23,10 +23,10 @@
     "expansion_gap_mm": "Junta de dilatación (mm)",
     "joint_offset": "Desfase de juntas",
     "exact_offset": "exacto",
-    "joint_offset_mm": "Desplazamiento de juntas (mm)",
+    "joint_offset_mm": "Desfase de juntas (mm)",
     "minimal_piece_length": "Longitud mínima del panel (mm)",
     "expansion_gap_in": "Junta de dilatación (in)",
-    "joint_offset_in": "Desplazamiento de juntas (in)",
+    "joint_offset_in": "Desfase de juntas (in)",
     "minimal_piece_length_in": "Longitud mínima del panel (in)",
     "required_field": "Campo obligatorio",
     "incorrect_value": "Valor incorrecto",
@@ -36,12 +36,8 @@
     "result": "Resultado del cálculo",
     "packages_required": "Paquetes necesarios",
     "laying_variants": "Variantes de instalación",
-    "panel_1": "paneles",
-    "panel_2_3_4": "paneles",
-    "panel_more": "paneles",
+    "panels": "{count, plural, one{panel} other{paneles}}",
     "laying_scheme": "Esquema de instalación",
-    "english": "English",
-    "russian": "Русский",
     "next": "Siguiente",
-    "no_laying_variants": "No es posible la instalación con estos parámetros. Intente cambiar el desplazamiento de juntas o la longitud mínima del panel"
+    "no_laying_variants": "No es posible la instalación con estos parámetros. Intente cambiar el desfase de juntas o la longitud mínima del panel"
 }

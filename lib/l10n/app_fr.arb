@@ -36,12 +36,8 @@
     "result": "Résultat du calcul",
     "packages_required": "Paquets nécessaires",
     "laying_variants": "Variantes de pose",
-    "panel_1": "lames",
-    "panel_2_3_4": "lames",
-    "panel_more": "lames",
+    "panels": "{count, plural, one{lame} other{lames}}",
     "laying_scheme": "Plan de pose",
-    "english": "English",
-    "russian": "Русский",
     "next": "Suivant",
     "no_laying_variants": "Aucune pose n'est possible avec ces paramètres. Essayez de modifier le décalage des joints ou la longueur minimale de lame"
 }

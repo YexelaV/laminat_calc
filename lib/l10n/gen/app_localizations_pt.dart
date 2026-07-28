@@ -75,13 +75,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get expansion_gap_mm => 'Junta de dilatação (mm)';
 
   @override
-  String get joint_offset => 'Desalinhamento das juntas';
+  String get joint_offset => 'Defasagem das juntas';
 
   @override
   String get exact_offset => 'exato';
 
   @override
-  String get joint_offset_mm => 'Desalinhamento das juntas (mm)';
+  String get joint_offset_mm => 'Defasagem das juntas (mm)';
 
   @override
   String get minimal_piece_length => 'Comprimento mínimo da régua (mm)';
@@ -90,7 +90,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get expansion_gap_in => 'Junta de dilatação (in)';
 
   @override
-  String get joint_offset_in => 'Desalinhamento das juntas (in)';
+  String get joint_offset_in => 'Defasagem das juntas (in)';
 
   @override
   String get minimal_piece_length_in => 'Comprimento mínimo da régua (in)';
@@ -120,27 +120,23 @@ class AppLocalizationsPt extends AppLocalizations {
   String get laying_variants => 'Variantes de instalação';
 
   @override
-  String get panel_1 => 'réguas';
-
-  @override
-  String get panel_2_3_4 => 'réguas';
-
-  @override
-  String get panel_more => 'réguas';
+  String panels(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'réguas',
+      one: 'régua',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get laying_scheme => 'Esquema de instalação';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get russian => 'Русский';
 
   @override
   String get next => 'Avançar';
 
   @override
   String get no_laying_variants =>
-      'Não é possível instalar com esses parâmetros. Tente alterar o desalinhamento das juntas ou o comprimento mínimo da régua';
+      'Não é possível instalar com esses parâmetros. Tente alterar a defasagem das juntas ou o comprimento mínimo da régua';
 }

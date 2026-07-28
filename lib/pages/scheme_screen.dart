@@ -5,7 +5,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
 import '../cubit/calculate_cubit.dart';
 import '../di/get_it.dart';
 import '../l10n/app_localizations.dart';
@@ -16,7 +15,7 @@ import '../utils/units.dart';
 class SchemeScreen extends StatelessWidget {
   final Result result;
   final int number;
-  SchemeScreen(this.result, this.number);
+  const SchemeScreen(this.result, this.number, {super.key});
 
   MeasurementSystem get system => getIt.get<CalculateCubit>().state.system;
 
@@ -25,9 +24,9 @@ class SchemeScreen extends StatelessWidget {
 
   List<Widget> drawFloor() {
     List<Widget> res = [];
-    result.lines.forEach((line) {
+    for (final line in result.lines) {
       List<Widget> children = [
-        Container(
+        SizedBox(
           height: line.planks[0].width / 20,
           width: 24,
           child: FittedBox(
@@ -37,14 +36,14 @@ class SchemeScreen extends StatelessWidget {
           ),
         ),
       ];
-      line.planks.forEach(((plank) {
+      for (final plank in line.planks) {
         children.add(Container(
           height: plank.width / 10,
           width: plank.length / 10,
           decoration: BoxDecoration(border: Border.all(color: Colors.black)),
           child: Row(
             children: [
-              Container(
+              SizedBox(
                 height: plank.width / 12,
                 width: plank.length / 30,
                 child: FittedBox(
@@ -55,7 +54,7 @@ class SchemeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
+              SizedBox(
                 height: plank.width / 12,
                 width: plank.length / 15 - 2,
                 child: FittedBox(
@@ -64,23 +63,23 @@ class SchemeScreen extends StatelessWidget {
                       ? Text(
                           ' ${sizeLabel(plank.length)}',
                         )
-                      : Container(),
+                      : const SizedBox.shrink(),
                 ),
               ),
             ],
           ),
         ));
-      }));
+      }
       res.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: children));
-    });
+    }
     return res;
   }
 
   Future<void> shareResult() async {
-    double koefLength = min(MAX_LENGTH / result.roomLength, MAX_WIDTH / result.roomWidth);
+    double koefLength = min(MAX_LENGTH_MM / result.roomLength, MAX_WIDTH_MM / result.roomWidth);
     double koefWidth = koefLength;
     List<pw.Widget> pdfResult = [];
-    result.lines.forEach((line) {
+    for (final line in result.lines) {
       List<pw.Widget> pdfChildren = [
         pw.Container(
           height: line.planks[0].width / KOEF_COMPRESS * koefWidth * 0.5,
@@ -92,7 +91,7 @@ class SchemeScreen extends StatelessWidget {
           ),
         ),
       ];
-      line.planks.forEach(((plank) {
+      for (final plank in line.planks) {
         pdfChildren.add(pw.Container(
           height: plank.width / KOEF_COMPRESS * koefWidth,
           width: plank.length / KOEF_COMPRESS * koefLength,
@@ -125,9 +124,9 @@ class SchemeScreen extends StatelessWidget {
             ],
           ),
         ));
-      }));
+      }
       pdfResult.add(pw.Row(mainAxisSize: pw.MainAxisSize.min, children: pdfChildren));
-    });
+    }
     final pdf = pw.Document();
     pdf.addPage(pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -147,9 +146,11 @@ class SchemeScreen extends StatelessWidget {
     final file = File('$path/laminat.pdf$now');
     await file.writeAsBytes(await pdf.save());
     final xFile = XFile(file.path, mimeType: 'application/pdf');
-    await Share.shareXFiles([xFile], text: "scheme №$number");
+    await SharePlus.instance
+        .share(ShareParams(files: [xFile], text: "scheme №$number"));
   }
 
+  @override
   Widget build(BuildContext context) {
     final scheme = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

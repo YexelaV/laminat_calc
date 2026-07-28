@@ -20,9 +20,6 @@ class Validators {
         return AppStrings.of(context).incorrect_value;
       }
     }
-    if (result != null) {
-      return result;
-    }
     if (double.parse(formattedValue) > maxValue) {
       return ("${AppStrings.of(context).maximum} $maxValue $measure");
     }

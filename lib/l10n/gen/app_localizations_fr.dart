@@ -120,22 +120,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get laying_variants => 'Variantes de pose';
 
   @override
-  String get panel_1 => 'lames';
-
-  @override
-  String get panel_2_3_4 => 'lames';
-
-  @override
-  String get panel_more => 'lames';
+  String panels(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'lames',
+      one: 'lame',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get laying_scheme => 'Plan de pose';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get russian => 'Русский';
 
   @override
   String get next => 'Suivant';

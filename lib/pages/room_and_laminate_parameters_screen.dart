@@ -12,6 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class RoomAndLaminateParametersScreen extends StatefulWidget {
+  const RoomAndLaminateParametersScreen({super.key});
+
   @override
   RoomAndLaminateParametersScreenState createState() => RoomAndLaminateParametersScreenState();
 }
@@ -57,20 +59,19 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
   double? _parse(TextEditingController controller) =>
       double.tryParse(controller.text.trim().replaceAll(',', '.'));
 
-  // Rewrites field texts from the canonical state (meters/mm) so already
+  // Rewrites field texts from the canonical state (millimetres) so already
   // entered values survive a unit switch.
   void switchSystem(BuildContext context, MeasurementSystem system, CalculateState state) {
-    void setRoomField(
-        double? meters, TextEditingController main, TextEditingController inchPart) {
-      if (meters == null) {
+    void setRoomField(int? mm, TextEditingController main, TextEditingController inchPart) {
+      if (mm == null) {
         main.clear();
         inchPart.text = '0';
         return;
       }
       if (system == MeasurementSystem.metric) {
-        main.text = '${(meters * 1000).round()}';
+        main.text = '$mm';
       } else {
-        final totalInches = meters * 1000 / MM_PER_INCH;
+        final totalInches = mm / MM_PER_INCH;
         final feet = totalInches ~/ 12;
         main.text = '$feet';
         inchPart.text = (totalInches - feet * 12).toStringAsFixed(1);
@@ -96,12 +97,12 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     final lengthFeet = _parse(lengthController);
     final lengthInches = _parse(lengthInchController);
     if (lengthFeet != null && lengthInches != null) {
-      context.read<CalculateCubit>().setRoomLength(feetInchesToMeters(lengthFeet, lengthInches));
+      context.read<CalculateCubit>().setRoomLength(feetInchesToMm(lengthFeet, lengthInches));
     }
     final widthFeet = _parse(widthController);
     final widthInches = _parse(widthInchController);
     if (widthFeet != null && widthInches != null) {
-      context.read<CalculateCubit>().setRoomWidth(feetInchesToMeters(widthFeet, widthInches));
+      context.read<CalculateCubit>().setRoomWidth(feetInchesToMm(widthFeet, widthInches));
     }
   }
 
@@ -143,13 +144,13 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
       final widthInchValue = widthInchController.text.trim();
       if (lengthInchValue.isEmpty || widthInchValue.isEmpty) return false;
       lengthValid = Validators.sizeValidator(context, lengthValue, MIN_ROOM_FT,
-                  (MAX_LENGTH / M_PER_FOOT).floor(), appStrings.ft) ==
+                  maxWholeFeet(MAX_LENGTH_MM), appStrings.ft) ==
               null &&
           Validators.sizeValidator(
                   context, lengthInchValue, 0, MAX_INCHES_IN_FOOT, appStrings.inch) ==
               null;
       widthValid = Validators.sizeValidator(context, widthValue, MIN_ROOM_FT,
-                  (MAX_WIDTH / M_PER_FOOT).floor(), appStrings.ft) ==
+                  maxWholeFeet(MAX_WIDTH_MM), appStrings.ft) ==
               null &&
           Validators.sizeValidator(
                   context, widthInchValue, 0, MAX_INCHES_IN_FOOT, appStrings.inch) ==
@@ -189,7 +190,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
         SizedBox(height: 12),
         Text(
           title,
-          style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 16),
+          style: TextStyle(color: Colors.black.withValues(alpha: 0.8), fontSize: 16),
         ),
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(
@@ -287,7 +288,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                                 callback: (value) {
                                   context
                                       .read<CalculateCubit>()
-                                      .setRoomLength(int.parse(value) / 1000);
+                                      .setRoomLength(int.parse(value));
                                 },
                               ),
                             ),
@@ -303,7 +304,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                                 callback: (value) {
                                   context
                                       .read<CalculateCubit>()
-                                      .setRoomWidth(int.parse(value) / 1000);
+                                      .setRoomWidth(int.parse(value));
                                 },
                               ),
                             ),
@@ -317,7 +318,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                             inchController: lengthInchController,
                             inchFocusNode: lengthInchFocusNode,
                             nextFocusNode: widthFocusNode,
-                            maxFeet: (MAX_LENGTH / M_PER_FOOT).floor(),
+                            maxFeet: maxWholeFeet(MAX_LENGTH_MM),
                           ),
                           imperialRoomSize(
                             context,
@@ -327,7 +328,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                             inchController: widthInchController,
                             inchFocusNode: widthInchFocusNode,
                             nextFocusNode: laminateLengthFocusNode,
-                            maxFeet: (MAX_WIDTH / M_PER_FOOT).floor(),
+                            maxFeet: maxWholeFeet(MAX_WIDTH_MM),
                           ),
                         ],
                         SizedBox(height: 16),
@@ -413,6 +414,12 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                         ),
                         SizedBox(height: 30),
                         TextButton(
+                          onPressed: areAllFieldsValid(context, state.system)
+                              ? () {
+                                  FocusScope.of(context).unfocus();
+                                  context.router.push(LayingParametersRoute());
+                                }
+                              : null,
                           child: Container(
                               alignment: Alignment.center,
                               width: 140,
@@ -425,12 +432,6 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                                 AppStrings.of(context).next,
                                 style: TextStyle(color: Colors.white, fontSize: 18),
                               )),
-                          onPressed: areAllFieldsValid(context, state.system)
-                              ? () {
-                                  FocusScope.of(context).unfocus();
-                                  context.router.push(LayingParametersRoute());
-                                }
-                              : null,
                         )
                       ],
                     ),

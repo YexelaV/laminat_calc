@@ -81,7 +81,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get exact_offset => 'exacto';
 
   @override
-  String get joint_offset_mm => 'Desplazamiento de juntas (mm)';
+  String get joint_offset_mm => 'Desfase de juntas (mm)';
 
   @override
   String get minimal_piece_length => 'Longitud mínima del panel (mm)';
@@ -90,7 +90,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get expansion_gap_in => 'Junta de dilatación (in)';
 
   @override
-  String get joint_offset_in => 'Desplazamiento de juntas (in)';
+  String get joint_offset_in => 'Desfase de juntas (in)';
 
   @override
   String get minimal_piece_length_in => 'Longitud mínima del panel (in)';
@@ -120,27 +120,23 @@ class AppLocalizationsEs extends AppLocalizations {
   String get laying_variants => 'Variantes de instalación';
 
   @override
-  String get panel_1 => 'paneles';
-
-  @override
-  String get panel_2_3_4 => 'paneles';
-
-  @override
-  String get panel_more => 'paneles';
+  String panels(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'paneles',
+      one: 'panel',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get laying_scheme => 'Esquema de instalación';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get russian => 'Русский';
 
   @override
   String get next => 'Siguiente';
 
   @override
   String get no_laying_variants =>
-      'No es posible la instalación con estos parámetros. Intente cambiar el desplazamiento de juntas o la longitud mínima del panel';
+      'No es posible la instalación con estos parámetros. Intente cambiar el desfase de juntas o la longitud mínima del panel';
 }

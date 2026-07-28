@@ -111,7 +111,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calculate => 'Calculate';
 
   @override
-  String get result => 'Сalculation result';
+  String get result => 'Calculation result';
 
   @override
   String get packages_required => 'Packages required';
@@ -120,22 +120,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get laying_variants => 'Laying variants';
 
   @override
-  String get panel_1 => 'panels';
-
-  @override
-  String get panel_2_3_4 => 'panels';
-
-  @override
-  String get panel_more => 'panels';
+  String panels(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'panels',
+      one: 'panel',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get laying_scheme => 'Laying scheme';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get russian => 'Русский';
 
   @override
   String get next => 'Next';

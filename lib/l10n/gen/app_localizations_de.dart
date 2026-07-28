@@ -15,7 +15,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get mm => 'mm';
 
   @override
-  String get pcs => 'Stk';
+  String get pcs => 'Stk.';
 
   @override
   String get ft => 'ft';
@@ -72,7 +72,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get along_width => 'Quer';
 
   @override
-  String get expansion_gap_mm => 'Wandabstand (mm)';
+  String get expansion_gap_mm => 'Dehnungsfuge (mm)';
 
   @override
   String get joint_offset => 'Fugenversatz';
@@ -87,7 +87,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get minimal_piece_length => 'Minimale Paneellänge (mm)';
 
   @override
-  String get expansion_gap_in => 'Wandabstand (in)';
+  String get expansion_gap_in => 'Dehnungsfuge (in)';
 
   @override
   String get joint_offset_in => 'Fugenversatz (in)';
@@ -120,22 +120,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get laying_variants => 'Verlegevarianten';
 
   @override
-  String get panel_1 => 'Paneele';
-
-  @override
-  String get panel_2_3_4 => 'Paneele';
-
-  @override
-  String get panel_more => 'Paneele';
+  String panels(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Paneele',
+      one: 'Paneel',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get laying_scheme => 'Verlegeplan';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get russian => 'Русский';
 
   @override
   String get next => 'Weiter';

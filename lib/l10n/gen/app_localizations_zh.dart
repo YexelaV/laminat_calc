@@ -48,7 +48,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get width_in => '宽度（英寸）';
 
   @override
-  String get laminate => '地板';
+  String get laminate => '强化地板';
 
   @override
   String get length_mm => '长度（毫米）';
@@ -120,22 +120,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get laying_variants => '铺设方案';
 
   @override
-  String get panel_1 => '块';
-
-  @override
-  String get panel_2_3_4 => '块';
-
-  @override
-  String get panel_more => '块';
+  String panels(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '块',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get laying_scheme => '铺设图';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get russian => 'Русский';
 
   @override
   String get next => '下一步';

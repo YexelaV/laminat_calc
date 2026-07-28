@@ -1,7 +1,27 @@
 import 'models.dart';
 
-const FAIL = -1;
-const SUCCESS = 0;
+// All dimensions are in millimetres. The field validators and the calculation
+// itself must derive the row geometry from here and nowhere else: feasibility
+// is not monotone in the minimum plank length, so even a 1 mm disagreement
+// between them flips it.
+int rowLengthMm({
+  required int roomLength,
+  required int roomWidth,
+  required int indentFromWall,
+  required Direction direction,
+}) =>
+    (direction == Direction.length ? roomLength : roomWidth) - indentFromWall * 2;
+
+int numberOfRowsMm({
+  required int roomLength,
+  required int roomWidth,
+  required int indentFromWall,
+  required int laminateWidth,
+  required Direction direction,
+}) {
+  final across = direction == Direction.length ? roomWidth : roomLength;
+  return ((across - indentFromWall * 2) / laminateWidth).ceil();
+}
 
 // The exact-offset laying pattern is a staircase: each row's first plank is
 // exactly rowOffset shorter than the previous one; when the next step would
@@ -81,12 +101,11 @@ bool exactOffsetFeasible(int rowLength, int laminateLength, int rowOffset, int m
 }
 
 class Calculation {
-  final double roomLength;
-  final double roomWidth;
+  final int roomLength;
+  final int roomWidth;
   final int laminateLength;
   final int laminateWidth;
   final int planksInPack;
-  final double price;
   final int indentFromWall;
   final int minimumLaminateLength;
   final int rowOffset;
@@ -98,7 +117,6 @@ class Calculation {
     required this.laminateLength,
     required this.laminateWidth,
     required this.planksInPack,
-    required this.price,
     required this.indentFromWall,
     required this.minimumLaminateLength,
     required this.rowOffset,
@@ -113,6 +131,10 @@ class Calculation {
   // First plank length of the first row; the staircase pattern restarts
   // from this value.
   int _patternStart = 0;
+  // Length to cut off, set by the last successful findCut call.
+  int _cut = 0;
+  // Running plank counter; holds the total once the rows are laid.
+  int _plankCount = 0;
 
   bool check(Result result, int rowLength) {
     for (final line in result.lines) {
@@ -157,35 +179,37 @@ class Calculation {
     return true;
   }
 
-  List<Result> calculate() {
-    final actualLength = (roomLength * 1000).round() - indentFromWall * 2;
-    final actualWidth = (roomWidth * 1000).round() - indentFromWall * 2;
-    numberOfRows =
-        (direction == Direction.length ? actualWidth / laminateWidth : actualLength / laminateWidth)
-            .ceil();
+  int get rowLength => rowLengthMm(
+        roomLength: roomLength,
+        roomWidth: roomWidth,
+        indentFromWall: indentFromWall,
+        direction: direction,
+      );
 
-    final rowLength = direction == Direction.length ? actualLength : actualWidth;
+  List<Result> calculate() {
+    numberOfRows = numberOfRowsMm(
+      roomLength: roomLength,
+      roomWidth: roomWidth,
+      indentFromWall: indentFromWall,
+      laminateWidth: laminateWidth,
+      direction: direction,
+    );
+    final rowLength = this.rowLength;
 
     final result = <Result>[];
 
     for (final cutPieces in [false, true]) {
       for (final optimizePieces in [false, true]) {
-        final planksInFirstRow = calculateFirstRow(rowLength, optimizePieces: optimizePieces);
-        if (planksInFirstRow == FAIL) continue;
-        final totalPlanks = calculateRows(
-          planksInFirstRow,
-          rowLength,
-          cutPieces: cutPieces,
-          optimizePieces: optimizePieces,
-        );
-        if (totalPlanks == FAIL) continue;
+        if (!calculateFirstRow(rowLength, optimizePieces: optimizePieces)) continue;
+        if (!calculateRows(rowLength, cutPieces: cutPieces, optimizePieces: optimizePieces)) {
+          continue;
+        }
         result.add(Result(
           laminateLength,
-          laminateWidth,
           roomLength,
           roomWidth,
           planksInPack,
-          totalPlanks,
+          _plankCount,
           lines,
           pieces,
           trash,
@@ -226,47 +250,51 @@ class Calculation {
     }
   }
 
-  // Finds how much to cut off (diff) from a plank/piece of length `available`
-  // so that the resulting first plank of the row fits the exact staircase
-  // pattern. For the first row (prevFirstLength == null) the pattern start f0
-  // is searched from the top down; for subsequent rows the first length is
-  // fully determined by the pattern. With optimizePieces, prefers a cut that
-  // produces a reusable offcut (diff >= minimumLaminateLength).
-  int findCut(int available, int rowLength, int? prevFirstLength, bool optimizePieces) {
+  // Looks for how much to cut off a plank/piece of length `available` so that
+  // the resulting first plank of the row fits the exact staircase pattern, and
+  // reports whether such a cut exists; the amount lands in [_cut]. For the
+  // first row (prevFirstLength == null) the pattern start f0 is searched from
+  // the top down; for subsequent rows the first length is fully determined by
+  // the pattern. With optimizePieces, prefers a cut that produces a reusable
+  // offcut (_cut >= minimumLaminateLength).
+  bool findCut(int available, int rowLength, int? prevFirstLength, bool optimizePieces) {
     if (optimizePieces) {
-      final noCut = _searchDown(available, available, rowLength, prevFirstLength);
-      if (noCut == 0) return 0;
-      final reusable =
-          _searchDown(available - minimumLaminateLength, available, rowLength, prevFirstLength);
-      if (reusable != FAIL) return reusable;
+      if (_searchDown(available, available, rowLength, prevFirstLength) && _cut == 0) return true;
+      if (_searchDown(available - minimumLaminateLength, available, rowLength, prevFirstLength)) {
+        return true;
+      }
     }
     return _searchDown(available, available, rowLength, prevFirstLength);
   }
 
-  int _searchDown(int startLength, int available, int rowLength, int? prevFirstLength) {
+  bool _searchDown(int startLength, int available, int rowLength, int? prevFirstLength) {
     if (prevFirstLength != null) {
       var required = prevFirstLength - rowOffset;
       if (required < minimumLaminateLength) required = _patternStart;
-      if (required == prevFirstLength) return FAIL;
-      if (required > startLength || required < minimumLaminateLength) return FAIL;
-      if (_lastOf(required, rowLength) < minimumLaminateLength) return FAIL;
-      return available - required;
+      if (required == prevFirstLength) return false;
+      if (required > startLength || required < minimumLaminateLength) return false;
+      if (_lastOf(required, rowLength) < minimumLaminateLength) return false;
+      _cut = available - required;
+      return true;
     }
     for (var f0 = startLength; f0 >= minimumLaminateLength; f0--) {
-      if (_patternFeasible(f0, rowLength)) return available - f0;
+      if (_patternFeasible(f0, rowLength)) {
+        _cut = available - f0;
+        return true;
+      }
     }
-    return FAIL;
+    return false;
   }
 
-  int checkRow(int length, int rowLength, bool optimizePieces) {
+  bool checkRow(int length, int rowLength, bool optimizePieces) {
     return findCut(length, rowLength, null, optimizePieces);
   }
 
-  int checkPiece(int length, int rowLength, int prevFirstlaminateLength, bool optimizePieces) {
+  bool checkPiece(int length, int rowLength, int prevFirstlaminateLength, bool optimizePieces) {
     return findCut(length, rowLength, prevFirstlaminateLength, optimizePieces);
   }
 
-  int calculateFirstRow(
+  bool calculateFirstRow(
     int rowLength, {
     required bool optimizePieces,
   }) {
@@ -275,39 +303,38 @@ class Calculation {
     lines = [];
     pieces = [];
     var currentLength = 0;
-    int number = 0;
+    _plankCount = 0;
     if (laminateLength >= rowLength) {
       _patternStart = rowLength;
-      number++;
-      addPlank(number, rowLength, laminateWidth);
-      addPiece(number, laminateLength - rowLength, laminateWidth, hasRightLock: false);
+      _plankCount++;
+      addPlank(_plankCount, rowLength, laminateWidth);
+      addPiece(_plankCount, laminateLength - rowLength, laminateWidth, hasRightLock: false);
       lines.add(Line(0, planks));
-      return 1;
+      return true;
     }
-    final diff = checkRow(laminateLength, rowLength, optimizePieces);
-    if (diff == FAIL) return FAIL;
+    if (!checkRow(laminateLength, rowLength, optimizePieces)) return false;
+    final diff = _cut;
     final firstlaminateLength = laminateLength - diff;
     _patternStart = firstlaminateLength;
-    number++;
-    addPlank(number, firstlaminateLength, laminateWidth);
-    addPiece(number, diff, laminateWidth, hasRightLock: false);
+    _plankCount++;
+    addPlank(_plankCount, firstlaminateLength, laminateWidth);
+    addPiece(_plankCount, diff, laminateWidth, hasRightLock: false);
     currentLength += firstlaminateLength;
 
     while (currentLength + laminateLength < rowLength) {
       currentLength += laminateLength;
-      number++;
-      addPlank(number, laminateLength, laminateWidth);
+      _plankCount++;
+      addPlank(_plankCount, laminateLength, laminateWidth);
     }
     var lastlaminateLength = rowLength - currentLength;
-    number++;
-    addPlank(number, lastlaminateLength, laminateWidth);
-    addPiece(number, laminateLength - lastlaminateLength, laminateWidth, hasLeftLock: false);
+    _plankCount++;
+    addPlank(_plankCount, lastlaminateLength, laminateWidth);
+    addPiece(_plankCount, laminateLength - lastlaminateLength, laminateWidth, hasLeftLock: false);
     lines.add(Line(0, planks));
-    return number;
+    return true;
   }
 
-  int calculateRows(
-    int number,
+  bool calculateRows(
     int rowLength, {
     required bool cutPieces,
     required bool optimizePieces,
@@ -315,9 +342,9 @@ class Calculation {
     for (int i = 1; i < numberOfRows; i++) {
       planks = [];
       if (laminateLength >= rowLength) {
-        number++;
-        addPlank(number, rowLength, laminateWidth);
-        addPiece(number, laminateLength - rowLength, laminateWidth, hasRightLock: false);
+        _plankCount++;
+        addPlank(_plankCount, rowLength, laminateWidth);
+        addPiece(_plankCount, laminateLength - rowLength, laminateWidth, hasRightLock: false);
         lines.add(Line(i, planks));
         continue;
       }
@@ -325,16 +352,18 @@ class Calculation {
       final prevFirstlaminateLength = lines[i - 1].planks.first.length;
       var index = -1;
       var minDiff = laminateLength;
-      var diff;
       for (int i = 0; i < pieces.length; i++) {
         if (pieces[i].hasRightLock) {
-          diff = checkPiece(pieces[i].length, rowLength, prevFirstlaminateLength, optimizePieces);
+          if (!checkPiece(pieces[i].length, rowLength, prevFirstlaminateLength, optimizePieces)) {
+            continue;
+          }
+          final diff = _cut;
           if (diff == 0) {
             minDiff = 0;
             index = i;
             break;
           }
-          if (diff != FAIL && diff < minDiff && cutPieces) {
+          if (diff < minDiff && cutPieces) {
             minDiff = diff;
             index = i;
           }
@@ -355,19 +384,21 @@ class Calculation {
           pieces.removeAt(index);
         }
       } else {
-        var diff = checkPiece(laminateLength, rowLength, prevFirstlaminateLength, optimizePieces);
-        if (diff == FAIL) return FAIL;
-        var firstlaminateLength = laminateLength - diff;
+        if (!checkPiece(laminateLength, rowLength, prevFirstlaminateLength, optimizePieces)) {
+          return false;
+        }
+        final firstlaminateLength = laminateLength - _cut;
         currentLength += firstlaminateLength;
-        number++;
-        addPlank(number, firstlaminateLength, laminateWidth);
-        addPiece(number, laminateLength - firstlaminateLength, laminateWidth, hasRightLock: false);
+        _plankCount++;
+        addPlank(_plankCount, firstlaminateLength, laminateWidth);
+        addPiece(_plankCount, laminateLength - firstlaminateLength, laminateWidth,
+            hasRightLock: false);
       }
 
       while (currentLength + laminateLength < rowLength) {
         currentLength += laminateLength;
-        number++;
-        addPlank(number, laminateLength, laminateWidth);
+        _plankCount++;
+        addPlank(_plankCount, laminateLength, laminateWidth);
       }
 
       var lastlaminateLength = rowLength - currentLength;
@@ -404,31 +435,29 @@ class Calculation {
           pieces.removeAt(index);
         }
       } else {
-        number++;
-        addPiece(number, laminateLength - lastlaminateLength, laminateWidth, hasLeftLock: false);
-        addPlank(number, lastlaminateLength, laminateWidth);
+        _plankCount++;
+        addPiece(_plankCount, laminateLength - lastlaminateLength, laminateWidth,
+            hasLeftLock: false);
+        addPlank(_plankCount, lastlaminateLength, laminateWidth);
       }
 
       lines.add(Line(i, planks));
     }
     // The dimension across the rows: room width when laying along the
     // length, room length when laying along the width.
-    final acrossSize = (direction == Direction.length ? roomWidth : roomLength) * 1000;
-    final actualWidth = acrossSize.round() - indentFromWall * 2;
+    final acrossSize = direction == Direction.length ? roomWidth : roomLength;
+    final actualWidth = acrossSize - indentFromWall * 2;
     var newWidth = laminateWidth - (laminateWidth * lines.length - actualWidth);
     if (newWidth >= 50) {
-      lines[lines.length - 1].planks.forEach((plank) {
+      for (final plank in lines.last.planks) {
         plank.width = newWidth;
-      });
+      }
     } else {
       newWidth = ((newWidth + laminateWidth) ~/ 2);
-      lines[0].planks.forEach((plank) {
+      for (final plank in [...lines.first.planks, ...lines.last.planks]) {
         plank.width = newWidth;
-      });
-      lines[lines.length - 1].planks.forEach((plank) {
-        plank.width = newWidth;
-      });
+      }
     }
-    return number;
+    return true;
   }
 }

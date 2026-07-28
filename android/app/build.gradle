@@ -28,12 +28,12 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.floor_calculator.host"
         minSdkVersion 26
         targetSdkVersion 36
-        versionCode 13
-        versionName "1.5.0"
+        // Taken from the version in pubspec.yaml.
+        versionCode flutter.versionCode
+        versionName flutter.versionName
     }
 
    signingConfigs {

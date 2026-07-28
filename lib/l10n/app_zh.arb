@@ -12,7 +12,7 @@
     "width": "宽度",
     "length_in": "长度（英寸）",
     "width_in": "宽度（英寸）",
-    "laminate": "地板",
+    "laminate": "强化地板",
     "length_mm": "长度（毫米）",
     "width_mm": "宽度（毫米）",
     "pieces_per_package": "每包块数",
@@ -36,12 +36,8 @@
     "result": "计算结果",
     "packages_required": "所需包数",
     "laying_variants": "铺设方案",
-    "panel_1": "块",
-    "panel_2_3_4": "块",
-    "panel_more": "块",
+    "panels": "{count, plural, other{块}}",
     "laying_scheme": "铺设图",
-    "english": "English",
-    "russian": "Русский",
     "next": "下一步",
     "no_laying_variants": "无法按这些参数铺设。请尝试修改接缝错位或地板最短长度"
 }

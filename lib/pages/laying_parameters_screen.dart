@@ -14,6 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class LayingParametersScreen extends StatefulWidget {
+  const LayingParametersScreen({super.key});
+
   @override
   LayingParametersScreenState createState() => LayingParametersScreenState();
 }
@@ -138,18 +140,33 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
   }
 
   int? rowLength(CalculateState state) {
-    final along = state.direction == Direction.length ? state.roomLength : state.roomWidth;
+    final roomLength = state.roomLength;
+    final roomWidth = state.roomWidth;
     final indentFromWall = state.indentFromWall;
-    if (along == null || indentFromWall == null) return null;
-    return (along * 1000 - indentFromWall * 2).toInt();
+    if (roomLength == null || roomWidth == null || indentFromWall == null) return null;
+    return rowLengthMm(
+      roomLength: roomLength,
+      roomWidth: roomWidth,
+      indentFromWall: indentFromWall,
+      direction: state.direction,
+    );
   }
 
   int? numberOfRowsFor(CalculateState state) {
-    final across = state.direction == Direction.length ? state.roomWidth : state.roomLength;
+    final roomLength = state.roomLength;
+    final roomWidth = state.roomWidth;
     final laminateWidth = state.laminateWidth;
     final indentFromWall = state.indentFromWall;
-    if (across == null || laminateWidth == null || indentFromWall == null) return null;
-    return ((across * 1000 - indentFromWall * 2) / laminateWidth).ceil();
+    if (roomLength == null || roomWidth == null || laminateWidth == null || indentFromWall == null) {
+      return null;
+    }
+    return numberOfRowsMm(
+      roomLength: roomLength,
+      roomWidth: roomWidth,
+      indentFromWall: indentFromWall,
+      laminateWidth: laminateWidth,
+      direction: state.direction,
+    );
   }
 
   // The exact offset in mm: derived from the plank length for the fraction
@@ -225,7 +242,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                           children: [
                             Text(
                               appStrings.laying_direction,
-                              style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 16),
+                              style: TextStyle(color: Colors.black.withValues(alpha: 0.8), fontSize: 16),
                             ),
                           ],
                         ),
@@ -275,7 +292,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                           children: [
                             Text(
                               appStrings.joint_offset,
-                              style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 16),
+                              style: TextStyle(color: Colors.black.withValues(alpha: 0.8), fontSize: 16),
                             ),
                           ],
                         ),
@@ -326,7 +343,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                               child: Text(
                                 offsetValueText(context, state),
                                 style:
-                                    TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 14),
+                                    TextStyle(color: Colors.black.withValues(alpha: 0.6), fontSize: 14),
                               ),
                             ),
                           ),
@@ -351,19 +368,6 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                         ),
                         SizedBox(height: 30),
                         TextButton(
-                          child: Container(
-                              alignment: Alignment.center,
-                              width: 140,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                color:
-                                    areAllFieldsValid(context, state) ? Colors.blue : Colors.grey,
-                              ),
-                              child: Text(
-                                AppStrings.of(context).next,
-                                style: TextStyle(color: Colors.white, fontSize: 18),
-                              )),
                           onPressed: areAllFieldsValid(context, state)
                               ? () {
                                   FocusScope.of(context).unfocus();
@@ -390,7 +394,6 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                       laminateLength: laminateLength,
                                       laminateWidth: laminateWidth,
                                       planksInPack: quantityPerPack,
-                                      price: 0,
                                       indentFromWall: indentFromWall,
                                       minimumLaminateLength: minimumLaminateLength,
                                       rowOffset: rowOffset,
@@ -409,6 +412,19 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                   }
                                 }
                               : null,
+                          child: Container(
+                              alignment: Alignment.center,
+                              width: 140,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                color:
+                                    areAllFieldsValid(context, state) ? Colors.blue : Colors.grey,
+                              ),
+                              child: Text(
+                                AppStrings.of(context).next,
+                                style: TextStyle(color: Colors.white, fontSize: 18),
+                              )),
                         )
                       ],
                     ),

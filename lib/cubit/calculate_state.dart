@@ -3,8 +3,9 @@ import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/utils/units.dart';
 
 class CalculateState extends Equatable {
-  final double? roomLength;
-  final double? roomWidth;
+  // Every dimension is in millimetres.
+  final int? roomLength;
+  final int? roomWidth;
   final int? laminateLength;
   final int? laminateWidth;
   final int? quantityPerPack;
@@ -15,7 +16,7 @@ class CalculateState extends Equatable {
   final OffsetMode offsetMode;
   final MeasurementSystem system;
 
-  CalculateState(
+  const CalculateState(
       {this.roomLength,
       this.roomWidth,
       this.laminateLength,
@@ -29,8 +30,8 @@ class CalculateState extends Equatable {
       this.system = MeasurementSystem.metric});
 
   CalculateState copyWith({
-    final double? roomLength,
-    final double? roomWidth,
+    final int? roomLength,
+    final int? roomWidth,
     final int? laminateLength,
     final int? laminateWidth,
     final int? quantityPerPack,
@@ -55,9 +56,6 @@ class CalculateState extends Equatable {
       system: system ?? this.system,
     );
   }
-
-  bool layingParametersEntered() =>
-      indentFromWall != null && rowOffset != null && minimumLaminateLength != null;
 
   @override
   List<Object?> get props => [

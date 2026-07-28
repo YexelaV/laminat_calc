@@ -6,17 +6,17 @@ class AppTextFormField extends StatelessWidget {
   final Function(String?) validator;
   final Function(String) callback;
   final FocusNode? nextFocusNode;
-  final TextEditingController? controller;
+  final TextEditingController controller;
 
   const AppTextFormField({
-    Key? key,
+    super.key,
     required this.focusNode,
     required this.labelText,
     required this.validator,
     required this.callback,
+    required this.controller,
     this.nextFocusNode,
-    this.controller,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +27,13 @@ class AppTextFormField extends StatelessWidget {
       decoration: InputDecoration(
         contentPadding: EdgeInsets.symmetric(vertical: 4),
         focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.black.withOpacity(0.8), width: 1),
+          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.8), width: 1),
         ),
         enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.black.withOpacity(0.8), width: 0.5),
+          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.8), width: 0.5),
         ),
         labelText: labelText,
-        labelStyle: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 16),
+        labelStyle: TextStyle(color: Colors.black.withValues(alpha: 0.8), fontSize: 16),
       ),
       keyboardType: TextInputType.number,
       textInputAction: nextFocusNode == null ? TextInputAction.done : TextInputAction.next,

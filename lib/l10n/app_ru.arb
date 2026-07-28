@@ -36,12 +36,15 @@
     "result": "Результат расчета",
     "packages_required": "Понадобится упаковок",
     "laying_variants": "Варианты укладки",
-    "panel_1": "панель",
-    "panel_2_3_4": "панели",
-    "panel_more": "панелей",
+    "panels": "{count, plural, one{панель} few{панели} many{панелей} other{панели}}",
+    "@panels": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
     "laying_scheme": "Схема укладки",
-    "english": "English",
-    "russian": "Русский",
     "next": "Далее",
     "no_laying_variants": "Укладка с заданными параметрами невозможна. Попробуйте изменить смещение рядов или минимальную длину панели"
 }

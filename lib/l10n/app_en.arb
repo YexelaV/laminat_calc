@@ -33,15 +33,11 @@
     "minimum": "Minimum",
     "maximum": "Maximum",
     "calculate": "Calculate",
-    "result": "Сalculation result",
+    "result": "Calculation result",
     "packages_required": "Packages required",
     "laying_variants": "Laying variants",
-    "panel_1": "panels",
-    "panel_2_3_4": "panels",
-    "panel_more": "panels",
+    "panels": "{count, plural, one{panel} other{panels}}",
     "laying_scheme": "Laying scheme",
-    "english": "English",
-    "russian": "Русский",
     "next": "Next",
     "no_laying_variants": "No laying variant is possible with these parameters. Try changing the joint offset or the minimal piece length"
 }

@@ -5,7 +5,9 @@ const double M_PER_FOOT = 0.3048;
 
 int inchToMm(double inch) => (inch * MM_PER_INCH).round();
 
-double feetInchesToMeters(double feet, double inches) => (feet * 12 + inches) * MM_PER_INCH / 1000;
+int feetInchesToMm(double feet, double inches) => inchToMm(feet * 12 + inches);
+
+int maxWholeFeet(int mm) => (mm / 1000 / M_PER_FOOT).floor();
 
 // Bounds converted to inches so that any accepted inch value maps back into
 // the original mm bounds: round the minimum up and the maximum down to 0.1".
