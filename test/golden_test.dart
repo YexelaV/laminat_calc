@@ -116,9 +116,9 @@ void main() {
         find.byType(SchemeScreen),
         matchesGoldenFile('goldens/scheme_imperial.png'),
       );
-      expect(find.text("4.5'' "), findsNWidgets(2), reason: '115 mm row width');
-      expect(find.text("7.5'' "), findsNWidgets(5), reason: '190 mm row width');
-      expect(find.text(" 1'-10.9''"), findsNWidgets(3), reason: '581 mm end plank');
+      expect(find.text("4 1/2'' "), findsNWidgets(2), reason: '115 mm row width');
+      expect(find.text("7 1/2'' "), findsNWidgets(5), reason: '190 mm row width');
+      expect(find.text(" 1'-10 7/8''"), findsNWidgets(3), reason: '581 mm end plank');
     });
   });
 
@@ -146,10 +146,10 @@ void main() {
         wrap(ResultScreen(variants), locale: const Locale('pl')),
         const Size(500, 600),
       );
-      expect(find.text('№1 - 1 panel'), findsOneWidget);
-      expect(find.text('№2 - 2 panele'), findsOneWidget);
-      expect(find.text('№3 - 5 paneli'), findsOneWidget);
-      expect(find.text('№4 - 11 paneli'), findsOneWidget);
+      expect(find.text('nr 1 - 1 panel'), findsOneWidget);
+      expect(find.text('nr 2 - 2 panele'), findsOneWidget);
+      expect(find.text('nr 3 - 5 paneli'), findsOneWidget);
+      expect(find.text('nr 4 - 11 paneli'), findsOneWidget);
     });
 
     testWidgets('english plural forms', (tester) async {
@@ -162,8 +162,8 @@ void main() {
         find.byType(ResultScreen),
         matchesGoldenFile('goldens/variants_en.png'),
       );
-      expect(find.text('№1 - 1 panel'), findsOneWidget);
-      expect(find.text('№2 - 2 panels'), findsOneWidget);
+      expect(find.text('#1 - 1 panel'), findsOneWidget);
+      expect(find.text('#2 - 2 panels'), findsOneWidget);
     });
   });
 

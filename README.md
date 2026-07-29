@@ -11,9 +11,10 @@ A Flutter app that calculates how much laminate flooring you need for a room and
 - Respects laying constraints: expansion gap from walls, exact joint offset between rows, minimum plank length
 - Plank offset level selection: 1/2, 1/3, 1/4 of the plank length or an exact value
 - Laying direction selection: along the room length or width
-- Metric and imperial measurement systems (millimeters or feet/inches)
+- Metric and imperial measurement systems (millimeters, or feet and inches down to 1/16")
 - Visual laying scheme with plank numbering
-- Export of the laying scheme to PDF and sharing
+- Text cut list: every row plank by plank, reusable leftovers, waste and its share of the material bought
+- Export of the laying scheme to PDF, and of the cut list as text
 - Language selection on first launch (persisted): English, Russian, German, Spanish, French, Italian, Polish, Portuguese, Turkish, Chinese
 
 ## How the calculation works
@@ -41,6 +42,10 @@ test/
   stress_test.dart       # Randomized stress test of algorithm invariants
   row_geometry_test.dart # The geometry the validators derive must match what the algorithm lays out
   l10n_test.dart         # .arb key parity, CLDR plural categories, unit-label collisions
+  cut_list_test.dart     # Grouping and waste arithmetic, plus the lines the cut list renders
+  units_test.dart        # Inch fractions: formatting, parsing and the round trip through millimetres
+  inch_field_test.dart   # The whole-inch field and its fraction picker stay one value
+  imperial_form_test.dart # What the imperial form accepts, and the millimetres it stores
   golden_test.dart       # Rendered result and scheme screens, plural forms, language picker
   goldens/               # Reference images for the golden tests
 ```

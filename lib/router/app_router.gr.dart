@@ -24,6 +24,12 @@ class _$AppRouter extends RootStackRouter {
         child: StartScreen(key: args.key),
       );
     },
+    MeasurementSystemRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: MeasurementSystemScreen(),
+      );
+    },
     RoomAndLaminateParametersRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
@@ -57,6 +63,10 @@ class _$AppRouter extends RootStackRouter {
         RouteConfig(
           StartRoute.name,
           path: '/',
+        ),
+        RouteConfig(
+          MeasurementSystemRoute.name,
+          path: '/measurement-system-screen',
         ),
         RouteConfig(
           RoomAndLaminateParametersRoute.name,
@@ -99,6 +109,18 @@ class StartRouteArgs {
   String toString() {
     return 'StartRouteArgs{key: $key}';
   }
+}
+
+/// generated route for
+/// [MeasurementSystemScreen]
+class MeasurementSystemRoute extends PageRouteInfo<void> {
+  const MeasurementSystemRoute()
+      : super(
+          MeasurementSystemRoute.name,
+          path: '/measurement-system-screen',
+        );
+
+  static const String name = 'MeasurementSystemRoute';
 }
 
 /// generated route for

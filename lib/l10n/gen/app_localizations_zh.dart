@@ -24,13 +24,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inch => '英寸';
 
   @override
-  String get units => '度量系统';
+  String get choose_units => '选择计量单位';
 
   @override
-  String get metric_units => '毫米';
+  String get metric_system => '公制（毫米）';
 
   @override
-  String get imperial_units => '英尺 / 英寸';
+  String get imperial_system => '英制（英尺和英寸）';
+
+  @override
+  String get settings => '设置';
+
+  @override
+  String get language => '语言';
 
   @override
   String get room => '房间';
@@ -40,12 +46,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get width => '宽度';
-
-  @override
-  String get length_in => '长度（英寸）';
-
-  @override
-  String get width_in => '宽度（英寸）';
 
   @override
   String get laminate => '强化地板';
@@ -137,4 +137,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get no_laying_variants => '无法按这些参数铺设。请尝试修改接缝错位或地板最短长度';
+
+  @override
+  String variant(int number) {
+    return '$number号';
+  }
+
+  @override
+  String get cut_list => '裁切清单';
+
+  @override
+  String row(int number) {
+    return '第$number排';
+  }
+
+  @override
+  String get leftovers => '剩余可用料';
+
+  @override
+  String get waste => '废料';
 }

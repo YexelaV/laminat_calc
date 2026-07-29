@@ -9,9 +9,16 @@ import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/router/app_router.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/utils/validators.dart';
+import 'package:floor_calculator/widgets/app_background.dart';
 import 'package:floor_calculator/widgets/app_text_form_field.dart';
+import 'package:floor_calculator/widgets/inch_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+// The same rhythm as the room form: the labels ride on the field borders, so
+// nothing may sit directly above a field.
+const double _GAP = 12;
+const double _SECTION_GAP = 20;
 
 class LayingParametersScreen extends StatefulWidget {
   const LayingParametersScreen({super.key});
@@ -52,9 +59,8 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     final appStrings = AppStrings.of(context);
     final disabled = state.laminateLength == null;
     final rangeError = state.system == MeasurementSystem.metric
-        ? Validators.sizeValidator(context, value, MIN_ROW_OFFSET, rowOffsetMax(state),
-            appStrings.mm,
-            disabled: disabled)
+        ? Validators.sizeValidator(
+            context, value, MIN_ROW_OFFSET, rowOffsetMax(state), appStrings.mm, disabled: disabled)
         : Validators.sizeValidator(context, value, ceilInch(MIN_ROW_OFFSET),
             floorInch(rowOffsetMax(state)), appStrings.inch,
             disabled: disabled);
@@ -70,13 +76,12 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     return null;
   }
 
-  String? minimumLaminateLengthValidator(
-      BuildContext context, CalculateState state, String value) {
+  String? minimumLaminateLengthValidator(BuildContext context, CalculateState state, String value) {
     final appStrings = AppStrings.of(context);
     final disabled = minimumLaminateLengthValidatorDisabled(state);
     final rangeError = state.system == MeasurementSystem.metric
-        ? Validators.sizeValidator(context, value, MIN_MIN_LENGTH, minimumLaminateLengthMax(state),
-            appStrings.mm,
+        ? Validators.sizeValidator(
+            context, value, MIN_MIN_LENGTH, minimumLaminateLengthMax(state), appStrings.mm,
             disabled: disabled)
         : Validators.sizeValidator(context, value, ceilInch(MIN_MIN_LENGTH),
             floorInch(minimumLaminateLengthMax(state)), appStrings.inch,
@@ -95,9 +100,39 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     return null;
   }
 
-  int parseSize(CalculateState state, String value) => state.system == MeasurementSystem.metric
-      ? int.parse(value)
-      : inchToMm(double.parse(value.replaceAll(',', '.')));
+  int parseSize(CalculateState state, String value) =>
+      state.system == MeasurementSystem.metric ? int.parse(value) : inchToMm(parseInches(value)!);
+
+  // Millimetres are typed whole; inches carry a fraction picker beside the
+  // field, and the two halves reach the validator as one string.
+  Widget sizeField({
+    required CalculateState state,
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    FocusNode? nextFocusNode,
+    required String labelText,
+    required String? Function(String) validator,
+    required void Function(int) apply,
+  }) {
+    if (state.system == MeasurementSystem.metric) {
+      return AppTextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        nextFocusNode: nextFocusNode,
+        labelText: labelText,
+        validator: (value) => validator(value ?? ''),
+        callback: (value) => apply(parseSize(state, value)),
+      );
+    }
+    return InchField(
+      controller: controller,
+      focusNode: focusNode,
+      nextFocusNode: nextFocusNode,
+      labelText: labelText,
+      validator: validator,
+      callback: (value) => apply(parseSize(state, value)),
+    );
+  }
 
   bool areAllFieldsValid(BuildContext context, CalculateState state) {
     final indentFromWallValue = indentFromWallController.text.trim();
@@ -122,7 +157,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     if (offset == null) return '';
     return state.system == MeasurementSystem.metric
         ? '= $offset ${appStrings.mm}'
-        : '= ${(offset / MM_PER_INCH).toStringAsFixed(1)} ${appStrings.inch}';
+        : '= ${formatInches(offset / MM_PER_INCH)} ${appStrings.inch}';
   }
 
   Widget titleText(String title, IconData icon) {
@@ -157,7 +192,10 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     final roomWidth = state.roomWidth;
     final laminateWidth = state.laminateWidth;
     final indentFromWall = state.indentFromWall;
-    if (roomLength == null || roomWidth == null || laminateWidth == null || indentFromWall == null) {
+    if (roomLength == null ||
+        roomWidth == null ||
+        laminateWidth == null ||
+        indentFromWall == null) {
       return null;
     }
     return numberOfRowsMm(
@@ -223,216 +261,223 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
       value: getIt.get<CalculateCubit>(),
       child: BlocBuilder<CalculateCubit, CalculateState>(
         builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(),
+          return AppBackground(
+              child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+            // Centred while the card fits, scrollable when it does not: the
+            // keyboard takes half the screen away while a field is focused.
             body: Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                child: Container(
-                  decoration:
-                      BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.white),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        titleText(AppStrings.of(context).laying, Icons.branding_watermark),
-                        SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Text(
-                              appStrings.laying_direction,
-                              style: TextStyle(color: Colors.black.withValues(alpha: 0.8), fontSize: 16),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: SegmentedButton<Direction>(
-                            segments: [
-                              ButtonSegment(
-                                value: Direction.length,
-                                label: Text(appStrings.along_length),
-                              ),
-                              ButtonSegment(
-                                value: Direction.width,
-                                label: Text(appStrings.along_width),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                  child: Container(
+                    decoration:
+                        BoxDecoration(borderRadius: BorderRadius.circular(20), color: Colors.white),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          titleText(AppStrings.of(context).laying, Icons.branding_watermark),
+                          SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Text(
+                                appStrings.laying_direction,
+                                style: TextStyle(
+                                    color: Colors.black.withValues(alpha: 0.8), fontSize: 16),
                               ),
                             ],
-                            selected: {state.direction},
-                            onSelectionChanged: (selection) =>
-                                context.read<CalculateCubit>().setDirection(selection.first),
                           ),
-                        ),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: AppTextFormField(
-                                controller: indentFromWallController,
-                                focusNode: indentFromWallFocusNode,
-                                nextFocusNode: state.offsetMode == OffsetMode.exact
-                                    ? rowOffsetFocusNode
-                                    : minimumLaminateLengthFocusNode,
-                                labelText: state.system == MeasurementSystem.metric
-                                    ? appStrings.expansion_gap_mm
-                                    : appStrings.expansion_gap_in,
-                                validator: (value) =>
-                                    indentFromWallValidator(context, state, value ?? ''),
-                                callback: (value) => context
-                                    .read<CalculateCubit>()
-                                    .setIndentFromWall(parseSize(state, value)),
-                              ),
+                          SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: SegmentedButton<Direction>(
+                              segments: [
+                                ButtonSegment(
+                                  value: Direction.length,
+                                  label: Text(appStrings.along_length),
+                                ),
+                                ButtonSegment(
+                                  value: Direction.width,
+                                  label: Text(appStrings.along_width),
+                                ),
+                              ],
+                              selected: {state.direction},
+                              onSelectionChanged: (selection) =>
+                                  context.read<CalculateCubit>().setDirection(selection.first),
                             ),
-                          ],
-                        ),
-                        SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Text(
-                              appStrings.joint_offset,
-                              style: TextStyle(color: Colors.black.withValues(alpha: 0.8), fontSize: 16),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: SegmentedButton<OffsetMode>(
-                            segments: [
-                              ButtonSegment(value: OffsetMode.half, label: Text('1/2')),
-                              ButtonSegment(value: OffsetMode.third, label: Text('1/3')),
-                              ButtonSegment(value: OffsetMode.quarter, label: Text('1/4')),
-                              ButtonSegment(
-                                value: OffsetMode.exact,
-                                label: Text(appStrings.exact_offset),
-                              ),
-                            ],
-                            selected: {state.offsetMode},
-                            onSelectionChanged: (selection) =>
-                                context.read<CalculateCubit>().setOffsetMode(selection.first),
                           ),
-                        ),
-                        if (state.offsetMode == OffsetMode.exact)
+                          SizedBox(height: _GAP),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: AppTextFormField(
-                                  controller: rowOffsetController,
-                                  focusNode: rowOffsetFocusNode,
-                                  nextFocusNode: minimumLaminateLengthFocusNode,
+                                child: sizeField(
+                                  state: state,
+                                  controller: indentFromWallController,
+                                  focusNode: indentFromWallFocusNode,
+                                  nextFocusNode: state.offsetMode == OffsetMode.exact
+                                      ? rowOffsetFocusNode
+                                      : minimumLaminateLengthFocusNode,
                                   labelText: state.system == MeasurementSystem.metric
-                                      ? appStrings.joint_offset_mm
-                                      : appStrings.joint_offset_in,
+                                      ? appStrings.expansion_gap_mm
+                                      : appStrings.expansion_gap_in,
                                   validator: (value) =>
-                                      rowOffsetValidator(context, state, value ?? ''),
-                                  callback: (value) => context
-                                      .read<CalculateCubit>()
-                                      .setRowOffset(parseSize(state, value)),
+                                      indentFromWallValidator(context, state, value),
+                                  apply: (mm) =>
+                                      context.read<CalculateCubit>().setIndentFromWall(mm),
                                 ),
                               ),
                             ],
-                          )
-                        else
-                          Padding(
-                            padding: EdgeInsets.only(top: 8),
-                            child: Align(
+                          ),
+                          SizedBox(height: _SECTION_GAP),
+                          Row(
+                            children: [
+                              Text(
+                                appStrings.joint_offset,
+                                style: TextStyle(
+                                    color: Colors.black.withValues(alpha: 0.8), fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: SegmentedButton<OffsetMode>(
+                              segments: [
+                                ButtonSegment(value: OffsetMode.half, label: Text('1/2')),
+                                ButtonSegment(value: OffsetMode.third, label: Text('1/3')),
+                                ButtonSegment(value: OffsetMode.quarter, label: Text('1/4')),
+                                ButtonSegment(
+                                  value: OffsetMode.exact,
+                                  label: Text(appStrings.exact_offset),
+                                ),
+                              ],
+                              selected: {state.offsetMode},
+                              onSelectionChanged: (selection) =>
+                                  context.read<CalculateCubit>().setOffsetMode(selection.first),
+                            ),
+                          ),
+                          SizedBox(height: _GAP),
+                          if (state.offsetMode == OffsetMode.exact)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: sizeField(
+                                    state: state,
+                                    controller: rowOffsetController,
+                                    focusNode: rowOffsetFocusNode,
+                                    nextFocusNode: minimumLaminateLengthFocusNode,
+                                    labelText: state.system == MeasurementSystem.metric
+                                        ? appStrings.joint_offset_mm
+                                        : appStrings.joint_offset_in,
+                                    validator: (value) => rowOffsetValidator(context, state, value),
+                                    apply: (mm) => context.read<CalculateCubit>().setRowOffset(mm),
+                                  ),
+                                ),
+                              ],
+                            )
+                          else
+                            Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 offsetValueText(context, state),
-                                style:
-                                    TextStyle(color: Colors.black.withValues(alpha: 0.6), fontSize: 14),
+                                style: TextStyle(
+                                    color: Colors.black.withValues(alpha: 0.6), fontSize: 14),
                               ),
                             ),
+                          SizedBox(height: _GAP),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: sizeField(
+                                  state: state,
+                                  controller: minimumLaminateLengthController,
+                                  focusNode: minimumLaminateLengthFocusNode,
+                                  labelText: state.system == MeasurementSystem.metric
+                                      ? appStrings.minimal_piece_length
+                                      : appStrings.minimal_piece_length_in,
+                                  validator: (value) =>
+                                      minimumLaminateLengthValidator(context, state, value),
+                                  apply: (mm) =>
+                                      context.read<CalculateCubit>().setMinimumLaminateLength(mm),
+                                ),
+                              ),
+                            ],
                           ),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: AppTextFormField(
-                                controller: minimumLaminateLengthController,
-                                focusNode: minimumLaminateLengthFocusNode,
-                                labelText: state.system == MeasurementSystem.metric
-                                    ? appStrings.minimal_piece_length
-                                    : appStrings.minimal_piece_length_in,
-                                validator: (value) =>
-                                    minimumLaminateLengthValidator(context, state, value ?? ''),
-                                callback: (value) => context
-                                    .read<CalculateCubit>()
-                                    .setMinimumLaminateLength(parseSize(state, value)),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 30),
-                        TextButton(
-                          onPressed: areAllFieldsValid(context, state)
-                              ? () {
-                                  FocusScope.of(context).unfocus();
-                                  final roomLength = state.roomLength;
-                                  final roomWidth = state.roomWidth;
-                                  final laminateLength = state.laminateLength;
-                                  final laminateWidth = state.laminateWidth;
-                                  final quantityPerPack = state.quantityPerPack;
-                                  final indentFromWall = state.indentFromWall;
-                                  final rowOffset = effectiveRowOffset(state);
-                                  final minimumLaminateLength = state.minimumLaminateLength;
+                          SizedBox(height: 30),
+                          TextButton(
+                            onPressed: areAllFieldsValid(context, state)
+                                ? () {
+                                    FocusScope.of(context).unfocus();
+                                    final roomLength = state.roomLength;
+                                    final roomWidth = state.roomWidth;
+                                    final laminateLength = state.laminateLength;
+                                    final laminateWidth = state.laminateWidth;
+                                    final quantityPerPack = state.quantityPerPack;
+                                    final indentFromWall = state.indentFromWall;
+                                    final rowOffset = effectiveRowOffset(state);
+                                    final minimumLaminateLength = state.minimumLaminateLength;
 
-                                  if (roomLength != null &&
-                                      roomWidth != null &&
-                                      laminateLength != null &&
-                                      laminateWidth != null &&
-                                      quantityPerPack != null &&
-                                      indentFromWall != null &&
-                                      rowOffset != null &&
-                                      minimumLaminateLength != null) {
-                                    final calculation = Calculation(
-                                      roomLength: roomLength,
-                                      roomWidth: roomWidth,
-                                      laminateLength: laminateLength,
-                                      laminateWidth: laminateWidth,
-                                      planksInPack: quantityPerPack,
-                                      indentFromWall: indentFromWall,
-                                      minimumLaminateLength: minimumLaminateLength,
-                                      rowOffset: rowOffset,
-                                      direction: state.direction,
-                                    );
-                                    final result = calculation.calculate();
-                                    if (result.isEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(AppStrings.of(context).no_laying_variants),
-                                        ),
+                                    if (roomLength != null &&
+                                        roomWidth != null &&
+                                        laminateLength != null &&
+                                        laminateWidth != null &&
+                                        quantityPerPack != null &&
+                                        indentFromWall != null &&
+                                        rowOffset != null &&
+                                        minimumLaminateLength != null) {
+                                      final calculation = Calculation(
+                                        roomLength: roomLength,
+                                        roomWidth: roomWidth,
+                                        laminateLength: laminateLength,
+                                        laminateWidth: laminateWidth,
+                                        planksInPack: quantityPerPack,
+                                        indentFromWall: indentFromWall,
+                                        minimumLaminateLength: minimumLaminateLength,
+                                        rowOffset: rowOffset,
+                                        direction: state.direction,
                                       );
-                                    } else {
-                                      context.router.push(ResultRoute(result: result));
+                                      final result = calculation.calculate();
+                                      if (result.isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content:
+                                                Text(AppStrings.of(context).no_laying_variants),
+                                          ),
+                                        );
+                                      } else {
+                                        context.router.push(ResultRoute(result: result));
+                                      }
                                     }
                                   }
-                                }
-                              : null,
-                          child: Container(
-                              alignment: Alignment.center,
-                              width: 140,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                color:
-                                    areAllFieldsValid(context, state) ? Colors.blue : Colors.grey,
-                              ),
-                              child: Text(
-                                AppStrings.of(context).next,
-                                style: TextStyle(color: Colors.white, fontSize: 18),
-                              )),
-                        )
-                      ],
+                                : null,
+                            child: Container(
+                                alignment: Alignment.center,
+                                width: 140,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  color:
+                                      areAllFieldsValid(context, state) ? Colors.blue : Colors.grey,
+                                ),
+                                child: Text(
+                                  AppStrings.of(context).next,
+                                  style: TextStyle(color: Colors.white, fontSize: 18),
+                                )),
+                          )
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          );
+          ));
         },
       ),
     );

@@ -74,8 +74,8 @@ void main() {
     test('the calculation lays out the row count the validators derive', () {
       for (var mm = 2000; mm <= 16000; mm++) {
         for (final width in [190, 192, 1000]) {
-          final calculation =
-              calculationFor(roomLength: 5000, roomWidth: mm, indentFromWall: 10, laminateWidth: width);
+          final calculation = calculationFor(
+              roomLength: 5000, roomWidth: mm, indentFromWall: 10, laminateWidth: width);
           calculation.calculate();
           expect(
             calculation.numberOfRows,

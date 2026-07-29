@@ -2,29 +2,11 @@ import 'package:auto_route/auto_route.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/router/app_router.dart';
+import 'package:floor_calculator/utils/languages.dart';
+import 'package:floor_calculator/widgets/app_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-class _Language {
-  final String code;
-  final String flagAsset;
-  final String name;
-  const _Language(this.code, this.flagAsset, this.name);
-}
-
-const _languages = [
-  _Language('ru', 'assets/ru.svg', 'Русский'),
-  _Language('en', 'assets/gb.svg', 'English'),
-  _Language('de', 'assets/de.svg', 'Deutsch'),
-  _Language('es', 'assets/es.svg', 'Español'),
-  _Language('fr', 'assets/fr.svg', 'Français'),
-  _Language('pt', 'assets/pt.svg', 'Português'),
-  _Language('pl', 'assets/pl.svg', 'Polski'),
-  _Language('it', 'assets/it.svg', 'Italiano'),
-  _Language('tr', 'assets/tr.svg', 'Türkçe'),
-  _Language('zh', 'assets/cn.svg', '中文'),
-];
 
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
@@ -42,13 +24,15 @@ class _StartScreenState extends State<StartScreen> {
     _detectedCode ??= Localizations.localeOf(context).languageCode;
     final selected = _selectedCode ?? _detectedCode;
 
-    final ordered = [..._languages];
+    final ordered = [...appLanguages];
     final detectedIndex = ordered.indexWhere((lang) => lang.code == _detectedCode);
     if (detectedIndex > 0) {
       ordered.insert(0, ordered.removeAt(detectedIndex));
     }
 
-    return Scaffold(
+    return AppBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -73,17 +57,19 @@ class _StartScreenState extends State<StartScreen> {
                         MyApp.of(context)?.setLocale(Locale(lang.code));
                       },
                       child: Container(
-                        width: 100,
-                        height: 100,
+                        width: 85,
+                        height: 85,
                         decoration: BoxDecoration(
                           border: Border.all(
                             color: lang.code == selected ? Colors.blue : Colors.black26,
                             width: lang.code == selected ? 2 : 1,
                           ),
                           borderRadius: BorderRadius.circular(20.0),
+                          // Opaque: a translucent tint would pick up the
+                          // orange behind it and read as brown.
                           color: lang.code == selected
-                              ? Colors.blue.withValues(alpha: 0.15)
-                              : Colors.black12,
+                              ? Color.alphaBlend(Colors.blue.withValues(alpha: 0.12), Colors.white)
+                              : Colors.white,
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -93,7 +79,12 @@ class _StartScreenState extends State<StartScreen> {
                               child: SvgPicture.asset(lang.flagAsset, width: 48, height: 36),
                             ),
                             SizedBox(height: 8),
-                            Text(lang.name, style: TextStyle(fontSize: 14)),
+                            Text(
+                              lang.name,
+                              style: TextStyle(fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ],
                         ),
                       ),
@@ -123,13 +114,13 @@ class _StartScreenState extends State<StartScreen> {
                     await prefs.setString(LOCALE_PREF_KEY, code);
                   }
                   if (!mounted) return;
-                  router.replace(RoomAndLaminateParametersRoute());
+                  router.replace(MeasurementSystemRoute());
                 },
               ),
             ],
           ),
         ),
       ),
-    );
+    ));
   }
 }

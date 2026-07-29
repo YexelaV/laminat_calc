@@ -24,13 +24,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inch => 'in';
 
   @override
-  String get units => 'Système de mesure';
+  String get choose_units => 'Choisissez le système de mesure';
 
   @override
-  String get metric_units => 'mm';
+  String get metric_system => 'Métrique (mm)';
 
   @override
-  String get imperial_units => 'ft / in';
+  String get imperial_system => 'Impérial (pieds et pouces)';
+
+  @override
+  String get settings => 'Paramètres';
+
+  @override
+  String get language => 'Langue';
 
   @override
   String get room => 'Pièce';
@@ -40,12 +46,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get width => 'Largeur';
-
-  @override
-  String get length_in => 'Longueur (in)';
-
-  @override
-  String get width_in => 'Largeur (in)';
 
   @override
   String get laminate => 'Stratifié';
@@ -139,4 +139,23 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get no_laying_variants =>
       'Aucune pose n\'est possible avec ces paramètres. Essayez de modifier le décalage des joints ou la longueur minimale de lame';
+
+  @override
+  String variant(int number) {
+    return 'N° $number';
+  }
+
+  @override
+  String get cut_list => 'Liste de coupe';
+
+  @override
+  String row(int number) {
+    return 'Rangée $number';
+  }
+
+  @override
+  String get leftovers => 'Chutes réutilisables';
+
+  @override
+  String get waste => 'Déchets';
 }

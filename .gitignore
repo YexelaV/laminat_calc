@@ -10,3 +10,6 @@ build
 .DS_Store
 # Diff images written by a failing golden test.
 test/failures/
+# Working notes, not part of the app.
+diagonal_plan.md
+features_plan.md

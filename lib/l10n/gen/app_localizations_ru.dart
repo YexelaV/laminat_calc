@@ -24,13 +24,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get inch => 'дюйм';
 
   @override
-  String get units => 'Система измерений';
+  String get choose_units => 'Выберите систему измерений';
 
   @override
-  String get metric_units => 'мм';
+  String get metric_system => 'Метрическая (мм)';
 
   @override
-  String get imperial_units => 'фут / дюйм';
+  String get imperial_system => 'Имперская (футы и дюймы)';
+
+  @override
+  String get settings => 'Настройки';
+
+  @override
+  String get language => 'Язык';
 
   @override
   String get room => 'Помещение';
@@ -40,12 +46,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get width => 'Ширина';
-
-  @override
-  String get length_in => 'Длина (дюйм)';
-
-  @override
-  String get width_in => 'Ширина (дюйм)';
 
   @override
   String get laminate => 'Ламинат';
@@ -141,4 +141,23 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get no_laying_variants =>
       'Укладка с заданными параметрами невозможна. Попробуйте изменить смещение рядов или минимальную длину панели';
+
+  @override
+  String variant(int number) {
+    return '№$number';
+  }
+
+  @override
+  String get cut_list => 'Список раскроя';
+
+  @override
+  String row(int number) {
+    return 'Ряд $number';
+  }
+
+  @override
+  String get leftovers => 'Остатки';
+
+  @override
+  String get waste => 'Отходы';
 }

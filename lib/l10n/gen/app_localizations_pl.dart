@@ -24,13 +24,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get inch => 'cal';
 
   @override
-  String get units => 'System miar';
+  String get choose_units => 'Wybierz system miar';
 
   @override
-  String get metric_units => 'mm';
+  String get metric_system => 'Metryczny (mm)';
 
   @override
-  String get imperial_units => 'ft / cal';
+  String get imperial_system => 'Imperialny (stopy i cale)';
+
+  @override
+  String get settings => 'Ustawienia';
+
+  @override
+  String get language => 'Język';
 
   @override
   String get room => 'Pomieszczenie';
@@ -40,12 +46,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get width => 'Szerokość';
-
-  @override
-  String get length_in => 'Długość (cal)';
-
-  @override
-  String get width_in => 'Szerokość (cal)';
 
   @override
   String get laminate => 'Laminat';
@@ -141,4 +141,23 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get no_laying_variants =>
       'Układanie z podanymi parametrami jest niemożliwe. Spróbuj zmienić przesunięcie spoin lub minimalną długość panelu';
+
+  @override
+  String variant(int number) {
+    return 'nr $number';
+  }
+
+  @override
+  String get cut_list => 'Lista cięć';
+
+  @override
+  String row(int number) {
+    return 'Rząd $number';
+  }
+
+  @override
+  String get leftovers => 'Pozostałości';
+
+  @override
+  String get waste => 'Odpady';
 }

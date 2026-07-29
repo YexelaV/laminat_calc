@@ -11,6 +11,7 @@ import '../l10n/app_localizations.dart';
 import '../models.dart';
 import '../constants.dart';
 import '../utils/units.dart';
+import '../widgets/cut_list_sheet.dart';
 
 class SchemeScreen extends StatelessWidget {
   final Result result;
@@ -19,8 +20,9 @@ class SchemeScreen extends StatelessWidget {
 
   MeasurementSystem get system => getIt.get<CalculateCubit>().state.system;
 
-  String sizeLabel(num mm) =>
-      system == MeasurementSystem.imperial ? formatFeetInches(mm) : '$mm';
+  // Room for the row width printed left of the scheme. A fraction is half
+  // again as wide as the millimetres it replaces ("7 1/2''" against "190").
+  double get labelWidth => system == MeasurementSystem.imperial ? 36 : 24;
 
   List<Widget> drawFloor() {
     List<Widget> res = [];
@@ -28,10 +30,10 @@ class SchemeScreen extends StatelessWidget {
       List<Widget> children = [
         SizedBox(
           height: line.planks[0].width / 20,
-          width: 24,
+          width: labelWidth,
           child: FittedBox(
             child: Text(
-              '${sizeLabel(line.planks[0].width)} ',
+              '${sizeLabel(line.planks[0].width, system)} ',
             ),
           ),
         ),
@@ -61,7 +63,7 @@ class SchemeScreen extends StatelessWidget {
                   alignment: Alignment.center,
                   child: plank.length < result.laminateLength
                       ? Text(
-                          ' ${sizeLabel(plank.length)}',
+                          ' ${sizeLabel(plank.length, system)}',
                         )
                       : const SizedBox.shrink(),
                 ),
@@ -75,7 +77,7 @@ class SchemeScreen extends StatelessWidget {
     return res;
   }
 
-  Future<void> shareResult() async {
+  Future<void> shareResult(String caption) async {
     double koefLength = min(MAX_LENGTH_MM / result.roomLength, MAX_WIDTH_MM / result.roomWidth);
     double koefWidth = koefLength;
     List<pw.Widget> pdfResult = [];
@@ -83,10 +85,10 @@ class SchemeScreen extends StatelessWidget {
       List<pw.Widget> pdfChildren = [
         pw.Container(
           height: line.planks[0].width / KOEF_COMPRESS * koefWidth * 0.5,
-          width: 24,
+          width: labelWidth,
           child: pw.FittedBox(
             child: pw.Text(
-              '${sizeLabel(line.planks[0].width)} ',
+              '${sizeLabel(line.planks[0].width, system)} ',
             ),
           ),
         ),
@@ -116,7 +118,7 @@ class SchemeScreen extends StatelessWidget {
                   alignment: pw.Alignment.center,
                   child: plank.length < result.laminateLength
                       ? pw.Text(
-                          ' ${sizeLabel(plank.length)}',
+                          ' ${sizeLabel(plank.length, system)}',
                         )
                       : pw.Container(),
                 ),
@@ -141,25 +143,26 @@ class SchemeScreen extends StatelessWidget {
           return scheme;
         }));
     final dir = await getApplicationDocumentsDirectory();
-    final path = dir.path;
-    final now = DateTime.now();
-    final file = File('$path/laminat.pdf$now');
+    // Colons and spaces out of DateTime.toString() break the name on the
+    // receiving side, and the extension has to be last for viewers to open it.
+    final stamp = DateTime.now().toIso8601String().replaceAll(RegExp(r'[:.]'), '-');
+    final file = File('${dir.path}/laminat-$number-$stamp.pdf');
     await file.writeAsBytes(await pdf.save());
     final xFile = XFile(file.path, mimeType: 'application/pdf');
-    await SharePlus.instance
-        .share(ShareParams(files: [xFile], text: "scheme №$number"));
+    await SharePlus.instance.share(ShareParams(files: [xFile], text: caption));
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final caption = '${s.laying_scheme} ${s.variant(number)}';
     final scheme = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: drawFloor(),
     );
     return Scaffold(
         appBar: AppBar(
-          title: Text("${AppStrings.of(context).laying_scheme} №$number",
-              style: TextStyle(fontSize: 18, color: Colors.black)),
+          title: Text(caption, style: TextStyle(fontSize: 18, color: Colors.black)),
           leading: Padding(
             padding: EdgeInsets.only(left: 12),
             child: IconButton(
@@ -170,11 +173,20 @@ class SchemeScreen extends StatelessWidget {
           centerTitle: true,
           backgroundColor: Colors.white,
           actions: [
+            IconButton(
+              icon: Icon(Icons.list_alt, size: 24, color: Colors.black),
+              onPressed: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.white,
+                builder: (_) => CutListSheet(result, number, system),
+              ),
+            ),
             Padding(
               padding: EdgeInsets.only(right: 20),
               child: IconButton(
                   icon: Icon(Icons.share_rounded, size: 24, color: Colors.black),
-                  onPressed: () async => await shareResult()),
+                  onPressed: () async => await shareResult(caption)),
             ),
           ],
         ),

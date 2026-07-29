@@ -11,5 +11,5 @@ const MAX_ITEMS_IN_PACK = 20;
 const MIN_ROW_OFFSET = 100;
 const MIN_MIN_LENGTH = 100;
 const MIN_ROOM_FT = 1;
-const MAX_INCHES_IN_FOOT = 11.9;
+const MAX_INCHES_IN_FOOT = 11.9375; // 11 15/16''
 const KOEF_COMPRESS = 35;

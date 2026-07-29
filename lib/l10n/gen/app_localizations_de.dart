@@ -24,13 +24,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get inch => 'in';
 
   @override
-  String get units => 'Maßsystem';
+  String get choose_units => 'Maßsystem wählen';
 
   @override
-  String get metric_units => 'mm';
+  String get metric_system => 'Metrisch (mm)';
 
   @override
-  String get imperial_units => 'ft / in';
+  String get imperial_system => 'Imperial (Fuß und Zoll)';
+
+  @override
+  String get settings => 'Einstellungen';
+
+  @override
+  String get language => 'Sprache';
 
   @override
   String get room => 'Raum';
@@ -40,12 +46,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get width => 'Breite';
-
-  @override
-  String get length_in => 'Länge (in)';
-
-  @override
-  String get width_in => 'Breite (in)';
 
   @override
   String get laminate => 'Laminat';
@@ -139,4 +139,23 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get no_laying_variants =>
       'Mit diesen Parametern ist keine Verlegung möglich. Versuchen Sie, den Fugenversatz oder die minimale Paneellänge zu ändern';
+
+  @override
+  String variant(int number) {
+    return 'Nr. $number';
+  }
+
+  @override
+  String get cut_list => 'Zuschnittliste';
+
+  @override
+  String row(int number) {
+    return 'Reihe $number';
+  }
+
+  @override
+  String get leftovers => 'Reststücke';
+
+  @override
+  String get waste => 'Verschnitt';
 }

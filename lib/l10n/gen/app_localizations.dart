@@ -144,23 +144,35 @@ abstract class AppLocalizations {
   /// **'дюйм'**
   String get inch;
 
-  /// No description provided for @units.
+  /// No description provided for @choose_units.
   ///
   /// In ru, this message translates to:
-  /// **'Система измерений'**
-  String get units;
+  /// **'Выберите систему измерений'**
+  String get choose_units;
 
-  /// No description provided for @metric_units.
+  /// No description provided for @metric_system.
   ///
   /// In ru, this message translates to:
-  /// **'мм'**
-  String get metric_units;
+  /// **'Метрическая (мм)'**
+  String get metric_system;
 
-  /// No description provided for @imperial_units.
+  /// No description provided for @imperial_system.
   ///
   /// In ru, this message translates to:
-  /// **'фут / дюйм'**
-  String get imperial_units;
+  /// **'Имперская (футы и дюймы)'**
+  String get imperial_system;
+
+  /// No description provided for @settings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get settings;
+
+  /// No description provided for @language.
+  ///
+  /// In ru, this message translates to:
+  /// **'Язык'**
+  String get language;
 
   /// No description provided for @room.
   ///
@@ -179,18 +191,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ширина'**
   String get width;
-
-  /// No description provided for @length_in.
-  ///
-  /// In ru, this message translates to:
-  /// **'Длина (дюйм)'**
-  String get length_in;
-
-  /// No description provided for @width_in.
-  ///
-  /// In ru, this message translates to:
-  /// **'Ширина (дюйм)'**
-  String get width_in;
 
   /// No description provided for @laminate.
   ///
@@ -359,6 +359,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Укладка с заданными параметрами невозможна. Попробуйте изменить смещение рядов или минимальную длину панели'**
   String get no_laying_variants;
+
+  /// No description provided for @variant.
+  ///
+  /// In ru, this message translates to:
+  /// **'№{number}'**
+  String variant(int number);
+
+  /// No description provided for @cut_list.
+  ///
+  /// In ru, this message translates to:
+  /// **'Список раскроя'**
+  String get cut_list;
+
+  /// No description provided for @row.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ряд {number}'**
+  String row(int number);
+
+  /// No description provided for @leftovers.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остатки'**
+  String get leftovers;
+
+  /// No description provided for @waste.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отходы'**
+  String get waste;
 }
 
 class _AppLocalizationsDelegate

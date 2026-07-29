@@ -71,8 +71,8 @@ int maxMinimumLaminateLengthExact(
 // piece length. Feasibility is NOT monotone in the minimum: a larger minimum
 // shortens the staircase, which can avoid row starts whose last plank would
 // be too short. So the value must be checked exactly, not against a bound.
-bool exactOffsetFeasible(int rowLength, int laminateLength, int rowOffset, int minimumLength,
-    int numberOfRows) {
+bool exactOffsetFeasible(
+    int rowLength, int laminateLength, int rowOffset, int minimumLength, int numberOfRows) {
   if (laminateLength >= rowLength) return true;
   if (rowOffset <= 0 || minimumLength < 1 || numberOfRows <= 0) return false;
   int lastOf(int first) {

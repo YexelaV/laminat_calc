@@ -20,8 +20,8 @@ void checkResult(String cfg, Calculation c, Result r, int rowLength) {
   for (final line in r.lines) {
     for (final p in line.planks) {
       if (p.length < c.minimumLaminateLength) {
-        violations.add(Violation(cfg,
-            'row ${line.number}: plank ${p.length} mm < min ${c.minimumLaminateLength} mm'));
+        violations.add(Violation(
+            cfg, 'row ${line.number}: plank ${p.length} mm < min ${c.minimumLaminateLength} mm'));
       }
       if (p.length > c.laminateLength) {
         violations.add(Violation(cfg,
@@ -36,8 +36,7 @@ void checkResult(String cfg, Calculation c, Result r, int rowLength) {
   for (final line in r.lines) {
     final sum = line.planks.fold<int>(0, (s, p) => s + p.length);
     if (sum != rowLength) {
-      violations
-          .add(Violation(cfg, 'row ${line.number}: sum $sum mm != row length $rowLength mm'));
+      violations.add(Violation(cfg, 'row ${line.number}: sum $sum mm != row length $rowLength mm'));
     }
   }
   // 3. Exact staircase offset between adjacent rows: one step down by
@@ -56,8 +55,7 @@ void checkResult(String cfg, Calculation c, Result r, int rowLength) {
     }
   }
   // 4. Material balance: planks * length == laid + pieces + waste
-  final used =
-      r.lines.fold<int>(0, (s, l) => s + l.planks.fold<int>(0, (s2, p) => s2 + p.length));
+  final used = r.lines.fold<int>(0, (s, l) => s + l.planks.fold<int>(0, (s2, p) => s2 + p.length));
   final leftPieces = r.pieces.fold<int>(0, (s, p) => s + p.length);
   final leftTrash = r.trash.fold<int>(0, (s, p) => s + p.length);
   final bought = r.totalPlanks * c.laminateLength;

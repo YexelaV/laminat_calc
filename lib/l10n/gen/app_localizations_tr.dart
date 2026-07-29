@@ -24,13 +24,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get inch => 'inç';
 
   @override
-  String get units => 'Ölçü sistemi';
+  String get choose_units => 'Ölçü sistemini seçin';
 
   @override
-  String get metric_units => 'mm';
+  String get metric_system => 'Metrik (mm)';
 
   @override
-  String get imperial_units => 'ft / inç';
+  String get imperial_system => 'Emperyal (fit ve inç)';
+
+  @override
+  String get settings => 'Ayarlar';
+
+  @override
+  String get language => 'Dil';
 
   @override
   String get room => 'Oda';
@@ -40,12 +46,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get width => 'Genişlik';
-
-  @override
-  String get length_in => 'Uzunluk (inç)';
-
-  @override
-  String get width_in => 'Genişlik (inç)';
 
   @override
   String get laminate => 'Laminat';
@@ -139,4 +139,23 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get no_laying_variants =>
       'Bu parametrelerle döşeme mümkün değil. Ek yeri kaydırmasını veya minimum parça uzunluğunu değiştirmeyi deneyin';
+
+  @override
+  String variant(int number) {
+    return 'No. $number';
+  }
+
+  @override
+  String get cut_list => 'Kesim listesi';
+
+  @override
+  String row(int number) {
+    return 'Sıra $number';
+  }
+
+  @override
+  String get leftovers => 'Artan parçalar';
+
+  @override
+  String get waste => 'Fire';
 }

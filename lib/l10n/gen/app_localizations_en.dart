@@ -24,13 +24,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inch => 'in';
 
   @override
-  String get units => 'Measurement system';
+  String get choose_units => 'Choose a measurement system';
 
   @override
-  String get metric_units => 'mm';
+  String get metric_system => 'Metric (mm)';
 
   @override
-  String get imperial_units => 'ft / in';
+  String get imperial_system => 'Imperial (feet and inches)';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get language => 'Language';
 
   @override
   String get room => 'Room';
@@ -40,12 +46,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get width => 'Width';
-
-  @override
-  String get length_in => 'Length (in)';
-
-  @override
-  String get width_in => 'Width (in)';
 
   @override
   String get laminate => 'Laminate';
@@ -139,4 +139,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get no_laying_variants =>
       'No laying variant is possible with these parameters. Try changing the joint offset or the minimal piece length';
+
+  @override
+  String variant(int number) {
+    return '#$number';
+  }
+
+  @override
+  String get cut_list => 'Cut list';
+
+  @override
+  String row(int number) {
+    return 'Row $number';
+  }
+
+  @override
+  String get leftovers => 'Leftovers';
+
+  @override
+  String get waste => 'Waste';
 }

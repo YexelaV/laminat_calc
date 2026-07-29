@@ -24,13 +24,19 @@ class AppLocalizationsPt extends AppLocalizations {
   String get inch => 'in';
 
   @override
-  String get units => 'Sistema de medidas';
+  String get choose_units => 'Escolha o sistema de medida';
 
   @override
-  String get metric_units => 'mm';
+  String get metric_system => 'Métrico (mm)';
 
   @override
-  String get imperial_units => 'ft / in';
+  String get imperial_system => 'Imperial (pés e polegadas)';
+
+  @override
+  String get settings => 'Definições';
+
+  @override
+  String get language => 'Idioma';
 
   @override
   String get room => 'Ambiente';
@@ -40,12 +46,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get width => 'Largura';
-
-  @override
-  String get length_in => 'Comprimento (in)';
-
-  @override
-  String get width_in => 'Largura (in)';
 
   @override
   String get laminate => 'Laminado';
@@ -139,4 +139,23 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get no_laying_variants =>
       'Não é possível instalar com esses parâmetros. Tente alterar a defasagem das juntas ou o comprimento mínimo da régua';
+
+  @override
+  String variant(int number) {
+    return 'N.º $number';
+  }
+
+  @override
+  String get cut_list => 'Lista de cortes';
+
+  @override
+  String row(int number) {
+    return 'Fileira $number';
+  }
+
+  @override
+  String get leftovers => 'Sobras';
+
+  @override
+  String get waste => 'Descarte';
 }

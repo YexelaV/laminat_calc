@@ -1,4 +1,5 @@
 import 'package:floor_calculator/l10n/app_localizations.dart';
+import 'package:floor_calculator/utils/units.dart';
 import 'package:flutter/material.dart';
 
 class Validators {
@@ -7,39 +8,40 @@ class Validators {
   static String? sizeValidator(
       BuildContext context, String value, minValue, maxValue, String measure,
       {bool disabled = false}) {
-    final formattedValue = value.replaceAll(',', '.');
+    final appStrings = AppStrings.of(context);
+    // Inch fields carry a fraction ('47 7/8'); every other measure is a plain
+    // number, so the measure label is what decides how the value reads.
+    final inches = measure == appStrings.inch;
+    final parsed = inches ? parseInches(value) : double.tryParse(value.replaceAll(',', '.'));
 
-    final result = emptyValidator(context, formattedValue);
+    final result = emptyValidator(context, value, parsed);
     if (disabled || result != null) {
       return result;
     }
-    if (measure == AppStrings.of(context).mm || measure == AppStrings.of(context).pcs) {
-      try {
-        int.parse(value);
-      } catch (e) {
-        return AppStrings.of(context).incorrect_value;
+    if (measure == appStrings.mm || measure == appStrings.pcs) {
+      if (int.tryParse(value) == null) {
+        return appStrings.incorrect_value;
       }
     }
-    if (double.parse(formattedValue) > maxValue) {
-      return ("${AppStrings.of(context).maximum} $maxValue $measure");
+    if (parsed! > maxValue) {
+      return ("${appStrings.maximum} ${_bound(maxValue, inches)} $measure");
     }
-    if (double.parse(formattedValue) < minValue) {
-      return ("${AppStrings.of(context).minimum} $minValue $measure");
+    if (parsed < minValue) {
+      return ("${appStrings.minimum} ${_bound(minValue, inches)} $measure");
     }
     return null;
   }
 
-  static String? emptyValidator(BuildContext context, String value) {
-    try {
-      if (value.isEmpty) {
-        return AppStrings.of(context).required_field;
-      }
-      if (double.parse(value) < 0) {
-        return AppStrings.of(context).incorrect_value;
-      }
-      return null;
-    } catch (e) {
+  static String _bound(num value, bool inches) => inches ? formatInches(value) : '$value';
+
+  static String? emptyValidator(BuildContext context, String value, [double? parsed]) {
+    if (value.trim().isEmpty) {
+      return AppStrings.of(context).required_field;
+    }
+    final number = parsed ?? double.tryParse(value.replaceAll(',', '.'));
+    if (number == null || number < 0) {
       return AppStrings.of(context).incorrect_value;
     }
+    return null;
   }
 }
