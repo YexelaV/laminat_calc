@@ -72,6 +72,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get along_width => 'Along width';
 
   @override
+  String get diagonally => 'Diagonal';
+
+  @override
   String get expansion_gap_mm => 'Expansion gap (mm)';
 
   @override

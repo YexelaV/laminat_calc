@@ -72,6 +72,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get along_width => 'По ширине';
 
   @override
+  String get diagonally => 'По диагонали';
+
+  @override
   String get expansion_gap_mm => 'Отступ от стен (мм)';
 
   @override

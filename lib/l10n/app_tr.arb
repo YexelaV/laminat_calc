@@ -20,6 +20,7 @@
     "laying_direction": "Döşeme yönü",
     "along_length": "Uzunluk boyunca",
     "along_width": "Genişlik boyunca",
+    "diagonally": "Çapraz",
     "expansion_gap_mm": "Genleşme boşluğu (mm)",
     "joint_offset": "Ek yeri kaydırması",
     "exact_offset": "tam",

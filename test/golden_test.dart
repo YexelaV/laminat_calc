@@ -1,7 +1,4 @@
-// Golden tests for the two screens that render a finished calculation. The
-// scheme scales every plank inline in the widget tree (plank.length / 10,
-// plank.width / 12, ...), and nothing else checks that those divisors still
-// produce the layout they used to.
+// Golden tests for the two screens that render a finished calculation.
 //
 // Regenerate after an intentional visual change:
 //   flutter test --update-goldens test/golden_test.dart
@@ -9,9 +6,13 @@
 // The tester draws text in its own test font, where every glyph is an identical
 // box. That makes the goldens independent of the host's fonts, but it also means
 // they cannot tell one string from another — 'панель' and 'панели' are the same
-// six boxes. So each golden pins the geometry and is paired with text
-// assertions that pin the labels.
+// six boxes. The variant list is still a widget tree, so its labels are pinned
+// here with find.text. The scheme is not: it is one canvas, and its labels are
+// pinned in scheme_geometry_test.dart, where they can be read as strings rather
+// than counted as boxes. What these images add is that the arithmetic that test
+// checks reaches the screen at all.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -58,6 +59,7 @@ Result variantWithPlanks(int totalPlanks) => Result(
       [],
       [],
       direction: Direction.length,
+      indentFromWall: 10,
     );
 
 Widget wrap(Widget child, {Locale locale = const Locale('ru')}) => MaterialApp(
@@ -86,26 +88,32 @@ void main() {
         find.byType(SchemeScreen),
         matchesGoldenFile('goldens/scheme_metric.png'),
       );
-      // 7 rows of 190 mm overshoot the 1180 mm across the rows, leaving 40 mm for
-      // the last row. That is under the 50 mm floor, so the shortfall is shared:
-      // the first and the last row both become 115 mm, the middle five stay full.
-      expect(find.text('115 '), findsNWidgets(2));
-      expect(find.text('190 '), findsNWidgets(5));
-      expect(find.text(' 581'), findsNWidgets(3), reason: 'the end plank of every third row');
-      // A plank left at full length carries no length label.
-      expect(find.text(' 1200'), findsNothing);
-      expect(find.text(' 1199'), findsNWidgets(3));
     });
 
-    testWidgets('rows along the room width are rotated', (tester) async {
+    // Rows are always drawn left to right, so laying across the room turns the
+    // room: the same 3000x1200 floor comes out 1200 wide and 3000 deep, which is
+    // why this one is shot upright.
+    testWidgets('rows along the room width are turned with the room', (tester) async {
       await pumpAt(
         tester,
         wrap(SchemeScreen(schemeResult(direction: Direction.width), 1)),
-        const Size(600, 500),
+        const Size(400, 600),
       );
       await expectLater(
         find.byType(SchemeScreen),
         matchesGoldenFile('goldens/scheme_along_width.png'),
+      );
+    });
+
+    testWidgets('rows at 45°', (tester) async {
+      await pumpAt(
+        tester,
+        wrap(SchemeScreen(schemeResult(direction: Direction.diagonal), 1)),
+        const Size(600, 500),
+      );
+      await expectLater(
+        find.byType(SchemeScreen),
+        matchesGoldenFile('goldens/scheme_diagonal.png'),
       );
     });
 
@@ -116,9 +124,71 @@ void main() {
         find.byType(SchemeScreen),
         matchesGoldenFile('goldens/scheme_imperial.png'),
       );
-      expect(find.text("4 1/2'' "), findsNWidgets(2), reason: '115 mm row width');
-      expect(find.text("7 1/2'' "), findsNWidgets(5), reason: '190 mm row width');
-      expect(find.text(" 1'-10 7/8''"), findsNWidgets(3), reason: '581 mm end plank');
+    });
+  });
+
+  // Not a golden: a widget test cannot turn the device, so what is checked is
+  // the request the screen makes of the platform.
+  group('orientation', () {
+    List<MethodCall> watchPlatform(WidgetTester tester) {
+      final calls = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          calls.add(call);
+          return null;
+        },
+      );
+      addTearDown(() => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null));
+      return calls;
+    }
+
+    List<String> orientationsIn(List<MethodCall> calls) => calls
+        .where((c) => c.method == 'SystemChrome.setPreferredOrientations')
+        .expand((c) => (c.arguments as List).cast<String>())
+        .toList();
+
+    const every = [
+      'DeviceOrientation.portraitUp',
+      'DeviceOrientation.landscapeLeft',
+      'DeviceOrientation.portraitDown',
+      'DeviceOrientation.landscapeRight',
+    ];
+    const landscape = [
+      'DeviceOrientation.landscapeLeft',
+      'DeviceOrientation.landscapeRight',
+    ];
+
+    testWidgets('opening the scheme leaves the device alone', (tester) async {
+      final calls = watchPlatform(tester);
+      await pumpAt(tester, wrap(SchemeScreen(schemeResult(), 1)), const Size(600, 400));
+      expect(orientationsIn(calls), isEmpty);
+    });
+
+    testWidgets('the button turns the phone, and turns it back', (tester) async {
+      final calls = watchPlatform(tester);
+      await pumpAt(tester, wrap(SchemeScreen(schemeResult(), 1)), const Size(600, 400));
+
+      await tester.tap(find.byIcon(Icons.screen_rotation));
+      await tester.pumpAndSettle();
+      expect(orientationsIn(calls), landscape);
+
+      // The icon changes with it, so the fitter can see the screen is held.
+      await tester.tap(find.byIcon(Icons.screen_lock_rotation));
+      await tester.pumpAndSettle();
+      expect(orientationsIn(calls), [...landscape, ...every]);
+      expect(find.byIcon(Icons.screen_rotation), findsOneWidget);
+    });
+
+    testWidgets('leaving the screen gives every orientation back', (tester) async {
+      final calls = watchPlatform(tester);
+      await pumpAt(tester, wrap(SchemeScreen(schemeResult(), 1)), const Size(600, 400));
+      await tester.tap(find.byIcon(Icons.screen_rotation));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(wrap(const SizedBox()));
+      await tester.pumpAndSettle();
+      expect(orientationsIn(calls), [...landscape, ...every]);
     });
   });
 

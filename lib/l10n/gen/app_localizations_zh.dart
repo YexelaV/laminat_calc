@@ -72,6 +72,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get along_width => '沿宽度';
 
   @override
+  String get diagonally => '斜铺';
+
+  @override
   String get expansion_gap_mm => '伸缩缝（毫米）';
 
   @override

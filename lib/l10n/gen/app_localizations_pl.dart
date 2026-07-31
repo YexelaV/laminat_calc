@@ -72,6 +72,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get along_width => 'Wzdłuż szerokości';
 
   @override
+  String get diagonally => 'Po skosie';
+
+  @override
   String get expansion_gap_mm => 'Szczelina dylatacyjna (mm)';
 
   @override

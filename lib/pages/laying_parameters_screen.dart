@@ -65,6 +65,10 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
             floorInch(rowOffsetMax(state)), appStrings.inch,
             disabled: disabled);
     if (rangeError != null || disabled) return rangeError;
+    // Whether an offset can be laid at all depends on the minimum length, and
+    // for diagonal rows that pairing has no closed form. The minimum length
+    // field asks the engine about the pair, so this one only checks the range.
+    if (state.direction == Direction.diagonal) return null;
     final length = rowLength(state);
     final rows = numberOfRowsFor(state);
     final laminateLength = state.laminateLength;
@@ -87,13 +91,38 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
             floorInch(minimumLaminateLengthMax(state)), appStrings.inch,
             disabled: disabled);
     if (rangeError != null || disabled) return rangeError;
-    final length = rowLength(state);
     final rows = numberOfRowsFor(state);
     final laminateLength = state.laminateLength;
+    final laminateWidth = state.laminateWidth;
+    final roomLength = state.roomLength;
+    final roomWidth = state.roomWidth;
+    final indentFromWall = state.indentFromWall;
     final offset = effectiveRowOffset(state);
-    if (length == null || rows == null || laminateLength == null || offset == null) return null;
+    if (rows == null || laminateLength == null || offset == null) return null;
     // Feasibility is not monotone in the minimum length, so a value inside
     // the min/max range can still be impossible to lay.
+    if (state.direction == Direction.diagonal) {
+      if (roomLength == null ||
+          roomWidth == null ||
+          laminateWidth == null ||
+          indentFromWall == null) {
+        return null;
+      }
+      if (!diagonalFeasible(
+        roomLength: roomLength,
+        roomWidth: roomWidth,
+        indentFromWall: indentFromWall,
+        laminateLength: laminateLength,
+        laminateWidth: laminateWidth,
+        minimumLaminateLength: parseSize(state, value),
+        rowOffset: offset,
+      )) {
+        return appStrings.incorrect_value;
+      }
+      return null;
+    }
+    final length = rowLength(state);
+    if (length == null) return null;
     if (!exactOffsetFeasible(length, laminateLength, offset, parseSize(state, value), rows)) {
       return appStrings.incorrect_value;
     }
@@ -174,11 +203,14 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     );
   }
 
+  // Null when there is nothing to give: a field still empty, or a 45° layout,
+  // whose rows are not all of one length.
   int? rowLength(CalculateState state) {
     final roomLength = state.roomLength;
     final roomWidth = state.roomWidth;
     final indentFromWall = state.indentFromWall;
     if (roomLength == null || roomWidth == null || indentFromWall == null) return null;
+    if (state.direction == Direction.diagonal) return null;
     return rowLengthMm(
       roomLength: roomLength,
       roomWidth: roomWidth,
@@ -225,10 +257,30 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
 
   int minimumLaminateLengthMax(CalculateState state) {
     final laminateLength = state.laminateLength;
+    final laminateWidth = state.laminateWidth;
+    final roomLength = state.roomLength;
+    final roomWidth = state.roomWidth;
+    final indentFromWall = state.indentFromWall;
     final rowOffset = effectiveRowOffset(state);
+
+    if (state.direction == Direction.diagonal) {
+      if (laminateLength == null ||
+          laminateWidth == null ||
+          roomLength == null ||
+          roomWidth == null ||
+          indentFromWall == null) {
+        return 0;
+      }
+      return maxMinimumLaminateLengthDiagonal(
+        roomLength: roomLength,
+        roomWidth: roomWidth,
+        indentFromWall: indentFromWall,
+        laminateLength: laminateLength,
+        laminateWidth: laminateWidth,
+      );
+    }
     final length = rowLength(state);
     final rows = numberOfRowsFor(state);
-
     if (laminateLength == null || rowOffset == null || length == null || rows == null) {
       return 0;
     }
@@ -294,6 +346,11 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: SegmentedButton<Direction>(
+                              // The tick costs the selected segment about a
+                              // character of width, which on a 360 dp phone is
+                              // enough to break a word in half. The fill already
+                              // says which one is chosen.
+                              showSelectedIcon: false,
                               segments: [
                                 ButtonSegment(
                                   value: Direction.length,
@@ -302,6 +359,10 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                 ButtonSegment(
                                   value: Direction.width,
                                   label: Text(appStrings.along_width),
+                                ),
+                                ButtonSegment(
+                                  value: Direction.diagonal,
+                                  label: Text(appStrings.diagonally),
                                 ),
                               ],
                               selected: {state.direction},
@@ -346,6 +407,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: SegmentedButton<OffsetMode>(
+                              showSelectedIcon: false,
                               segments: [
                                 ButtonSegment(value: OffsetMode.half, label: Text('1/2')),
                                 ButtonSegment(value: OffsetMode.third, label: Text('1/3')),

@@ -5,7 +5,7 @@ description: Laminate flooring layout calculator.
 # the build number as versionCode and the name as versionName. Google Play
 # rejects an upload whose versionCode is not higher than the last published one,
 # so the build number must be bumped for every release.
-version: 1.7.0+16
+version: 1.8.0+17
 
 environment:
   sdk: ">=2.18.0 <4.0.0"
@@ -53,6 +53,10 @@ flutter:
   # like this:
   assets:
     - assets/
+    # Not a Flutter font family: the PDF is drawn by the pdf package, which
+    # cannot reach the app's fonts and whose built-in faces carry no glyph past
+    # U+00FF. Loaded as bytes in scheme_pdf.dart. Apache 2.0, see LICENSE.txt.
+    - assets/fonts/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see

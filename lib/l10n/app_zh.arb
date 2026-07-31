@@ -20,6 +20,7 @@
     "laying_direction": "铺设方向",
     "along_length": "沿长度",
     "along_width": "沿宽度",
+    "diagonally": "斜铺",
     "expansion_gap_mm": "伸缩缝（毫米）",
     "joint_offset": "接缝错位",
     "exact_offset": "精确",

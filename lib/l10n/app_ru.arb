@@ -20,6 +20,7 @@
     "laying_direction": "Направление укладки",
     "along_length": "По длине",
     "along_width": "По ширине",
+    "diagonally": "По диагонали",
     "expansion_gap_mm": "Отступ от стен (мм)",
     "joint_offset": "Смещение стыков",
     "exact_offset": "точно",

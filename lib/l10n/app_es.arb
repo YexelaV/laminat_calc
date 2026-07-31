@@ -20,6 +20,7 @@
     "laying_direction": "Dirección de instalación",
     "along_length": "A lo largo",
     "along_width": "A lo ancho",
+    "diagonally": "En diagonal",
     "expansion_gap_mm": "Junta de dilatación (mm)",
     "joint_offset": "Desfase de juntas",
     "exact_offset": "exacto",

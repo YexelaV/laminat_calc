@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/cubit/calculate_state.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/row_plan.dart';
 
 Calculation calculationFor({
   required int roomLength,
@@ -131,6 +132,99 @@ void main() {
 
       expect(results.isNotEmpty, accepted,
           reason: 'the field validator and the calculation must agree on feasibility');
+    });
+
+    test('the row count the validators derive is the one a 45° layout has', () {
+      for (var mm = 2000; mm <= 16000; mm += 7) {
+        for (final width in [190, 192, 1000]) {
+          expect(
+            numberOfRowsMm(
+              roomLength: 5000,
+              roomWidth: mm,
+              indentFromWall: 10,
+              laminateWidth: width,
+              direction: Direction.diagonal,
+            ),
+            planFor(
+              roomLength: 5000,
+              roomWidth: mm,
+              indentFromWall: 10,
+              laminateLength: 1380,
+              laminateWidth: width,
+              direction: Direction.diagonal,
+            ).numberOfRows,
+            reason: 'room width $mm mm, plank width $width mm',
+          );
+        }
+      }
+    });
+
+    // The diagonal validator has no closed form to check against: it asks the
+    // engine. What is worth pinning is that it asks the same question the user
+    // will — the memoised answer must not outlive the parameters it was for.
+    test('the diagonal feasibility the field reports is the one the engine gives', () {
+      for (final room in [
+        [5000, 4000],
+        [4100, 3200],
+        [3000, 2500],
+        [2800, 2000],
+        [6000, 4500],
+      ]) {
+        for (final minLen in [200, 300, 400, 500]) {
+          final reported = diagonalFeasible(
+            roomLength: room[0],
+            roomWidth: room[1],
+            indentFromWall: 10,
+            laminateLength: 1380,
+            laminateWidth: 190,
+            minimumLaminateLength: minLen,
+            rowOffset: 300,
+          );
+          final laid = Calculation(
+            roomLength: room[0],
+            roomWidth: room[1],
+            laminateLength: 1380,
+            laminateWidth: 190,
+            planksInPack: 8,
+            indentFromWall: 10,
+            minimumLaminateLength: minLen,
+            rowOffset: 300,
+            direction: Direction.diagonal,
+          ).calculate().isNotEmpty;
+          expect(reported, laid, reason: 'room ${room[0]}x${room[1]}, minimum $minLen mm');
+        }
+      }
+    });
+
+    test('a minimum length past the diagonal bound cannot be laid', () {
+      for (final room in [
+        [5000, 4000],
+        [4100, 3200],
+        [2800, 2000],
+      ]) {
+        final bound = maxMinimumLaminateLengthDiagonal(
+          roomLength: room[0],
+          roomWidth: room[1],
+          indentFromWall: 10,
+          laminateLength: 1380,
+          laminateWidth: 190,
+        );
+        for (final minLen in [bound + 1, bound + 50, bound + 200]) {
+          expect(
+            diagonalFeasible(
+              roomLength: room[0],
+              roomWidth: room[1],
+              indentFromWall: 10,
+              laminateLength: 1380,
+              laminateWidth: 190,
+              minimumLaminateLength: minLen,
+              rowOffset: 300,
+            ),
+            isFalse,
+            reason: 'room ${room[0]}x${room[1]}: $minLen mm is past the bound $bound mm',
+          );
+        }
+      }
     });
   });
 }

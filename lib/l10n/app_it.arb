@@ -20,6 +20,7 @@
     "laying_direction": "Senso di posa",
     "along_length": "Lungo la lunghezza",
     "along_width": "Lungo la larghezza",
+    "diagonally": "In diagonale",
     "expansion_gap_mm": "Giunto di dilatazione (mm)",
     "joint_offset": "Sfalsamento giunzioni",
     "exact_offset": "esatto",

@@ -72,6 +72,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get along_width => 'Quer';
 
   @override
+  String get diagonally => 'Diagonal';
+
+  @override
   String get expansion_gap_mm => 'Dehnungsfuge (mm)';
 
   @override

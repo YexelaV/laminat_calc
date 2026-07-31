@@ -72,6 +72,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get along_width => 'A lo ancho';
 
   @override
+  String get diagonally => 'En diagonal';
+
+  @override
   String get expansion_gap_mm => 'Junta de dilatación (mm)';
 
   @override

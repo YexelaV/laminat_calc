@@ -20,6 +20,7 @@
     "laying_direction": "Kierunek układania",
     "along_length": "Wzdłuż długości",
     "along_width": "Wzdłuż szerokości",
+    "diagonally": "Po skosie",
     "expansion_gap_mm": "Szczelina dylatacyjna (mm)",
     "joint_offset": "Przesunięcie spoin",
     "exact_offset": "dokładnie",

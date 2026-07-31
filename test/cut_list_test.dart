@@ -76,6 +76,7 @@ void main() {
         [],
         [],
         direction: Direction.length,
+        indentFromWall: 10,
       );
       expect(totalPacks(result), 1);
       expect(wastePercent(result), 50);

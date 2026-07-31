@@ -240,6 +240,12 @@ abstract class AppLocalizations {
   /// **'По ширине'**
   String get along_width;
 
+  /// No description provided for @diagonally.
+  ///
+  /// In ru, this message translates to:
+  /// **'По диагонали'**
+  String get diagonally;
+
   /// No description provided for @expansion_gap_mm.
   ///
   /// In ru, this message translates to:

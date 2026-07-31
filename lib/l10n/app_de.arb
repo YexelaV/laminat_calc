@@ -20,6 +20,7 @@
     "laying_direction": "Verlegerichtung",
     "along_length": "Längs",
     "along_width": "Quer",
+    "diagonally": "Diagonal",
     "expansion_gap_mm": "Dehnungsfuge (mm)",
     "joint_offset": "Fugenversatz",
     "exact_offset": "genau",

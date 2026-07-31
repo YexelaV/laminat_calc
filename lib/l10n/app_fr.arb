@@ -20,6 +20,7 @@
     "laying_direction": "Sens de pose",
     "along_length": "Dans la longueur",
     "along_width": "Dans la largeur",
+    "diagonally": "En diagonale",
     "expansion_gap_mm": "Joint de dilatation (mm)",
     "joint_offset": "Décalage des joints",
     "exact_offset": "exact",

@@ -11,5 +11,7 @@ build
 # Diff images written by a failing golden test.
 test/failures/
 # Working notes, not part of the app.
-diagonal_plan.md
+*.md
 features_plan.md
+# Pictures for stores
+/store

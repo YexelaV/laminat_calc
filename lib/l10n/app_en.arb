@@ -20,6 +20,7 @@
     "laying_direction": "Laying direction",
     "along_length": "Along length",
     "along_width": "Along width",
+    "diagonally": "Diagonal",
     "expansion_gap_mm": "Expansion gap (mm)",
     "joint_offset": "Joint offset",
     "exact_offset": "exact",

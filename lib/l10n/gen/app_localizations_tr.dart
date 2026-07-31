@@ -72,6 +72,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get along_width => 'Genişlik boyunca';
 
   @override
+  String get diagonally => 'Çapraz';
+
+  @override
   String get expansion_gap_mm => 'Genleşme boşluğu (mm)';
 
   @override
