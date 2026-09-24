@@ -7,6 +7,7 @@ import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/router/app_router.dart';
+import 'package:floor_calculator/row_plan.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/utils/validators.dart';
 import 'package:floor_calculator/widgets/app_background.dart';
@@ -66,9 +67,9 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
             disabled: disabled);
     if (rangeError != null || disabled) return rangeError;
     // Whether an offset can be laid at all depends on the minimum length, and
-    // for diagonal rows that pairing has no closed form. The minimum length
-    // field asks the engine about the pair, so this one only checks the range.
-    if (state.direction == Direction.diagonal) return null;
+    // where the rows are not all one length that pairing has no closed form.
+    // The minimum length field asks the engine about the pair, so this one only
+    // checks the range.
     final length = rowLength(state);
     final rows = numberOfRowsFor(state);
     final laminateLength = state.laminateLength;
@@ -91,39 +92,43 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
             floorInch(minimumLaminateLengthMax(state)), appStrings.inch,
             disabled: disabled);
     if (rangeError != null || disabled) return rangeError;
-    final rows = numberOfRowsFor(state);
+    final plan = planOf(state);
+    final shape = state.shape;
     final laminateLength = state.laminateLength;
     final laminateWidth = state.laminateWidth;
-    final roomLength = state.roomLength;
-    final roomWidth = state.roomWidth;
     final indentFromWall = state.indentFromWall;
     final offset = effectiveRowOffset(state);
-    if (rows == null || laminateLength == null || offset == null) return null;
+    if (plan == null ||
+        shape == null ||
+        laminateLength == null ||
+        laminateWidth == null ||
+        indentFromWall == null ||
+        offset == null) {
+      return null;
+    }
     // Feasibility is not monotone in the minimum length, so a value inside
     // the min/max range can still be impossible to lay.
-    if (state.direction == Direction.diagonal) {
-      if (roomLength == null ||
-          roomWidth == null ||
-          laminateWidth == null ||
-          indentFromWall == null) {
-        return null;
-      }
-      if (!diagonalFeasible(
-        roomLength: roomLength,
-        roomWidth: roomWidth,
+    //
+    // Rows all of one length carry one grid of joints and the answer is a
+    // formula. Rows that do not — a 45° layout, or a room whose opposite walls
+    // differ — have to be searched for, and the search is the engine's: a
+    // second implementation of it would drift from the first.
+    if (!plan.isUniform) {
+      if (!planFeasible(
+        shape: shape,
         indentFromWall: indentFromWall,
         laminateLength: laminateLength,
         laminateWidth: laminateWidth,
         minimumLaminateLength: parseSize(state, value),
         rowOffset: offset,
+        direction: state.direction,
       )) {
         return appStrings.incorrect_value;
       }
       return null;
     }
-    final length = rowLength(state);
-    if (length == null) return null;
-    if (!exactOffsetFeasible(length, laminateLength, offset, parseSize(state, value), rows)) {
+    if (!exactOffsetFeasible(plan.lengths.first, laminateLength, offset, parseSize(state, value),
+        plan.numberOfRows)) {
       return appStrings.incorrect_value;
     }
     return null;
@@ -203,41 +208,44 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
     );
   }
 
-  // Null when there is nothing to give: a field still empty, or a 45° layout,
-  // whose rows are not all of one length.
-  int? rowLength(CalculateState state) {
-    final roomLength = state.roomLength;
-    final roomWidth = state.roomWidth;
-    final indentFromWall = state.indentFromWall;
-    if (roomLength == null || roomWidth == null || indentFromWall == null) return null;
-    if (state.direction == Direction.diagonal) return null;
-    return rowLengthMm(
-      roomLength: roomLength,
-      roomWidth: roomWidth,
-      indentFromWall: indentFromWall,
-      direction: state.direction,
-    );
-  }
-
-  int? numberOfRowsFor(CalculateState state) {
-    final roomLength = state.roomLength;
-    final roomWidth = state.roomWidth;
+  // The rows the room will actually be laid in, asked of the same function the
+  // engine asks. Null while a field the geometry needs is still empty.
+  //
+  // The form used to derive the geometry alongside the engine, in scalars of
+  // its own. It cannot any more — a room whose walls differ has no single row
+  // length to derive — and it is better off for it: feasibility is not monotone
+  // in the minimum plank length, so a millimetre of disagreement between the
+  // two used to turn into a green form that then reported no laying variants.
+  RowPlan? planOf(CalculateState state) {
+    final shape = state.shape;
+    final laminateLength = state.laminateLength;
     final laminateWidth = state.laminateWidth;
     final indentFromWall = state.indentFromWall;
-    if (roomLength == null ||
-        roomWidth == null ||
+    if (shape == null ||
+        laminateLength == null ||
         laminateWidth == null ||
         indentFromWall == null) {
       return null;
     }
-    return numberOfRowsMm(
-      roomLength: roomLength,
-      roomWidth: roomWidth,
+    if (shape.problem != null) return null;
+    return planFor(
+      shape: shape,
       indentFromWall: indentFromWall,
+      laminateLength: laminateLength,
       laminateWidth: laminateWidth,
       direction: state.direction,
     );
   }
+
+  // Null when there is nothing to give: a field still empty, or rows that are
+  // not all of one length — a 45° layout, or a room whose opposite walls differ.
+  int? rowLength(CalculateState state) {
+    final plan = planOf(state);
+    if (plan == null || !plan.isUniform) return null;
+    return plan.lengths.first;
+  }
+
+  int? numberOfRowsFor(CalculateState state) => planOf(state)?.numberOfRows;
 
   // The exact offset in mm: derived from the plank length for the fraction
   // modes, entered by the user in the exact mode.
@@ -256,45 +264,23 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
   }
 
   int minimumLaminateLengthMax(CalculateState state) {
+    final plan = planOf(state);
     final laminateLength = state.laminateLength;
-    final laminateWidth = state.laminateWidth;
-    final roomLength = state.roomLength;
-    final roomWidth = state.roomWidth;
-    final indentFromWall = state.indentFromWall;
     final rowOffset = effectiveRowOffset(state);
-
-    if (state.direction == Direction.diagonal) {
-      if (laminateLength == null ||
-          laminateWidth == null ||
-          roomLength == null ||
-          roomWidth == null ||
-          indentFromWall == null) {
-        return 0;
-      }
-      return maxMinimumLaminateLengthDiagonal(
-        roomLength: roomLength,
-        roomWidth: roomWidth,
-        indentFromWall: indentFromWall,
-        laminateLength: laminateLength,
-        laminateWidth: laminateWidth,
-      );
+    if (plan == null || laminateLength == null) return 0;
+    // Rows all of one length have a closed form for this; the rest are read off
+    // the plan they will actually be laid in.
+    if (!plan.isUniform) {
+      return maxMinimumLaminateLengthFor(plan: plan, laminateLength: laminateLength);
     }
-    final length = rowLength(state);
-    final rows = numberOfRowsFor(state);
-    if (laminateLength == null || rowOffset == null || length == null || rows == null) {
-      return 0;
-    }
-    return maxMinimumLaminateLengthExact(length, laminateLength, rowOffset, rows);
+    if (rowOffset == null) return 0;
+    return maxMinimumLaminateLengthExact(
+        plan.lengths.first, laminateLength, rowOffset, plan.numberOfRows);
   }
 
   bool minimumLaminateLengthValidatorDisabled(CalculateState state) {
     final rowOffset = effectiveRowOffset(state);
-    if (state.roomLength == null ||
-        state.roomWidth == null ||
-        state.laminateLength == null ||
-        state.laminateWidth == null ||
-        state.indentFromWall == null ||
-        rowOffset == null) {
+    if (planOf(state) == null || rowOffset == null) {
       return true;
     }
     // While the offset itself is out of range, or no minimum length works at
@@ -476,8 +462,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                             onPressed: areAllFieldsValid(context, state)
                                 ? () {
                                     FocusScope.of(context).unfocus();
-                                    final roomLength = state.roomLength;
-                                    final roomWidth = state.roomWidth;
+                                    final shape = state.shape;
                                     final laminateLength = state.laminateLength;
                                     final laminateWidth = state.laminateWidth;
                                     final quantityPerPack = state.quantityPerPack;
@@ -485,8 +470,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                     final rowOffset = effectiveRowOffset(state);
                                     final minimumLaminateLength = state.minimumLaminateLength;
 
-                                    if (roomLength != null &&
-                                        roomWidth != null &&
+                                    if (shape != null &&
                                         laminateLength != null &&
                                         laminateWidth != null &&
                                         quantityPerPack != null &&
@@ -494,8 +478,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                         rowOffset != null &&
                                         minimumLaminateLength != null) {
                                       final calculation = Calculation(
-                                        roomLength: roomLength,
-                                        roomWidth: roomWidth,
+                                        shape: shape,
                                         laminateLength: laminateLength,
                                         laminateWidth: laminateWidth,
                                         planksInPack: quantityPerPack,

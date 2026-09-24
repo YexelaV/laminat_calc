@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/pages/result_screen.dart';
 import 'package:floor_calculator/utils/cut_list.dart';
 import 'package:floor_calculator/utils/units.dart';
@@ -15,8 +16,7 @@ import 'package:floor_calculator/widgets/cut_list_sheet.dart';
 // The same room as the scheme goldens: three planks per row, a staircase that
 // restarts, and offcuts that get reused.
 List<Result> fixtures() => Calculation(
-      roomLength: 3000,
-      roomWidth: 1200,
+      shape: RoomShape.rectangle(3000, 1200),
       laminateLength: 1200,
       laminateWidth: 190,
       planksInPack: 8,
@@ -66,8 +66,7 @@ void main() {
       // Two planks bought, one laid whole, nothing cut: still half wasted.
       final result = Result(
         1200,
-        3000,
-        1200,
+        RoomShape.rectangle(3000, 1200),
         2,
         1,
         [

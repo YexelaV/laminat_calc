@@ -8,14 +8,37 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/scheme_pdf.dart';
 import 'package:floor_calculator/utils/cut_list.dart';
 import 'package:floor_calculator/utils/units.dart';
 
 Result laid(Direction direction) {
   final results = Calculation(
-    roomLength: 3000,
-    roomWidth: 1200,
+    shape: RoomShape.rectangle(3000, 1200),
+    laminateLength: 1200,
+    laminateWidth: 190,
+    planksInPack: 8,
+    indentFromWall: 10,
+    minimumLaminateLength: 300,
+    rowOffset: 300,
+    direction: direction,
+  ).calculate();
+  expect(results, isNotEmpty, reason: 'the fixture must be layable');
+  return results.first;
+}
+
+// The same room measured wall by wall. On the page the walls are no longer one
+// drawRect but a path of four corners, and nothing else in this file draws one.
+Result laidSkewed(Direction direction) {
+  final results = Calculation(
+    shape: RoomShape(
+      lengthNear: 3000,
+      lengthFar: 2880,
+      widthLeft: 1200,
+      widthRight: 1320,
+      diagonal: 3300,
+    ),
     laminateLength: 1200,
     laminateWidth: 190,
     planksInPack: 8,
@@ -48,6 +71,17 @@ void main() {
         expect(bytes.length, greaterThan(1000));
       });
     }
+  }
+
+  for (final direction in [Direction.length, Direction.diagonal]) {
+    test('$direction in a room measured wall by wall saves', () async {
+      final result = laidSkewed(direction);
+      final pdf = schemePdf(result, MeasurementSystem.metric, fonts,
+          cutList: await report(result, MeasurementSystem.metric, 'ru'));
+      final bytes = await pdf.save();
+      expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+      expect(bytes.length, greaterThan(1000));
+    });
   }
 
   // A page cannot be panned, so the scheme is fitted to it. Printing a drawing
@@ -110,8 +144,7 @@ void main() {
   test('a scheme of one plank still saves', () async {
     final result = Result(
       1200,
-      1400,
-      400,
+      RoomShape.rectangle(1400, 400),
       8,
       1,
       [

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_shape.dart';
 
 class Violation {
   final String config;
@@ -70,8 +71,7 @@ void run(int roomLength, int roomWidth, int lamLength, int lamWidth, int pack, i
   final cfg =
       'room=${roomLength}x${roomWidth}mm, laminate=${lamLength}x${lamWidth}mm, min=$minLen, offset=$offset, indent=$indent';
   final c = Calculation(
-    roomLength: roomLength,
-    roomWidth: roomWidth,
+    shape: RoomShape.rectangle(roomLength, roomWidth),
     laminateLength: lamLength,
     laminateWidth: lamWidth,
     planksInPack: pack,

@@ -210,6 +210,54 @@ abstract class AppLocalizations {
   /// **'Ширина (мм)'**
   String get width_mm;
 
+  /// No description provided for @uneven_walls.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стены разной длины'**
+  String get uneven_walls;
+
+  /// No description provided for @wall_length.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина {number}'**
+  String wall_length(int number);
+
+  /// No description provided for @wall_width.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина {number}'**
+  String wall_width(int number);
+
+  /// No description provided for @wall_length_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина {number} (мм)'**
+  String wall_length_mm(int number);
+
+  /// No description provided for @wall_width_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина {number} (мм)'**
+  String wall_width_mm(int number);
+
+  /// No description provided for @wall_diagonal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Диагональ'**
+  String get wall_diagonal;
+
+  /// No description provided for @wall_diagonal_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Диагональ (мм)'**
+  String get wall_diagonal_mm;
+
+  /// No description provided for @walls_do_not_close.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стены не сходятся'**
+  String get walls_do_not_close;
+
   /// No description provided for @pieces_per_package.
   ///
   /// In ru, this message translates to:

@@ -36,28 +36,35 @@ class SchemePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..color = Colors.grey
       ..strokeWidth = 1;
-    canvas.drawRect(
-      Rect.fromPoints(_px(scheme.room.topLeft), _px(scheme.room.bottomRight)),
-      wall,
-    );
+    canvas.drawPath(_outlineOf(scheme.room), wall);
 
     final edge = Paint()
       ..style = PaintingStyle.stroke
       ..color = Colors.black
       ..strokeWidth = 1;
     for (final shape in scheme.planks) {
-      final path = Path()..moveTo(_px(shape.outline.first).dx, _px(shape.outline.first).dy);
-      for (final point in shape.outline.skip(1)) {
-        final p = _px(point);
-        path.lineTo(p.dx, p.dy);
-      }
-      path.close();
-      canvas.drawPath(path, edge);
+      canvas.drawPath(_outlineOf(shape.outline), edge);
     }
 
     for (final label in scheme.labels) {
       _drawLabel(canvas, label);
     }
+  }
+
+  /// A closed path through [corners]. The walls are drawn the same way the
+  /// planks are, because a room whose opposite walls differ is no more a
+  /// rectangle than a plank cut against one is.
+  Path _outlineOf(List<Offset> corners) {
+    final path = Path();
+    for (var i = 0; i < corners.length; i++) {
+      final p = _px(corners[i]);
+      if (i == 0) {
+        path.moveTo(p.dx, p.dy);
+      } else {
+        path.lineTo(p.dx, p.dy);
+      }
+    }
+    return path..close();
   }
 
   void _drawLabel(Canvas canvas, SchemeLabel label) {

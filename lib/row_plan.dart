@@ -2,8 +2,10 @@
 // diagonal laying differ only in this file: everywhere downstream a row is a
 // centreline length, a start position and a pair of end bevels.
 import 'dart:math' as math;
+import 'dart:math' show Point;
 
 import 'models.dart';
+import 'room_shape.dart';
 
 /// The only place the 45° layout is rounded to millimetres.
 ///
@@ -59,17 +61,19 @@ class RowPlan {
 
   /// Longest centreline a plank may have in the first and last slot of a row.
   /// A bevelled end has to be cut out of a full plank on the slant, so it costs
-  /// half a plank width of reach.
+  /// reach — half a plank width for a 45° cut, less for a shallower one.
   final List<int> capFirst;
   final List<int> capLast;
 
   /// The cap for a plank that spans a whole row alone, bevelled at both ends.
+  /// Both cuts are rounded together rather than one at a time: rounding twice
+  /// would take a millimetre off a plank that has it.
   final List<int> capWhole;
 
   final List<Bevel> startBevel;
   final List<Bevel> endBevel;
 
-  RowPlan({
+  RowPlan._({
     required this.lengths,
     required this.widths,
     required this.startU,
@@ -81,34 +85,90 @@ class RowPlan {
     required this.endBevel,
   });
 
+  /// The caps follow from the ends, so no plan works them out for itself: a
+  /// row's reach and the bevel the engine then cuts have to be the same number.
+  factory RowPlan({
+    required List<int> lengths,
+    required List<int> widths,
+    required List<int> startU,
+    required List<int> shift,
+    required List<Bevel> startBevel,
+    required List<Bevel> endBevel,
+    required int laminateLength,
+    required int laminateWidth,
+  }) {
+    final rows = lengths.length;
+    return RowPlan._(
+      lengths: lengths,
+      widths: widths,
+      startU: startU,
+      shift: shift,
+      capFirst: [
+        for (var i = 0; i < rows; i++) laminateLength - startBevel[i].reachMm(laminateWidth)
+      ],
+      capLast: [
+        for (var i = 0; i < rows; i++) laminateLength - endBevel[i].reachMm(laminateWidth)
+      ],
+      capWhole: [
+        for (var i = 0; i < rows; i++)
+          laminateLength - Bevel(startBevel[i].slope.abs() + endBevel[i].slope.abs())
+              .reachMm(laminateWidth)
+      ],
+      startBevel: startBevel,
+      endBevel: endBevel,
+    );
+  }
+
   int get numberOfRows => lengths.length;
 
-  /// True when every row is the same square-ended length, i.e. this is straight
-  /// laying and the cheaper scalar reasoning still applies.
-  bool get isUniform => shift.every((s) => s == 0);
+  /// True when every row is the same square-ended length, i.e. all the rows
+  /// carry one grid of joints and the cheaper scalar reasoning still applies.
+  ///
+  /// Both halves matter. Rows that start together but run to different lengths
+  /// — a room whose opposite walls are not parallel — share no grid either, and
+  /// treating them as if they did makes [Calculation.check] insist on an exact
+  /// step the rows cannot hold.
+  bool get isUniform =>
+      shift.every((s) => s == 0) && lengths.every((l) => l == lengths.first);
 }
 
 /// The rows a room is laid in. The single place a laying direction turns into
 /// geometry: the engine and the field validators must agree to the millimetre,
 /// so neither may derive the rows for itself.
+///
+/// A rectangle goes down a closed form of its own rather than through
+/// [scanPlan]. Not because the walk cannot do it — test/scan_plan_test.dart
+/// shows it does, and nearer the room than the closed form at that — but
+/// because a rectangle is what every room was until walls could differ, and it
+/// has to keep laying out to the same millimetre it always did.
 RowPlan planFor({
-  required int roomLength,
-  required int roomWidth,
+  required RoomShape shape,
   required int indentFromWall,
   required int laminateLength,
   required int laminateWidth,
   required Direction direction,
 }) {
-  final a = roomLength - indentFromWall * 2;
-  final b = roomWidth - indentFromWall * 2;
-  if (direction == Direction.diagonal) {
-    return diagonalPlan(a: a, b: b, laminateLength: laminateLength, laminateWidth: laminateWidth);
+  if (shape.isRectangular) {
+    final a = shape.lengthNear - indentFromWall * 2;
+    final b = shape.widthLeft - indentFromWall * 2;
+    if (direction == Direction.diagonal) {
+      return diagonalPlan(a: a, b: b, laminateLength: laminateLength, laminateWidth: laminateWidth);
+    }
+    return straightPlan(
+      rowLength: direction == Direction.length ? a : b,
+      across: direction == Direction.length ? b : a,
+      laminateLength: laminateLength,
+      laminateWidth: laminateWidth,
+    );
   }
-  final along = direction == Direction.length ? a : b;
-  final across = direction == Direction.length ? b : a;
-  return straightPlan(
-    rowLength: along,
-    numberOfRows: (across / laminateWidth).ceil(),
+  final floor = shape.floor(indentFromWall);
+  return scanPlan(
+    // Rows are always drawn and cut running along `u`. Laying across the room
+    // turns the room rather than the rows, and [drawnRoom] turns it the same
+    // way on the drawing side — through the same [RoomShape.turned], so the two
+    // cannot end up looking at different rooms.
+    floor: direction == Direction.width ? shape.turned(floor) : floor,
+    angle: direction == Direction.diagonal ? -math.pi / 4 : 0,
     laminateLength: laminateLength,
     laminateWidth: laminateWidth,
   );
@@ -116,23 +176,135 @@ RowPlan planFor({
 
 /// Rows parallel to a wall: all the same length, square at both ends, and all
 /// starting from the same place.
+///
+/// [across] is the room the other way. A whole number of planks rarely covers
+/// it, and the shortfall is settled here rather than after the laying, because
+/// how wide a row is ripped is a property of the room and not of what went into
+/// it. The last row takes what is left; when that is too narrow to lay, the
+/// first row gives up half of its own width so that the floor ends the same way
+/// it begins and neither end is a sliver.
+///
+/// Only parallel walls can be evened out like this. A room whose opposite walls
+/// are not parallel has nothing to share the shortfall with, and [scanPlan]
+/// leaves the last strip as the geometry gives it.
 RowPlan straightPlan({
   required int rowLength,
-  required int numberOfRows,
+  required int across,
   required int laminateLength,
   required int laminateWidth,
-}) =>
-    RowPlan(
-      lengths: List.filled(numberOfRows, rowLength),
-      widths: List.filled(numberOfRows, laminateWidth),
-      startU: List.filled(numberOfRows, 0),
-      shift: List.filled(numberOfRows, 0),
-      capFirst: List.filled(numberOfRows, laminateLength),
-      capLast: List.filled(numberOfRows, laminateLength),
-      capWhole: List.filled(numberOfRows, laminateLength),
-      startBevel: List.filled(numberOfRows, Bevel.square),
-      endBevel: List.filled(numberOfRows, Bevel.square),
-    );
+}) {
+  final numberOfRows = (across / laminateWidth).ceil();
+  final widths = List.filled(numberOfRows, laminateWidth);
+  final leftOver = laminateWidth - (laminateWidth * numberOfRows - across);
+  if (leftOver >= minRowWidthMm) {
+    widths[numberOfRows - 1] = leftOver;
+  } else {
+    final shared = (leftOver + laminateWidth) ~/ 2;
+    widths[0] = shared;
+    widths[numberOfRows - 1] = shared;
+  }
+  return RowPlan(
+    lengths: List.filled(numberOfRows, rowLength),
+    widths: widths,
+    startU: List.filled(numberOfRows, 0),
+    shift: List.filled(numberOfRows, 0),
+    startBevel: List.filled(numberOfRows, Bevel.square),
+    endBevel: List.filled(numberOfRows, Bevel.square),
+    laminateLength: laminateLength,
+    laminateWidth: laminateWidth,
+  );
+}
+
+/// The rows a floor of any shape is laid in, found by walking a strip across
+/// it.
+///
+/// One generalisation covering both of the closed forms above. The floor is
+/// turned so that the rows run along `u`, then cut into strips a plank wide.
+/// Where a strip's centreline crosses the floor is the row — how long it is and
+/// where it starts — and how the walls lean at those two crossings is the slant
+/// of its two ends. A rectangle laid parallel to a wall comes back with equal
+/// lengths, equal starts and square ends; the same rectangle at 45° comes back
+/// as [diagonalPlan] draws it, to within the millimetre the two roundings differ
+/// by (test/scan_plan_test.dart holds them to that).
+///
+/// [angle] is the direction the rows run in, measured the way the drawing
+/// measures it: 0 along the room's length, −π/4 for a 45° layout.
+///
+/// A row is measured at the middle of the part of its strip that is inside the
+/// floor, for the reason [diagonalPlan] gives: the last strip is a sliver
+/// against a corner, and measured at the strip's own centre it can come out
+/// empty while there is still floor to lay.
+RowPlan scanPlan({
+  required List<Point<double>> floor,
+  required double angle,
+  required int laminateLength,
+  required int laminateWidth,
+}) {
+  final w = laminateWidth;
+  final rotated = rowFrame(floor, angle);
+  var uMin = double.infinity;
+  var vMin = double.infinity;
+  var vMax = double.negativeInfinity;
+  for (final corner in rotated) {
+    uMin = math.min(uMin, corner.x);
+    vMin = math.min(vMin, corner.y);
+    vMax = math.max(vMax, corner.y);
+  }
+
+  final extent = vMax - vMin;
+  var rows = (extent / w).ceil();
+  // The same sliver rule the 45° layout has always used. A shortfall cannot be
+  // shared out between the first row and the last here: the walls those two lie
+  // against are not parallel, so there is nothing to share it with.
+  if (rows > 1 && extent - (rows - 1) * w < minRowWidthMm) rows--;
+
+  final lengths = <int>[];
+  final widths = <int>[];
+  final startU = <int>[];
+  final startBevel = <Bevel>[];
+  final endBevel = <Bevel>[];
+  for (var i = 0; i < rows; i++) {
+    final vLo = vMin + i * w;
+    final vHi = math.min(vMin + (i + 1) * w, vMax);
+    final span = spanAt(rotated, (vLo + vHi) / 2);
+    lengths.add(span == null ? 0 : math.max(0, span.length.round()));
+    widths.add((vHi - vLo).round());
+    startU.add(span == null ? 0 : (span.lo - uMin).round());
+    // The plank's end follows the wall, so its far corner leads by as much as
+    // the wall leans. At the start of the row the wall leans away from the row
+    // and at the end towards it, which is where the sign comes from.
+    startBevel.add(span == null ? Bevel.square : Bevel.fromLean(-span.loLean, w));
+    endBevel.add(span == null ? Bevel.square : Bevel.fromLean(span.hiLean, w));
+  }
+
+  final shift = <int>[];
+  for (var i = 0; i < rows; i++) {
+    shift.add(i + 1 < rows ? startU[i] - startU[i + 1] : 0);
+  }
+
+  return RowPlan(
+    lengths: lengths,
+    widths: widths,
+    startU: startU,
+    shift: shift,
+    startBevel: startBevel,
+    endBevel: endBevel,
+    laminateLength: laminateLength,
+    laminateWidth: w,
+  );
+}
+
+/// [polygon] turned so that rows running at [angle] run along `u`, which the
+/// result carries as `x`, with `v` across them as `y`.
+///
+/// The drawing turns it back by the same angle, so the two share this.
+List<Point<double>> rowFrame(List<Point<double>> polygon, double angle) {
+  final c = math.cos(angle);
+  final s = math.sin(angle);
+  return [
+    for (final p in polygon) Point(p.x * c + p.y * s, -p.x * s + p.y * c),
+  ];
+}
 
 /// Rows at 45° across a room of [a] by [b] (already inset from the walls).
 ///
@@ -194,18 +366,14 @@ RowPlan diagonalPlan({
     shift.add(i + 1 < rows ? startU[i] - startU[i + 1] : 0);
   }
 
-  // Half a width, rounded up: a plank must be long enough for the bevel's long
-  // corner, and rounding the other way would claim reach the plank has not got.
-  final bevelCost = (w + 1) ~/ 2;
   return RowPlan(
     lengths: lengths,
     widths: widths,
     startU: startU,
     shift: shift,
-    capFirst: List.filled(rows, laminateLength - bevelCost),
-    capLast: List.filled(rows, laminateLength - bevelCost),
-    capWhole: List.filled(rows, laminateLength - w),
     startBevel: startBevel,
     endBevel: endBevel,
+    laminateLength: laminateLength,
+    laminateWidth: w,
   );
 }

@@ -15,6 +15,42 @@
     "laminate": "Stratifié",
     "length_mm": "Longueur (mm)",
     "width_mm": "Largeur (mm)",
+    "uneven_walls": "Murs de longueurs différentes",
+    "wall_length": "Longueur {number}",
+    "@wall_length": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width": "Largeur {number}",
+    "@wall_width": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_length_mm": "Longueur {number} (mm)",
+    "@wall_length_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width_mm": "Largeur {number} (mm)",
+    "@wall_width_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_diagonal": "Diagonale",
+    "wall_diagonal_mm": "Diagonale (mm)",
+    "walls_do_not_close": "Les murs ne se referment pas",
     "pieces_per_package": "Pièces par paquet",
     "laying": "Pose",
     "laying_direction": "Sens de pose",

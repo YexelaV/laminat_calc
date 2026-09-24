@@ -15,6 +15,42 @@
     "laminate": "Laminato",
     "length_mm": "Lunghezza (mm)",
     "width_mm": "Larghezza (mm)",
+    "uneven_walls": "Pareti di lunghezze diverse",
+    "wall_length": "Lunghezza {number}",
+    "@wall_length": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width": "Larghezza {number}",
+    "@wall_width": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_length_mm": "Lunghezza {number} (mm)",
+    "@wall_length_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width_mm": "Larghezza {number} (mm)",
+    "@wall_width_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_diagonal": "Diagonale",
+    "wall_diagonal_mm": "Diagonale (mm)",
+    "walls_do_not_close": "Le pareti non si chiudono",
     "pieces_per_package": "Pezzi per confezione",
     "laying": "Posa",
     "laying_direction": "Senso di posa",

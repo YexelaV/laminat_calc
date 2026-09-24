@@ -15,6 +15,42 @@
     "laminate": "Laminado",
     "length_mm": "Comprimento (mm)",
     "width_mm": "Largura (mm)",
+    "uneven_walls": "Paredes de comprimentos diferentes",
+    "wall_length": "Comprimento {number}",
+    "@wall_length": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width": "Largura {number}",
+    "@wall_width": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_length_mm": "Comprimento {number} (mm)",
+    "@wall_length_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width_mm": "Largura {number} (mm)",
+    "@wall_width_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_diagonal": "Diagonal",
+    "wall_diagonal_mm": "Diagonal (mm)",
+    "walls_do_not_close": "As paredes não fecham",
     "pieces_per_package": "Peças por pacote",
     "laying": "Instalação",
     "laying_direction": "Direção de instalação",

@@ -21,6 +21,7 @@ import 'package:floor_calculator/cubit/calculate_cubit.dart';
 import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/pages/result_screen.dart';
 import 'package:floor_calculator/pages/scheme_screen.dart';
 import 'package:floor_calculator/pages/start_screen.dart';
@@ -32,8 +33,33 @@ import 'package:floor_calculator/utils/units.dart';
 // and the last row.
 Result schemeResult({Direction direction = Direction.length}) {
   final results = Calculation(
-    roomLength: 3000,
-    roomWidth: 1200,
+    shape: RoomShape.rectangle(3000, 1200),
+    laminateLength: 1200,
+    laminateWidth: 190,
+    planksInPack: 8,
+    indentFromWall: 10,
+    minimumLaminateLength: 300,
+    rowOffset: 300,
+    direction: direction,
+  ).calculate();
+  expect(results, isNotEmpty, reason: 'the golden fixture must be layable');
+  return results.first;
+}
+
+// The same room measured wall by wall, so that no two opposite walls are
+// parallel and no row is the same length as its neighbour. Skewed hard enough
+// to see in a small picture — a real tape measure is off by a centimetre, not
+// twelve — because what these images are for is showing that the drawing
+// follows the outline at all.
+Result skewedResult({Direction direction = Direction.length}) {
+  final results = Calculation(
+    shape: RoomShape(
+      lengthNear: 3000,
+      lengthFar: 2880,
+      widthLeft: 1200,
+      widthRight: 1320,
+      diagonal: 3300,
+    ),
     laminateLength: 1200,
     laminateWidth: 190,
     planksInPack: 8,
@@ -49,8 +75,7 @@ Result schemeResult({Direction direction = Direction.length}) {
 // One variant per plural category so a single golden pins all of them.
 Result variantWithPlanks(int totalPlanks) => Result(
       1200,
-      3000,
-      1200,
+      RoomShape.rectangle(3000, 1200),
       8,
       totalPlanks,
       [
@@ -114,6 +139,31 @@ void main() {
       await expectLater(
         find.byType(SchemeScreen),
         matchesGoldenFile('goldens/scheme_diagonal.png'),
+      );
+    });
+
+    // A room whose walls differ takes the general path end to end: the rows are
+    // walked rather than derived, their ends are cut on the slant the walls
+    // lean at, and the walls themselves are drawn corner to corner. Nothing in
+    // the four images above can go wrong without one of these going wrong too,
+    // but they are the only ones where the outline is not a rectangle.
+    testWidgets('rows in a room measured wall by wall', (tester) async {
+      await pumpAt(tester, wrap(SchemeScreen(skewedResult(), 1)), const Size(600, 400));
+      await expectLater(
+        find.byType(SchemeScreen),
+        matchesGoldenFile('goldens/scheme_skewed.png'),
+      );
+    });
+
+    testWidgets('rows at 45° in a room measured wall by wall', (tester) async {
+      await pumpAt(
+        tester,
+        wrap(SchemeScreen(skewedResult(direction: Direction.diagonal), 1)),
+        const Size(600, 500),
+      );
+      await expectLater(
+        find.byType(SchemeScreen),
+        matchesGoldenFile('goldens/scheme_skewed_diagonal.png'),
       );
     });
 

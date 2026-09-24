@@ -5,7 +5,7 @@ import 'dart:math' as math;
 
 // Matrix4 comes from vector_math, which both Flutter and the pdf package build
 // on; taking it from Flutter keeps it out of pubspec.yaml.
-import 'package:flutter/widgets.dart' show AssetBundle, Matrix4;
+import 'package:flutter/widgets.dart' show AssetBundle, Matrix4, Offset;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -122,26 +122,26 @@ void _paint(
   double x(double mm) => (mm - scheme.bounds.left) * scale;
   double y(double mm) => size.y - (mm - scheme.bounds.top) * scale;
 
-  canvas
-    ..setLineWidth(0.4)
-    ..setStrokeColor(PdfColors.grey)
-    ..drawRect(
-      x(scheme.room.left),
-      y(scheme.room.bottom),
-      scheme.room.width * scale,
-      scheme.room.height * scale,
-    )
-    ..strokePath()
-    ..setStrokeColor(PdfColors.black);
-
-  for (final shape in scheme.planks) {
-    canvas.moveTo(x(shape.outline.first.dx), y(shape.outline.first.dy));
-    for (final point in shape.outline.skip(1)) {
+  void outline(List<Offset> corners) {
+    canvas.moveTo(x(corners.first.dx), y(corners.first.dy));
+    for (final point in corners.skip(1)) {
       canvas.lineTo(x(point.dx), y(point.dy));
     }
     canvas
       ..closePath()
       ..strokePath();
+  }
+
+  canvas
+    ..setLineWidth(0.4)
+    ..setStrokeColor(PdfColors.grey);
+  // The walls are drawn corner to corner like everything else: a room whose
+  // opposite walls differ is not a rectangle.
+  outline(scheme.room);
+  canvas.setStrokeColor(PdfColors.black);
+
+  for (final shape in scheme.planks) {
+    outline(shape.outline);
   }
 
   canvas.setFillColor(PdfColors.black);

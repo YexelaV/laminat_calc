@@ -15,6 +15,42 @@
     "laminate": "Laminat",
     "length_mm": "Uzunluk (mm)",
     "width_mm": "Genişlik (mm)",
+    "uneven_walls": "Farklı uzunlukta duvarlar",
+    "wall_length": "Uzunluk {number}",
+    "@wall_length": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width": "Genişlik {number}",
+    "@wall_width": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_length_mm": "Uzunluk {number} (mm)",
+    "@wall_length_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width_mm": "Genişlik {number} (mm)",
+    "@wall_width_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_diagonal": "Köşegen",
+    "wall_diagonal_mm": "Köşegen (mm)",
+    "walls_do_not_close": "Duvarlar kapanmıyor",
     "pieces_per_package": "Paketteki adet",
     "laying": "Döşeme",
     "laying_direction": "Döşeme yönü",

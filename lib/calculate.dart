@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'models.dart';
+import 'room_shape.dart';
 import 'row_plan.dart';
 
 // All dimensions are in millimetres. The field validators and the calculation
@@ -117,28 +118,18 @@ bool exactOffsetFeasible(
   return false;
 }
 
-/// An upper bound for the minimum plank length of a 45° layout.
+/// An upper bound for the minimum plank length of a layout whose rows are not
+/// all one length — a 45° one, or a room whose opposite walls differ.
 ///
 /// A bound and nothing more. A row that takes more than one plank needs a
 /// first and a last one, so the minimum cannot pass half the shortest such
-/// row; and a first plank is cut on the slant, so it cannot pass the row's
-/// reach either. Whether a value under the bound can be laid is a search, and
-/// [diagonalFeasible] is the one that runs it.
-int maxMinimumLaminateLengthDiagonal({
-  required int roomLength,
-  required int roomWidth,
-  required int indentFromWall,
+/// row; and a first plank cut on the slant cannot pass the row's reach either.
+/// Whether a value under the bound can be laid is a search, and [planFeasible]
+/// is the one that runs it.
+int maxMinimumLaminateLengthFor({
+  required RowPlan plan,
   required int laminateLength,
-  required int laminateWidth,
 }) {
-  final plan = planFor(
-    roomLength: roomLength,
-    roomWidth: roomWidth,
-    indentFromWall: indentFromWall,
-    laminateLength: laminateLength,
-    laminateWidth: laminateWidth,
-    direction: Direction.diagonal,
-  );
   var bound = laminateLength;
   for (var i = 0; i < plan.numberOfRows; i++) {
     // A row one plank spans holds whatever the geometry leaves it, however
@@ -152,47 +143,47 @@ int maxMinimumLaminateLengthDiagonal({
 String? _feasibleKey;
 bool _feasibleAnswer = false;
 
-/// Whether a 45° layout exists for these parameters.
+/// Whether a layout exists for these parameters at all.
 ///
-/// Straight laying is answered in closed form by [exactOffsetFeasible]: the
-/// rows are all one length, so the pattern either fits or it does not.
-/// Diagonal rows are not, and where their joints can go has to be searched
-/// for. A search is not a formula, and a second implementation of it would
-/// drift from the first — so the form asks the engine itself, and what it
-/// promises is exactly what the user then gets.
+/// A rectangle laid parallel to a wall is answered in closed form by
+/// [exactOffsetFeasible]: the rows are all one length, so the pattern either
+/// fits or it does not. Rows of differing lengths are not, and where their
+/// joints can go has to be searched for — that is true of a 45° layout and
+/// equally of a room whose opposite walls differ. A search is not a formula,
+/// and a second implementation of it would drift from the first, so the form
+/// asks the engine itself and what it promises is exactly what the user gets.
 ///
 /// The answer is kept for the last question asked, because the form asks the
 /// same one several times per keystroke.
-bool diagonalFeasible({
-  required int roomLength,
-  required int roomWidth,
+bool planFeasible({
+  required RoomShape shape,
   required int indentFromWall,
   required int laminateLength,
   required int laminateWidth,
   required int minimumLaminateLength,
   required int rowOffset,
+  required Direction direction,
 }) {
-  final key = '$roomLength/$roomWidth/$indentFromWall/$laminateLength/'
-      '$laminateWidth/$minimumLaminateLength/$rowOffset';
+  final key = '${shape.lengthNear}/${shape.lengthFar}/${shape.widthLeft}/'
+      '${shape.widthRight}/${shape.diagonal}/$indentFromWall/$laminateLength/'
+      '$laminateWidth/$minimumLaminateLength/$rowOffset/${direction.index}';
   if (key == _feasibleKey) return _feasibleAnswer;
   _feasibleKey = key;
   _feasibleAnswer = Calculation(
-    roomLength: roomLength,
-    roomWidth: roomWidth,
+    shape: shape,
     laminateLength: laminateLength,
     laminateWidth: laminateWidth,
     planksInPack: 1,
     indentFromWall: indentFromWall,
     minimumLaminateLength: minimumLaminateLength,
     rowOffset: rowOffset,
-    direction: Direction.diagonal,
+    direction: direction,
   ).calculate().isNotEmpty;
   return _feasibleAnswer;
 }
 
 class Calculation {
-  final int roomLength;
-  final int roomWidth;
+  final RoomShape shape;
   final int laminateLength;
   final int laminateWidth;
   final int planksInPack;
@@ -202,8 +193,7 @@ class Calculation {
   final Direction direction;
 
   Calculation({
-    required this.roomLength,
-    required this.roomWidth,
+    required this.shape,
     required this.laminateLength,
     required this.laminateWidth,
     required this.planksInPack,
@@ -325,17 +315,19 @@ class Calculation {
     return [inner, last];
   }
 
-  int get rowLength => rowLengthMm(
-        roomLength: roomLength,
-        roomWidth: roomWidth,
-        indentFromWall: indentFromWall,
-        direction: direction,
-      );
+  int get rowLength {
+    assert(shape.isRectangular, 'rows of a room with differing walls are not all one length');
+    return rowLengthMm(
+      roomLength: shape.lengthNear,
+      roomWidth: shape.widthLeft,
+      indentFromWall: indentFromWall,
+      direction: direction,
+    );
+  }
 
   List<Result> calculate() {
     final plan = planFor(
-      roomLength: roomLength,
-      roomWidth: roomWidth,
+      shape: shape,
       indentFromWall: indentFromWall,
       laminateLength: laminateLength,
       laminateWidth: laminateWidth,
@@ -353,8 +345,7 @@ class Calculation {
         }
         result.add(Result(
           laminateLength,
-          roomLength,
-          roomWidth,
+          shape,
           planksInPack,
           _plankCount,
           lines,
@@ -433,15 +424,17 @@ class Calculation {
 
   /// What a piece has to give up so that its end becomes the one the row wants.
   ///
-  /// Trimming a square end on the slant produces the bevel as a by-product, so
-  /// the only cost is reach — the same half width a bevel costs a full plank,
-  /// which is exactly what [RowPlan.capFirst] is short by. An end already cut
-  /// the right way costs nothing, and one cut the other way is unusable: a 45°
-  /// cut cannot be turned round.
+  /// Recutting an end only ever takes material away, so a piece can serve any
+  /// end leaning the same way and gives up the difference in reach — trimming a
+  /// square end on the slant produces the bevel as a by-product, and its whole
+  /// reach is the cost. An end already cut the right way costs nothing, and one
+  /// cut the other way is unusable: the material on that side was never there,
+  /// and a slant cannot be turned round.
   int? _reachLoss(RowPlan plan, int row, Bevel have, Bevel want) {
     if (have == want) return 0;
-    if (have == Bevel.square) return laminateLength - plan.capFirst[row];
-    return null;
+    // A square end leans neither way and is the one that can still go either.
+    if (!have.isSquare && !have.leansSameWayAs(want)) return null;
+    return (want.reachMm(laminateWidth) - have.reachMm(laminateWidth)).abs();
   }
 
   bool _searchDown(int startLength, int available, RowPlan plan, int row, int? prevJoint) {
@@ -712,30 +705,13 @@ class Calculation {
 
       lines.add(Line(i, planks, startOffsetMm: plan.startU[i]));
     }
-    if (direction == Direction.diagonal) {
-      // The far corner leaves a sliver of a row. Unlike straight laying it
-      // cannot be evened out against the first row — that one is a sliver too,
-      // in the near corner — so each row simply takes the width the plan gives.
-      for (var i = 0; i < lines.length; i++) {
-        for (final plank in lines[i].planks) {
-          plank.width = plan.widths[i];
-        }
-      }
-      return true;
-    }
-    // The dimension across the rows: room width when laying along the
-    // length, room length when laying along the width.
-    final acrossSize = direction == Direction.length ? roomWidth : roomLength;
-    final actualWidth = acrossSize - indentFromWall * 2;
-    var newWidth = laminateWidth - (laminateWidth * lines.length - actualWidth);
-    if (newWidth >= 50) {
-      for (final plank in lines.last.planks) {
-        plank.width = newWidth;
-      }
-    } else {
-      newWidth = ((newWidth + laminateWidth) ~/ 2);
-      for (final plank in [...lines.first.planks, ...lines.last.planks]) {
-        plank.width = newWidth;
+    // How wide each row is ripped is a property of the room, not of what went
+    // into the row, so the plan has already settled it — including the
+    // shortfall a whole number of planks leaves against the far wall, which
+    // [straightPlan] shares out and the other layouts leave where it falls.
+    for (var i = 0; i < lines.length; i++) {
+      for (final plank in lines[i].planks) {
+        plank.width = plan.widths[i];
       }
     }
     return true;

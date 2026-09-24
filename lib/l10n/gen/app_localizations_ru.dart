@@ -57,6 +57,38 @@ class AppLocalizationsRu extends AppLocalizations {
   String get width_mm => 'Ширина (мм)';
 
   @override
+  String get uneven_walls => 'Стены разной длины';
+
+  @override
+  String wall_length(int number) {
+    return 'Длина $number';
+  }
+
+  @override
+  String wall_width(int number) {
+    return 'Ширина $number';
+  }
+
+  @override
+  String wall_length_mm(int number) {
+    return 'Длина $number (мм)';
+  }
+
+  @override
+  String wall_width_mm(int number) {
+    return 'Ширина $number (мм)';
+  }
+
+  @override
+  String get wall_diagonal => 'Диагональ';
+
+  @override
+  String get wall_diagonal_mm => 'Диагональ (мм)';
+
+  @override
+  String get walls_do_not_close => 'Стены не сходятся';
+
+  @override
   String get pieces_per_package => 'В упаковке (штук)';
 
   @override

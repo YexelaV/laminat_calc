@@ -281,7 +281,7 @@ void main() {
   group('straight laying is the same class with the corners taken out', () {
     test('one length, no drift, no bevels, full reach', () {
       final plan = straightPlan(
-          rowLength: 2980, numberOfRows: 16, laminateLength: 1380, laminateWidth: 190);
+          rowLength: 2980, across: 3040, laminateLength: 1380, laminateWidth: 190);
       expect(plan.numberOfRows, 16);
       expect(plan.isUniform, isTrue);
       expect(plan.lengths.toSet(), {2980});

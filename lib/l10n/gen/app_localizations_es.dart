@@ -57,6 +57,38 @@ class AppLocalizationsEs extends AppLocalizations {
   String get width_mm => 'Ancho (mm)';
 
   @override
+  String get uneven_walls => 'Paredes de distinta longitud';
+
+  @override
+  String wall_length(int number) {
+    return 'Longitud $number';
+  }
+
+  @override
+  String wall_width(int number) {
+    return 'Ancho $number';
+  }
+
+  @override
+  String wall_length_mm(int number) {
+    return 'Longitud $number (mm)';
+  }
+
+  @override
+  String wall_width_mm(int number) {
+    return 'Ancho $number (mm)';
+  }
+
+  @override
+  String get wall_diagonal => 'Diagonal';
+
+  @override
+  String get wall_diagonal_mm => 'Diagonal (mm)';
+
+  @override
+  String get walls_do_not_close => 'Las paredes no cierran';
+
+  @override
   String get pieces_per_package => 'Piezas por paquete';
 
   @override

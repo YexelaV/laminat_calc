@@ -8,9 +8,12 @@
 // triangles then come out of the bevels on their own, with no case for the
 // corners of the room.
 import 'dart:math' as math;
+import 'dart:math' show Point;
 import 'dart:ui';
 
 import 'models.dart';
+import 'room_shape.dart';
+import 'row_plan.dart';
 import 'utils/units.dart';
 
 /// A plank where it lies. [outline] runs from the near-left corner in the order
@@ -39,8 +42,10 @@ class SchemeLabel {
 }
 
 class Scheme {
-  /// The walls. The laid area sits inside it by the expansion gap.
-  final Rect room;
+  /// The walls, corner by corner. The laid area sits inside them by the
+  /// expansion gap. Four corners always, but not a rectangle unless the room
+  /// was measured as one.
+  final List<Offset> room;
   final List<PlankShape> planks;
   final List<SchemeLabel> labels;
 
@@ -68,17 +73,40 @@ double _textWidth(String text, double height) => text.length * _charAdvance * he
 double _fits(String text, double boxWidth, double boxHeight) =>
     math.min(boxHeight, boxWidth / (text.length * _charAdvance));
 
-/// The room as it is drawn, in millimetres: width across the page, height down
-/// it.
+/// The walls as they are drawn, in millimetres: x across the page, y down it.
 ///
 /// Planks are read along their length, so a row is always drawn running left to
 /// right. Laying across the room therefore turns the room a quarter of a turn
-/// rather than the rows — its width goes across the page and its length down it.
-/// The scheme screen asks the same question of the same function to decide which
-/// way up the phone should be.
-Size drawnRoomSize(Result result) => result.direction == Direction.width
-    ? Size(result.roomWidth.toDouble(), result.roomLength.toDouble())
-    : Size(result.roomLength.toDouble(), result.roomWidth.toDouble());
+/// rather than the rows — its width goes across the page and its length down
+/// it. [planFor] turns the floor the same way for the same reason, and the two
+/// have to agree or the drawing is of a different room than the one laid.
+List<Offset> drawnRoom(Result result) =>
+    _asDrawn(result.shape, result.shape.corners(), result.direction);
+
+/// The floor inside those walls: what the planks are cut against.
+List<Offset> drawnFloor(Result result) =>
+    _asDrawn(result.shape, result.shape.floor(result.indentFromWall), result.direction);
+
+/// The room's own geometry comes in as plain points — [RoomShape] and [planFor]
+/// have no business knowing about canvases — and turns into canvas coordinates
+/// here, which is the first place they mean anything.
+///
+/// The quarter turn is [RoomShape.turned], the same one [planFor] lays the rows
+/// through. One function rather than two matching ones: they used to be a
+/// transpose apiece, each right about the other and both mirroring the room.
+List<Offset> _asDrawn(RoomShape shape, List<Point<double>> polygon, Direction direction) {
+  final placed = direction == Direction.width ? shape.turned(polygon) : polygon;
+  return [for (final p in placed) Offset(p.x, p.y)];
+}
+
+/// The smallest rectangle [polygon] fits in.
+Rect boundsOf(List<Offset> polygon) {
+  var rect = Rect.fromPoints(polygon.first, polygon.first);
+  for (final point in polygon.skip(1)) {
+    rect = rect.expandToInclude(Rect.fromPoints(point, point));
+  }
+  return rect;
+}
 
 /// Turn a finished calculation into something drawable.
 ///
@@ -95,12 +123,10 @@ Scheme buildScheme(
   final planks = <PlankShape>[];
   final labels = <SchemeLabel>[];
   final indent = result.indentFromWall.toDouble();
-  final a = (result.roomLength - result.indentFromWall * 2).toDouble();
-  final b = (result.roomWidth - result.indentFromWall * 2).toDouble();
-  final place = _placement(result.direction, indent: indent, a: a, b: b);
-  final drawn = drawnRoomSize(result);
-  final floor = Rect.fromLTWH(
-      indent, indent, drawn.width - indent * 2, drawn.height - indent * 2);
+  final room = drawnRoom(result);
+  final floor = drawnFloor(result);
+  final floorNormals = normalsOf(floor);
+  final place = _placement(result, floor);
 
   var v = 0.0;
   for (final line in result.lines) {
@@ -131,7 +157,7 @@ Scheme buildScheme(
           place(u1 - right, vLo),
           place(u1 + right, vHi),
           place(u0 - left, vHi),
-        ], floor),
+        ], floor, floorNormals),
       ));
 
       // The bounding box of a trapezoid lies about the room for text: only the
@@ -193,21 +219,56 @@ Scheme buildScheme(
     final line = result.lines[i];
     final width = line.planks.first.width.toDouble();
     final start = place(line.startOffsetMm.toDouble(), v + width / 2);
-    final outward = _outward(start, floor);
+    final outward = _outward(start, floor, floorNormals);
     labels.add(SchemeLabel(
       rowLabels[i],
       start + outward * (gutter / 2 + indent),
       // Labels off a side wall stack downwards and are written across; labels
       // off a top or bottom wall stack sideways and have to be turned, or each
-      // would be written over the next.
-      outward.dx == 0 ? math.pi / 2 : 0,
+      // would be written over the next. Which of the two a wall is has to be
+      // read off the direction it leans, not off an exact zero: a wall of a
+      // room whose corners are not square misses that by a hair and every
+      // label lands on the one before it.
+      outward.dx.abs() < outward.dy.abs() ? math.pi / 2 : 0,
       Size(gutter, width * _textFill),
     ));
     v += width;
   }
 
-  final room = Offset.zero & drawn;
-  var bounds = room;
+  // The room's own measurements, written along the wall each one belongs to.
+  //
+  // Nothing else on the drawing says how big the room is — the numbers inside
+  // the planks are cut lengths, the ones down the side are row widths. For a
+  // room whose walls differ that silence is the whole story: fifteen millimetres
+  // out of five metres is a pixel or two of drawing, far too little to see and
+  // plenty to cut wrong, so the shape has to be read rather than looked at.
+  //
+  // The lengths come from the room as it was measured rather than from the
+  // corners as they were drawn: they are the numbers the user typed, and no
+  // amount of turning and insetting can round them off.
+  final walls = [
+    result.shape.lengthNear,
+    result.shape.widthRight,
+    result.shape.lengthFar,
+    result.shape.widthLeft,
+  ];
+  final roomNormals = normalsOf(room);
+  for (var i = 0; i < room.length; i++) {
+    final from = room[i];
+    final to = room[(i + 1) % room.length];
+    final text = sizeLabel(walls[i], system);
+    final outward = Offset(-roomNormals[i].dx, -roomNormals[i].dy);
+    labels.add(SchemeLabel(
+      text,
+      (from + to) / 2 +
+          outward *
+              (_reservedOutside(labels, floor, floorNormals, i) + gutterHeight / 2 + indent),
+      _alongWall(to - from),
+      Size(_textWidth(text, gutterHeight), gutterHeight),
+    ));
+  }
+
+  var bounds = boundsOf(room);
   for (final label in labels) {
     bounds = bounds.expandToInclude(Rect.fromCircle(
       center: label.centre,
@@ -217,28 +278,72 @@ Scheme buildScheme(
   return Scheme(room: room, planks: planks, labels: labels, bounds: bounds);
 }
 
-/// The way out of [rect] from the wall [point] is nearest to.
-Offset _outward(Offset point, Rect rect) {
-  final away = <double, Offset>{
-    point.dx - rect.left: const Offset(-1, 0),
-    rect.right - point.dx: const Offset(1, 0),
-    point.dy - rect.top: const Offset(0, -1),
-    rect.bottom - point.dy: const Offset(0, 1),
-  };
-  return away[away.keys.reduce(math.min)]!;
+/// Which way is in for each wall of a polygon in canvas coordinates. Worked out
+/// once per drawing and handed round: it is the same four walls for every plank,
+/// and [inwardNormals] is the one place that decides what "in" means.
+List<Offset> normalsOf(List<Offset> polygon) => [
+      for (final normal in inwardNormals([for (final p in polygon) Point(p.dx, p.dy)]))
+        Offset(normal.x, normal.y)
+    ];
+
+/// How deep inside the wall `i` of [floor] a point lies; negative when outside.
+double _depth(Offset point, List<Offset> floor, List<Offset> normals, int i) =>
+    (point.dx - floor[i].dx) * normals[i].dx + (point.dy - floor[i].dy) * normals[i].dy;
+
+/// Which wall of [floor] a point is nearest to.
+int _nearestWall(Offset point, List<Offset> floor, List<Offset> normals) {
+  var nearest = double.infinity;
+  var wall = 0;
+  for (var i = 0; i < floor.length; i++) {
+    final depth = _depth(point, floor, normals, i);
+    // Ties go to the later wall, which is the order the rectangle case has
+    // always resolved them in.
+    if (depth <= nearest) {
+      nearest = depth;
+      wall = i;
+    }
+  }
+  return wall;
 }
 
-/// [polygon] with everything outside [rect] cut away, by Sutherland–Hodgman.
+/// The way out of [floor] from the wall [point] is nearest to.
+Offset _outward(Offset point, List<Offset> floor, List<Offset> normals) {
+  final normal = normals[_nearestWall(point, floor, normals)];
+  return Offset(-normal.dx, -normal.dy);
+}
+
+/// The angle text written along [edge] runs at, turned back when it would come
+/// out upside down.
+double _alongWall(Offset edge) {
+  final angle = math.atan2(edge.dy, edge.dx);
+  if (angle > math.pi / 2) return angle - math.pi;
+  if (angle < -math.pi / 2) return angle + math.pi;
+  return angle;
+}
+
+/// How far out of wall [wall] the labels already written beside it reach, so
+/// that the wall's own measurement can go past them instead of on top.
+double _reservedOutside(
+    List<SchemeLabel> labels, List<Offset> floor, List<Offset> normals, int wall) {
+  var out = 0.0;
+  for (final label in labels) {
+    if (_nearestWall(label.centre, floor, normals) != wall) continue;
+    final beyond = -_depth(label.centre, floor, normals, wall) +
+        math.max(label.box.width, label.box.height) / 2;
+    out = math.max(out, beyond);
+  }
+  return out;
+}
+
+/// [polygon] with everything outside [floor] cut away, by Sutherland–Hodgman.
 /// Convex against convex, so the result is one polygon and no hole.
-List<Offset> _clip(List<Offset> polygon, Rect rect) {
+List<Offset> _clip(List<Offset> polygon, List<Offset> floor, List<Offset> normals) {
   var out = polygon;
-  for (final depth in <double Function(Offset)>[
-    (p) => p.dx - rect.left,
-    (p) => rect.right - p.dx,
-    (p) => p.dy - rect.top,
-    (p) => rect.bottom - p.dy,
-  ]) {
-    out = _clipHalfPlane(out, depth);
+  for (var i = 0; i < floor.length; i++) {
+    final corner = floor[i];
+    final normal = normals[i];
+    out = _clipHalfPlane(
+        out, (p) => (p.dx - corner.dx) * normal.dx + (p.dy - corner.dy) * normal.dy);
     if (out.isEmpty) break;
   }
   return out;
@@ -265,16 +370,11 @@ List<Offset> _clipHalfPlane(List<Offset> polygon, double Function(Offset) depth)
 
 /// How far past its centreline a bevelled end reaches on the far side of the
 /// row, negative when the long corner is on the near side instead.
-double _bevelReach(Bevel bevel, double halfWidth) {
-  switch (bevel) {
-    case Bevel.square:
-      return 0;
-    case Bevel.up:
-      return halfWidth;
-    case Bevel.down:
-      return -halfWidth;
-  }
-}
+///
+/// Measured against the row's own half width, not the plank's: the sliver of a
+/// row against a far corner is ripped narrow, and its end slants across only
+/// what is left of it.
+double _bevelReach(Bevel bevel, double halfWidth) => halfWidth * bevel.slope;
 
 /// Room coordinates from row coordinates: `u` along the rows, `v` across them.
 class _Placement {
@@ -286,7 +386,13 @@ class _Placement {
   Offset call(double u, double v) => _map(u, v);
 }
 
-/// The one place a laying direction becomes a position on the floor.
+/// The one place a laying direction becomes a position on the floor. It has to
+/// undo exactly what [planFor] did, or the planks land somewhere the room is
+/// not.
+///
+/// A rectangle keeps a closed form of its own, because [planFor] does: its rows
+/// come from [straightPlan] and [diagonalPlan], which measure from the room's
+/// own corners rather than from an outline that was turned and measured.
 ///
 /// The 45° map is fixed by where [diagonalPlan] measures from: `v` is the
 /// distance from the corner the layout starts at, and `u` is measured along the
@@ -294,21 +400,41 @@ class _Placement {
 /// `u = b/√2`. Reading that back gives the map below — and the corner the rows
 /// run out at lands exactly on `(a, b)`, which is what
 /// test/scheme_geometry_test.dart checks.
-_Placement _placement(Direction direction,
-    {required double indent, required double a, required double b}) {
-  switch (direction) {
-    // Rows parallel to a wall are always drawn left to right; laying across the
-    // room turns the room instead, in [drawnRoomSize].
-    case Direction.length:
-    case Direction.width:
-      return _Placement(0, (u, v) => Offset(indent + u, indent + v));
-    case Direction.diagonal:
-      return _Placement(
-        -math.pi / 4,
-        (u, v) => Offset(
-          indent + (u + v) / math.sqrt2 - b / 2,
-          indent + (v - u) / math.sqrt2 + b / 2,
-        ),
-      );
+_Placement _placement(Result result, List<Offset> floor) {
+  final angle = result.direction == Direction.diagonal ? -math.pi / 4 : 0.0;
+  if (result.shape.isRectangular) {
+    final indent = result.indentFromWall.toDouble();
+    final b = (result.shape.widthLeft - result.indentFromWall * 2).toDouble();
+    switch (result.direction) {
+      // Rows parallel to a wall are always drawn left to right; laying across
+      // the room turns the room instead, in [drawnRoom].
+      case Direction.length:
+      case Direction.width:
+        return _Placement(0, (u, v) => Offset(indent + u, indent + v));
+      case Direction.diagonal:
+        return _Placement(
+          angle,
+          (u, v) => Offset(
+            indent + (u + v) / math.sqrt2 - b / 2,
+            indent + (v - u) / math.sqrt2 + b / 2,
+          ),
+        );
+    }
   }
+  // Any other room is laid out by [scanPlan], which turned the floor until the
+  // rows ran along `u` and then measured from its near corner. Turn it back.
+  final rotated = rowFrame([for (final p in floor) Point(p.dx, p.dy)], angle);
+  var uMin = double.infinity;
+  var vMin = double.infinity;
+  for (final corner in rotated) {
+    uMin = math.min(uMin, corner.x);
+    vMin = math.min(vMin, corner.y);
+  }
+  final cos = math.cos(angle);
+  final sin = math.sin(angle);
+  return _Placement(angle, (u, v) {
+    final uAbs = uMin + u;
+    final vAbs = vMin + v;
+    return Offset(uAbs * cos - vAbs * sin, uAbs * sin + vAbs * cos);
+  });
 }

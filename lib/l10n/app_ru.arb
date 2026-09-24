@@ -15,6 +15,42 @@
     "laminate": "Ламинат",
     "length_mm": "Длина (мм)",
     "width_mm": "Ширина (мм)",
+    "uneven_walls": "Стены разной длины",
+    "wall_length": "Длина {number}",
+    "@wall_length": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width": "Ширина {number}",
+    "@wall_width": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_length_mm": "Длина {number} (мм)",
+    "@wall_length_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width_mm": "Ширина {number} (мм)",
+    "@wall_width_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_diagonal": "Диагональ",
+    "wall_diagonal_mm": "Диагональ (мм)",
+    "walls_do_not_close": "Стены не сходятся",
     "pieces_per_package": "В упаковке (штук)",
     "laying": "Укладка",
     "laying_direction": "Направление укладки",

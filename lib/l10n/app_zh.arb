@@ -15,6 +15,42 @@
     "laminate": "强化地板",
     "length_mm": "长度（毫米）",
     "width_mm": "宽度（毫米）",
+    "uneven_walls": "墙长不一",
+    "wall_length": "长度 {number}",
+    "@wall_length": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width": "宽度 {number}",
+    "@wall_width": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_length_mm": "长度 {number}（毫米）",
+    "@wall_length_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width_mm": "宽度 {number}（毫米）",
+    "@wall_width_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_diagonal": "对角线",
+    "wall_diagonal_mm": "对角线（毫米）",
+    "walls_do_not_close": "墙无法闭合",
     "pieces_per_package": "每包块数",
     "laying": "铺设",
     "laying_direction": "铺设方向",

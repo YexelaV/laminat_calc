@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/scheme_geometry.dart';
 import 'package:floor_calculator/utils/units.dart';
 
@@ -17,10 +18,51 @@ const roomLength = 3000;
 const roomWidth = 1200;
 const indent = 10;
 
+/// How far inside one wall a point is: the wall runs through [corner] with
+/// [inward] pointing into the room, and the result is negative outside it.
+double _depthOf(Offset point, Offset corner, Offset inward) =>
+    (point.dx - corner.dx) * inward.dx + (point.dy - corner.dy) * inward.dy;
+
+/// How far inside [polygon] a point is, in millimetres; negative when it is
+/// out. A polygon rather than a bounding box, because a room whose opposite
+/// walls differ has planks that a box would let stray past a wall unnoticed.
+double _depthInside(Offset point, List<Offset> polygon) {
+  final normals = normalsOf(polygon);
+  var least = double.infinity;
+  for (var i = 0; i < polygon.length; i++) {
+    final depth = (point.dx - polygon[i].dx) * normals[i].dx +
+        (point.dy - polygon[i].dy) * normals[i].dy;
+    least = math.min(least, depth);
+  }
+  return least;
+}
+
+// A room measured wall by wall, with all four walls different, so that a label
+// can be told from the wall it belongs to.
+Result laidSkewed(Direction direction) {
+  final results = Calculation(
+    shape: RoomShape(
+      lengthNear: 3000,
+      lengthFar: 2880,
+      widthLeft: 1200,
+      widthRight: 1320,
+      diagonal: 3300,
+    ),
+    laminateLength: 1200,
+    laminateWidth: 190,
+    planksInPack: 8,
+    indentFromWall: indent,
+    minimumLaminateLength: 300,
+    rowOffset: 300,
+    direction: direction,
+  ).calculate();
+  expect(results, isNotEmpty, reason: 'the fixture must be layable');
+  return results.first;
+}
+
 Result laid(Direction direction, {int length = roomLength, int width = roomWidth}) {
   final results = Calculation(
-    roomLength: length,
-    roomWidth: width,
+    shape: RoomShape.rectangle(length, width),
     laminateLength: 1200,
     laminateWidth: 190,
     planksInPack: 8,
@@ -67,9 +109,7 @@ void main() {
         final scheme = schemeOf(laid(direction));
         for (final shape in scheme.planks) {
           for (final point in shape.outline) {
-            expect(point.dx, inInclusiveRange(-0.5, scheme.room.width + 0.5),
-                reason: 'plank ${shape.plank.number}');
-            expect(point.dy, inInclusiveRange(-0.5, scheme.room.height + 0.5),
+            expect(_depthInside(point, scheme.room), greaterThanOrEqualTo(-0.5),
                 reason: 'plank ${shape.plank.number}');
           }
         }
@@ -163,6 +203,35 @@ void main() {
       expect(texts.where((t) => t == " 1'-10 7/8''").length, 3, reason: '581 mm end plank');
     });
 
+    // The only thing on the drawing that says how big the room is. It matters
+    // most where it shows least: a room fifteen millimetres out of square is a
+    // pixel or two of slant, so the walls have to be read, not looked at.
+    test('every wall carries its own measurement, written outside it', () {
+      for (final direction in Direction.values) {
+        final scheme = schemeOf(laidSkewed(direction));
+        final normals = normalsOf(scheme.room);
+        // The corners run near length, right width, far length, left width.
+        const measured = [3000, 1320, 2880, 1200];
+        for (var i = 0; i < measured.length; i++) {
+          final matching =
+              scheme.labels.where((l) => l.text == '${measured[i]}').toList();
+          expect(matching, hasLength(1), reason: '$direction, wall $i');
+          final depth = _depthOf(matching.single.centre, scheme.room[i], normals[i]);
+          expect(depth, lessThan(0),
+              reason: '$direction, wall $i: its measurement is inside the room');
+          // Past the row widths written against the same wall, not on top of
+          // them. A row width is the one label written with a trailing space.
+          for (final other in scheme.labels.where((l) => l.text.endsWith(' '))) {
+            final otherDepth = _depthOf(other.centre, scheme.room[i], normals[i]);
+            if (otherDepth >= 0) continue;
+            expect(depth, lessThan(otherDepth),
+                reason: '$direction, wall $i: the row width "${other.text}" '
+                    'is written further out than the wall itself');
+          }
+        }
+      }
+    });
+
     test('every laid plank is numbered', () {
       final result = laid(Direction.length);
       final texts = textsOf(schemeOf(result));
@@ -180,8 +249,7 @@ void main() {
       // It is the width of the plank, not of the row, that runs out first.
       final result = Result(
         1200,
-        1400,
-        400,
+        RoomShape.rectangle(1400, 400),
         8,
         1,
         [
@@ -211,8 +279,9 @@ void main() {
   test('the bounds hold everything drawn', () {
     for (final direction in Direction.values) {
       final scheme = schemeOf(laid(direction));
-      expect(scheme.bounds.contains(scheme.room.topLeft), isTrue);
-      expect(scheme.bounds.width, greaterThanOrEqualTo(scheme.room.width));
+      final room = boundsOf(scheme.room);
+      expect(scheme.bounds.contains(room.topLeft), isTrue);
+      expect(scheme.bounds.width, greaterThanOrEqualTo(room.width));
       for (final shape in scheme.planks) {
         for (final point in shape.outline) {
           expect(scheme.bounds.inflate(0.5).contains(point), isTrue, reason: '$direction');
@@ -233,8 +302,7 @@ void main() {
   test('degenerate: a scheme of one whole plank still has bounds', () {
     final result = Result(
       1200,
-      1400,
-      400,
+      RoomShape.rectangle(1400, 400),
       8,
       1,
       [
@@ -255,7 +323,10 @@ void main() {
     final result = laid(Direction.length);
     final scheme = schemeOf(result);
     final gutter = scheme.labels.where((l) => l.centre.dx < indent).toList();
-    expect(gutter.length, result.lines.length);
+    // One per row, and beyond them the wall's own length.
+    expect(gutter.length, result.lines.length + 1);
+    expect(gutter.where((l) => l.text == '$roomWidth').length, 1,
+        reason: 'the wall the rows start against carries its own measurement');
     for (final label in gutter) {
       expect(label.bold, isFalse);
     }
@@ -272,12 +343,20 @@ void main() {
 
   // Laying across the room turns the drawing: the room's width goes across the
   // page and its length down it, so the same floor comes out portrait rather
-  // than landscape. The scheme screen reads this to decide which way up the
-  // phone should be.
+  // than landscape.
   test('laying across the room turns the drawing a quarter of a turn', () {
     final along = schemeOf(laid(Direction.length)).room;
-    expect([along.width, along.height], [roomLength, roomWidth]);
     final across = schemeOf(laid(Direction.width)).room;
-    expect([across.width, across.height], [roomWidth, roomLength]);
+    expect([boundsOf(along).width, boundsOf(along).height], [roomLength, roomWidth]);
+    expect([boundsOf(across).width, boundsOf(across).height], [roomWidth, roomLength]);
+
+    // And a turn, not a mirror. Transposing `(x, y) → (y, x)` stands the room
+    // on its side too and passes every check above — a reflection keeps the
+    // bounding box — but it prints the room back to front, so a wall's own
+    // measurement would be written along the wall opposite it. What tells the
+    // two apart is which way the corners run: a turn keeps the winding, a
+    // reflection reverses it.
+    expect(twiceArea(across).sign, twiceArea(along).sign,
+        reason: 'the corners run the other way round, so the room is mirrored');
   });
 }

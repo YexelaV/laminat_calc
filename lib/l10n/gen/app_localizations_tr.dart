@@ -57,6 +57,38 @@ class AppLocalizationsTr extends AppLocalizations {
   String get width_mm => 'Genişlik (mm)';
 
   @override
+  String get uneven_walls => 'Farklı uzunlukta duvarlar';
+
+  @override
+  String wall_length(int number) {
+    return 'Uzunluk $number';
+  }
+
+  @override
+  String wall_width(int number) {
+    return 'Genişlik $number';
+  }
+
+  @override
+  String wall_length_mm(int number) {
+    return 'Uzunluk $number (mm)';
+  }
+
+  @override
+  String wall_width_mm(int number) {
+    return 'Genişlik $number (mm)';
+  }
+
+  @override
+  String get wall_diagonal => 'Köşegen';
+
+  @override
+  String get wall_diagonal_mm => 'Köşegen (mm)';
+
+  @override
+  String get walls_do_not_close => 'Duvarlar kapanmıyor';
+
+  @override
   String get pieces_per_package => 'Paketteki adet';
 
   @override

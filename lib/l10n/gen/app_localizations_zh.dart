@@ -57,6 +57,38 @@ class AppLocalizationsZh extends AppLocalizations {
   String get width_mm => '宽度（毫米）';
 
   @override
+  String get uneven_walls => '墙长不一';
+
+  @override
+  String wall_length(int number) {
+    return '长度 $number';
+  }
+
+  @override
+  String wall_width(int number) {
+    return '宽度 $number';
+  }
+
+  @override
+  String wall_length_mm(int number) {
+    return '长度 $number（毫米）';
+  }
+
+  @override
+  String wall_width_mm(int number) {
+    return '宽度 $number（毫米）';
+  }
+
+  @override
+  String get wall_diagonal => '对角线';
+
+  @override
+  String get wall_diagonal_mm => '对角线（毫米）';
+
+  @override
+  String get walls_do_not_close => '墙无法闭合';
+
+  @override
   String get pieces_per_package => '每包块数';
 
   @override

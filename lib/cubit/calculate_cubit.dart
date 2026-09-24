@@ -16,6 +16,22 @@ class CalculateCubit extends Cubit<CalculateState> {
     emit(state.copyWith(roomWidth: roomWidth));
   }
 
+  void setRoomLength2(int roomLength2) {
+    emit(state.copyWith(roomLength2: roomLength2));
+  }
+
+  void setRoomWidth2(int roomWidth2) {
+    emit(state.copyWith(roomWidth2: roomWidth2));
+  }
+
+  void setRoomDiagonal(int roomDiagonal) {
+    emit(state.copyWith(roomDiagonal: roomDiagonal));
+  }
+
+  void setUnevenWalls(bool unevenWalls) {
+    emit(state.copyWith(unevenWalls: unevenWalls));
+  }
+
   void setLaminateLength(int laminateLength) {
     emit(state.copyWith(laminateLength: laminateLength));
   }

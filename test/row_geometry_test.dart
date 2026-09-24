@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/cubit/calculate_state.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/row_plan.dart';
 
 Calculation calculationFor({
@@ -20,8 +21,7 @@ Calculation calculationFor({
   int minimumLaminateLength = 490,
 }) =>
     Calculation(
-      roomLength: roomLength,
-      roomWidth: roomWidth,
+      shape: RoomShape.rectangle(roomLength, roomWidth),
       laminateLength: laminateLength,
       laminateWidth: laminateWidth,
       planksInPack: 8,
@@ -146,8 +146,7 @@ void main() {
               direction: Direction.diagonal,
             ),
             planFor(
-              roomLength: 5000,
-              roomWidth: mm,
+              shape: RoomShape.rectangle(5000, mm),
               indentFromWall: 10,
               laminateLength: 1380,
               laminateWidth: width,
@@ -171,18 +170,17 @@ void main() {
         [6000, 4500],
       ]) {
         for (final minLen in [200, 300, 400, 500]) {
-          final reported = diagonalFeasible(
-            roomLength: room[0],
-            roomWidth: room[1],
+          final reported = planFeasible(
+            shape: RoomShape.rectangle(room[0], room[1]),
             indentFromWall: 10,
             laminateLength: 1380,
             laminateWidth: 190,
             minimumLaminateLength: minLen,
             rowOffset: 300,
+            direction: Direction.diagonal,
           );
           final laid = Calculation(
-            roomLength: room[0],
-            roomWidth: room[1],
+            shape: RoomShape.rectangle(room[0], room[1]),
             laminateLength: 1380,
             laminateWidth: 190,
             planksInPack: 8,
@@ -202,23 +200,26 @@ void main() {
         [4100, 3200],
         [2800, 2000],
       ]) {
-        final bound = maxMinimumLaminateLengthDiagonal(
-          roomLength: room[0],
-          roomWidth: room[1],
-          indentFromWall: 10,
+        final bound = maxMinimumLaminateLengthFor(
+          plan: planFor(
+            shape: RoomShape.rectangle(room[0], room[1]),
+            indentFromWall: 10,
+            laminateLength: 1380,
+            laminateWidth: 190,
+            direction: Direction.diagonal,
+          ),
           laminateLength: 1380,
-          laminateWidth: 190,
         );
         for (final minLen in [bound + 1, bound + 50, bound + 200]) {
           expect(
-            diagonalFeasible(
-              roomLength: room[0],
-              roomWidth: room[1],
+            planFeasible(
+              shape: RoomShape.rectangle(room[0], room[1]),
               indentFromWall: 10,
               laminateLength: 1380,
               laminateWidth: 190,
               minimumLaminateLength: minLen,
               rowOffset: 300,
+              direction: Direction.diagonal,
             ),
             isFalse,
             reason: 'room ${room[0]}x${room[1]}: $minLen mm is past the bound $bound mm',

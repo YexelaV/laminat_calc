@@ -7,12 +7,13 @@ A Flutter app that calculates how much laminate flooring you need for a room and
 ## Features
 
 - Calculates the number of planks and packs required for a room
+- Rooms that are not square: each of the four walls is measured on its own, and the diagonal closes the outline exactly, so the rows come out at the lengths they will actually be cut to
 - Builds several laying layout options, minimizing waste by reusing offcuts
 - Respects laying constraints: expansion gap from walls, exact joint offset between rows, minimum plank length
 - Plank offset level selection: 1/2, 1/3, 1/4 of the plank length or an exact value
 - Laying direction selection: along the room length, along its width, or at 45°
 - Metric and imperial measurement systems (millimeters, or feet and inches down to 1/16")
-- Visual laying scheme with plank numbering, drawn large enough to read and panned rather than shrunk onto the screen; rows always run left to right, so laying across the room turns the room instead; a button holds the phone in landscape while the scheme is read
+- Visual laying scheme with plank numbering, drawn large enough to read and panned rather than shrunk onto the screen; every wall carries its own measured length, so a room that is out of square says so even where the slant is too small to see; rows always run left to right, so laying across the room turns the room instead; a button holds the phone in landscape while the scheme is read
 - Text cut list: every row plank by plank, reusable leftovers, waste and its share of the material bought
 - Export to PDF: the scheme on a sheet turned to match it, then the cut list; the cut list also shares as plain text
 - Language and measurement system are asked once at first launch, persisted, and changed later from the gear on the form; switching the system rewrites the values already typed
@@ -30,13 +31,16 @@ Given the room size, plank dimensions, and laying parameters, the algorithm (`li
 
 Laying at 45° changes only the shape of the rows (`lib/row_plan.dart`): they grow, hold and shrink across the diagonal of the room instead of all being one length, they start a plank width apart in a staircase that turns once at a corner, and every row ends in a wedge, which costs half a plank width of reach and cannot be reused as a square end. The strip left against the far corner is dropped when it comes to less than 50 mm, being narrower than a plank a fitter can cut and click into place.
 
+A room whose walls differ is the same idea taken one step further. Four wall lengths are one measurement short of a shape — a quadrilateral has five degrees of freedom, and four sides leave the outline hinged — so the form asks for the diagonal too, which cuts the room into two triangles and fixes it without assuming anything about right angles (`lib/room_shape.dart`). The rows are then found by turning the outline until they run along one axis and cutting it into strips a plank wide (`scanPlan`): where a strip's centreline crosses the floor is the row, and how the walls lean at those two crossings is the slant of its ends, never steeper than 45°. A true rectangle keeps the closed forms it has always used, so nothing about it moves; `test/scan_plan_test.dart` holds the strip walk to what they produce.
+
 ## Project structure
 
 ```
 lib/
   calculate.dart      # Core laying/count algorithm
-  row_plan.dart       # The shape of the rows: the only file straight and 45° laying differ in
-  models.dart         # Plank, Line, Result models
+  room_shape.dart     # The floor as four walls and a diagonal, and the outline they close into
+  row_plan.dart       # The shape of the rows: the only file the laying directions differ in
+  models.dart         # Plank, Line, Bevel, Result models
   scheme_geometry.dart # Result to polygons and label anchors in millimetres of room
   scheme_pdf.dart     # The same geometry on an A4 page, and the cut list after it
   cubit/              # BLoC (Cubit) state management
@@ -48,8 +52,11 @@ lib/
 test/
   stress_test.dart       # Randomized stress test of algorithm invariants
   diagonal_stress_test.dart # The same, for 45° laying: row lengths, bevels, material balance
+  uneven_stress_test.dart # The same, for rooms measured wall by wall, in all three directions
   row_geometry_test.dart # The geometry the validators derive must match what the algorithm lays out
   row_plan_test.dart     # Row lengths and starts at 45°, against a numeric oracle
+  room_shape_test.dart   # Measuring the outline built from five numbers gives the five numbers back
+  scan_plan_test.dart    # The strip walk against the closed forms it has to subsume on a rectangle
   scheme_geometry_test.dart # The drawn planks cover the floor, stay inside the walls and are labelled
   scheme_pdf_test.dart   # The pages save, the sheet turns with the drawing, and every alphabet prints
   l10n_test.dart         # .arb key parity, CLDR plural categories, unit-label collisions
@@ -57,6 +64,7 @@ test/
   units_test.dart        # Inch fractions: formatting, parsing and the round trip through millimetres
   inch_field_test.dart   # The whole-inch field and its fraction picker stay one value
   imperial_form_test.dart # What the imperial form accepts, and the millimetres it stores
+  uneven_form_test.dart  # Measuring wall by wall from the form's side, and what it refuses
   measurement_system_test.dart # The system picked at launch reaches the calculation and the disk
   settings_test.dart     # The gear sheet: relocalising in place, and switching units under typed values
   golden_test.dart       # Rendered result and scheme screens, plural forms, language picker
@@ -65,7 +73,7 @@ test/
 assets/
   *.svg               # Flags for the language picker
   fonts/              # Roboto, for the PDF only: the pdf package cannot reach the app's fonts
-store/                # Play listing assets: feature graphic and screenshots per locale, listing text
+store/                # Play listing per locale: feature graphic, screenshots, listing.txt, whatsnew.txt
 ```
 
 The PDF is set in Roboto (Apache 2.0, `assets/fonts/LICENSE.txt`), which covers every language the

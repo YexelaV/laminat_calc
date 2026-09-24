@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/row_plan.dart';
 
 final violations = <String>[];
@@ -92,8 +93,7 @@ int run(int roomLength, int roomWidth, int lamLength, int lamWidth, int indent, 
   final cfg = 'room=${roomLength}x$roomWidth, laminate=${lamLength}x$lamWidth, '
       'min=$minLen, offset=$offset, indent=$indent';
   final c = Calculation(
-    roomLength: roomLength,
-    roomWidth: roomWidth,
+    shape: RoomShape.rectangle(roomLength, roomWidth),
     laminateLength: lamLength,
     laminateWidth: lamWidth,
     planksInPack: 8,
@@ -103,8 +103,7 @@ int run(int roomLength, int roomWidth, int lamLength, int lamWidth, int indent, 
     direction: Direction.diagonal,
   );
   final plan = planFor(
-    roomLength: roomLength,
-    roomWidth: roomWidth,
+    shape: RoomShape.rectangle(roomLength, roomWidth),
     indentFromWall: indent,
     laminateLength: lamLength,
     laminateWidth: lamWidth,
@@ -185,8 +184,7 @@ void main() {
   test('the diagonal costs more material than laying along a wall', () {
     int cheapest(Direction direction) {
       final results = Calculation(
-        roomLength: 5000,
-        roomWidth: 4000,
+        shape: RoomShape.rectangle(5000, 4000),
         laminateLength: 1380,
         laminateWidth: 190,
         planksInPack: 8,
