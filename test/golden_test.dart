@@ -72,6 +72,31 @@ Result skewedResult({Direction direction = Direction.length}) {
   return results.first;
 }
 
+// The same room with a corner taken out of it: a riser boxed into the far
+// right corner, a third of the length by a third of the width. Big enough to
+// see in a small picture, and deep enough that rows run above it, below it and
+// across the step between.
+Result cutCornerResult({Direction direction = Direction.length}) {
+  final results = Calculation(
+    shape: LRoomShape(
+      length: 3000,
+      width: 1200,
+      notchLength: 1000,
+      notchWidth: 400,
+      corner: RoomCorner.farRight,
+    ),
+    laminateLength: 1200,
+    laminateWidth: 190,
+    planksInPack: 8,
+    indentFromWall: 10,
+    minimumLaminateLength: 300,
+    rowOffset: 300,
+    direction: direction,
+  ).calculate();
+  expect(results, isNotEmpty, reason: 'the golden fixture must be layable');
+  return results.first;
+}
+
 // One variant per plural category so a single golden pins all of them.
 Result variantWithPlanks(int totalPlanks) => Result(
       1200,
@@ -167,12 +192,48 @@ void main() {
       );
     });
 
+    // A room with a corner cut away is the only one whose outline is not
+    // convex, and the only one where a plank comes back from the clip with six
+    // sides rather than four. These two are where that shows.
+    testWidgets('rows in a room with a corner cut away', (tester) async {
+      await pumpAt(tester, wrap(SchemeScreen(cutCornerResult(), 1)), const Size(600, 400));
+      await expectLater(
+        find.byType(SchemeScreen),
+        matchesGoldenFile('goldens/scheme_cut_corner.png'),
+      );
+    });
+
+    testWidgets('rows across a room with a corner cut away', (tester) async {
+      await pumpAt(
+        tester,
+        wrap(SchemeScreen(cutCornerResult(direction: Direction.width), 1)),
+        const Size(600, 500),
+      );
+      await expectLater(
+        find.byType(SchemeScreen),
+        matchesGoldenFile('goldens/scheme_cut_corner_width.png'),
+      );
+    });
+
     testWidgets('plank sizes are labelled in feet and inches', (tester) async {
       getIt.get<CalculateCubit>().setMeasurementSystem(MeasurementSystem.imperial);
       await pumpAt(tester, wrap(SchemeScreen(schemeResult(), 1)), const Size(600, 400));
       await expectLater(
         find.byType(SchemeScreen),
         matchesGoldenFile('goldens/scheme_imperial.png'),
+      );
+    });
+
+    // Feet and inches is where the short walls of a cut-away corner stop
+    // fitting their own measurements: "1'-3 3/4''" is eleven characters on a
+    // wall 400 mm long, and without the fit-to-the-wall rule it is written
+    // across its neighbours.
+    testWidgets('a cut-away corner labelled in feet and inches', (tester) async {
+      getIt.get<CalculateCubit>().setMeasurementSystem(MeasurementSystem.imperial);
+      await pumpAt(tester, wrap(SchemeScreen(cutCornerResult(), 1)), const Size(600, 400));
+      await expectLater(
+        find.byType(SchemeScreen),
+        matchesGoldenFile('goldens/scheme_cut_corner_imperial.png'),
       );
     });
   });

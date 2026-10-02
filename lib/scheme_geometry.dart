@@ -43,8 +43,9 @@ class SchemeLabel {
 
 class Scheme {
   /// The walls, corner by corner. The laid area sits inside them by the
-  /// expansion gap. Four corners always, but not a rectangle unless the room
-  /// was measured as one.
+  /// expansion gap. As many corners as the room has walls — four for a room
+  /// measured wall by wall, six for one with a corner cut away — and not a
+  /// rectangle unless the room was measured as one.
   final List<Offset> room;
   final List<PlankShape> planks;
   final List<SchemeLabel> labels;
@@ -87,14 +88,14 @@ List<Offset> drawnRoom(Result result) =>
 List<Offset> drawnFloor(Result result) =>
     _asDrawn(result.shape, result.shape.floor(result.indentFromWall), result.direction);
 
-/// The room's own geometry comes in as plain points — [RoomShape] and [planFor]
-/// have no business knowing about canvases — and turns into canvas coordinates
-/// here, which is the first place they mean anything.
+/// The room's own geometry comes in as plain points — [RoomOutline] and
+/// [planFor] have no business knowing about canvases — and turns into canvas
+/// coordinates here, which is the first place they mean anything.
 ///
-/// The quarter turn is [RoomShape.turned], the same one [planFor] lays the rows
-/// through. One function rather than two matching ones: they used to be a
+/// The quarter turn is [RoomOutline.turned], the same one [planFor] lays the
+/// rows through. One function rather than two matching ones: they used to be a
 /// transpose apiece, each right about the other and both mirroring the room.
-List<Offset> _asDrawn(RoomShape shape, List<Point<double>> polygon, Direction direction) {
+List<Offset> _asDrawn(RoomOutline shape, List<Point<double>> polygon, Direction direction) {
   final placed = direction == Direction.width ? shape.turned(polygon) : polygon;
   return [for (final p in placed) Offset(p.x, p.y)];
 }
@@ -124,9 +125,15 @@ Scheme buildScheme(
   final labels = <SchemeLabel>[];
   final indent = result.indentFromWall.toDouble();
   final room = drawnRoom(result);
-  final floor = drawnFloor(result);
-  final floorNormals = normalsOf(floor);
-  final place = _placement(result, floor);
+  final floorCorners = drawnFloor(result);
+  final floor = LaidFloor(floorCorners);
+  final place = _placement(result, floorCorners);
+  // Where the rows were measured from, for the one thing that has to ask the
+  // floor again: how far a row actually reaches at a given height. Only a
+  // floor with an inside corner needs it, and such a floor is only ever laid
+  // along a wall, so the row frame is the drawing's own frame shifted.
+  final floorBounds = boundsOf(floorCorners);
+  final floorPoints = [for (final p in floorCorners) Point(p.dx, p.dy)];
 
   var v = 0.0;
   for (final line in result.lines) {
@@ -152,19 +159,33 @@ Scheme buildScheme(
       // case for either.
       planks.add(PlankShape(
         plank,
-        _clip([
+        clipToFloor([
           place(u0 + left, vLo),
           place(u1 - right, vLo),
           place(u1 + right, vHi),
           place(u0 - left, vHi),
-        ], floor, floorNormals),
+        ], floor),
       ));
 
       // The bounding box of a trapezoid lies about the room for text: only the
       // shorter of the two parallel edges is backed by material end to end.
-      final from = u0 + left.abs();
-      final usable = plank.length - left.abs() - right.abs();
+      var from = u0 + left.abs();
+      var usable = plank.length - left.abs() - right.abs();
       final vMid = (vLo + vHi) / 2;
+      if (!floor.isConvex) {
+        // A plank the cut-away corner took half of still has its number
+        // written down the middle of the plank the row plan laid, which for
+        // that one plank is a point outside the room. Fitted to the part of
+        // the row that is floor at this height instead. Nowhere else can a
+        // plank reach past the floor, so nowhere else does this fire.
+        final reach = spanAt(floorPoints, floorBounds.top + vMid);
+        if (reach != null) {
+          final lo = math.max(from, reach.lo - floorBounds.left);
+          final hi = math.min(from + usable, reach.hi - floorBounds.left);
+          from = lo;
+          usable = math.max(0.0, hi - lo);
+        }
+      }
       final height = width * _textFill;
       final number = ' ${plank.number}';
       // A plank still at its full length was not cut, and its size is the one
@@ -219,7 +240,7 @@ Scheme buildScheme(
     final line = result.lines[i];
     final width = line.planks.first.width.toDouble();
     final start = place(line.startOffsetMm.toDouble(), v + width / 2);
-    final outward = _outward(start, floor, floorNormals);
+    final outward = floor.outward(start);
     labels.add(SchemeLabel(
       rowLabels[i],
       start + outward * (gutter / 2 + indent),
@@ -246,25 +267,28 @@ Scheme buildScheme(
   // The lengths come from the room as it was measured rather than from the
   // corners as they were drawn: they are the numbers the user typed, and no
   // amount of turning and insetting can round them off.
-  final walls = [
-    result.shape.lengthNear,
-    result.shape.widthRight,
-    result.shape.lengthFar,
-    result.shape.widthLeft,
-  ];
+  final walls = result.shape.wallLengths();
   final roomNormals = normalsOf(room);
   for (var i = 0; i < room.length; i++) {
     final from = room[i];
     final to = room[(i + 1) % room.length];
     final text = sizeLabel(walls[i], system);
     final outward = Offset(-roomNormals[i].dx, -roomNormals[i].dy);
+    // A room measurement is the one label that is never dropped — nothing else
+    // on the drawing says how big the room is — but it may shrink. The two
+    // walls of a cut-away corner are short, and in feet and inches the text
+    // for one of them comes out wider than the wall it is written on and
+    // lands on its neighbours. Written at the height that fits its own wall,
+    // it stays where it belongs; a wall long enough for its own text, which
+    // every wall of every room drawn before this was, keeps the shared height
+    // and nothing already drawn moves.
+    final height = math.min(gutterHeight, _fits(text, (to - from).distance, gutterHeight));
     labels.add(SchemeLabel(
       text,
       (from + to) / 2 +
-          outward *
-              (_reservedOutside(labels, floor, floorNormals, i) + gutterHeight / 2 + indent),
+          outward * (_reservedOutside(labels, floor, i) + gutterHeight / 2 + indent),
       _alongWall(to - from),
-      Size(_textWidth(text, gutterHeight), gutterHeight),
+      Size(_textWidth(text, height), height),
     ));
   }
 
@@ -279,37 +303,130 @@ Scheme buildScheme(
 }
 
 /// Which way is in for each wall of a polygon in canvas coordinates. Worked out
-/// once per drawing and handed round: it is the same four walls for every plank,
+/// once per drawing and handed round: it is the same walls for every plank,
 /// and [inwardNormals] is the one place that decides what "in" means.
 List<Offset> normalsOf(List<Offset> polygon) => [
       for (final normal in inwardNormals([for (final p in polygon) Point(p.dx, p.dy)]))
         Offset(normal.x, normal.y)
     ];
 
-/// How deep inside the wall `i` of [floor] a point lies; negative when outside.
-double _depth(Offset point, List<Offset> floor, List<Offset> normals, int i) =>
-    (point.dx - floor[i].dx) * normals[i].dx + (point.dy - floor[i].dy) * normals[i].dy;
+/// The laid floor as the drawing asks about it: its walls, which way is in, and
+/// where its inside corner is if it has one.
+///
+/// One object because the questions all have to be answered about the same
+/// floor, and because every one of the answers changes when the floor stops
+/// being convex.
+class LaidFloor {
+  /// The floor's own corners, in canvas coordinates.
+  final List<Offset> corners;
+  final List<Offset> normals;
 
-/// Which wall of [floor] a point is nearest to.
-int _nearestWall(Offset point, List<Offset> floor, List<Offset> normals) {
-  var nearest = double.infinity;
-  var wall = 0;
-  for (var i = 0; i < floor.length; i++) {
-    final depth = _depth(point, floor, normals, i);
-    // Ties go to the later wall, which is the order the rectangle case has
-    // always resolved them in.
-    if (depth <= nearest) {
-      nearest = depth;
-      wall = i;
-    }
+  /// Where the floor turns back on itself — the inside corner of a room with a
+  /// piece cut out of it. Empty for every room that is convex, and that is the
+  /// condition everything below switches on.
+  final List<int> reflex;
+
+  LaidFloor(this.corners)
+      : normals = normalsOf(corners),
+        reflex = reflexCorners([for (final p in corners) Point(p.dx, p.dy)]);
+
+  bool get isConvex => reflex.isEmpty;
+
+  /// How deep inside wall `i` a point lies; negative when outside.
+  double depth(Offset point, int i) =>
+      (point.dx - corners[i].dx) * normals[i].dx +
+      (point.dy - corners[i].dy) * normals[i].dy;
+
+  /// Whether the foot of the perpendicular from [point] onto wall `i` lands on
+  /// the wall rather than past one of its ends.
+  bool _alongside(Offset point, int i) {
+    final from = corners[i];
+    final to = corners[(i + 1) % corners.length];
+    final edge = to - from;
+    final squared = edge.dx * edge.dx + edge.dy * edge.dy;
+    if (squared == 0) return false;
+    final t = ((point.dx - from.dx) * edge.dx + (point.dy - from.dy) * edge.dy) / squared;
+    return t >= 0 && t <= 1;
   }
-  return wall;
-}
 
-/// The way out of [floor] from the wall [point] is nearest to.
-Offset _outward(Offset point, List<Offset> floor, List<Offset> normals) {
-  final normal = normals[_nearestWall(point, floor, normals)];
-  return Offset(-normal.dx, -normal.dy);
+  /// Which wall [point] is nearest to.
+  ///
+  /// A wall's line runs on past both of its ends. In a convex room that costs
+  /// nothing — the floor is on the inside of every one of those lines — so the
+  /// nearest line is the nearest wall, and ties go to the later wall, which is
+  /// the order the rectangle case has always resolved them in.
+  ///
+  /// An inside corner breaks it. The wall that stops at that corner has a line
+  /// that carries straight on through the other arm of the room, and reports a
+  /// point nowhere near it as being well outside it — which would write the
+  /// row widths of half an L-shaped room into the middle of the floor instead
+  /// of out past the wall they belong to. So where there is an inside corner,
+  /// a wall only counts if the point is level with it. A point outside the
+  /// room may be level with none, and then every wall counts again.
+  int nearestWall(Offset point) {
+    for (final restrict in isConvex ? const [false] : const [true, false]) {
+      var nearest = double.infinity;
+      var wall = -1;
+      for (var i = 0; i < corners.length; i++) {
+        if (restrict && !_alongside(point, i)) continue;
+        final d = depth(point, i);
+        if (d <= nearest) {
+          nearest = d;
+          wall = i;
+        }
+      }
+      if (wall >= 0) return wall;
+    }
+    return 0;
+  }
+
+  /// The way out of the floor from the wall [point] is nearest to.
+  Offset outward(Offset point) {
+    final normal = normals[nearestWall(point)];
+    return Offset(-normal.dx, -normal.dy);
+  }
+
+  /// How far inside the floor a point is, in millimetres; negative when it is
+  /// outside.
+  ///
+  /// Measured to the walls themselves rather than to their lines, for the
+  /// reason [nearestWall] gives. For a point inside a convex floor the two
+  /// agree exactly; for a room with a corner cut away the line of the wall
+  /// that stops at that corner runs on through the other arm, and a plank
+  /// standing in that arm is not outside anything.
+  double insideDepth(Offset point) {
+    var nearest = double.infinity;
+    for (var i = 0; i < corners.length; i++) {
+      nearest = math.min(nearest, _distanceToWall(point, i));
+    }
+    return _contains(point) ? nearest : -nearest;
+  }
+
+  double _distanceToWall(Offset point, int i) {
+    final from = corners[i];
+    final to = corners[(i + 1) % corners.length];
+    final edge = to - from;
+    final squared = edge.dx * edge.dx + edge.dy * edge.dy;
+    if (squared == 0) return (point - from).distance;
+    final t =
+        (((point.dx - from.dx) * edge.dx + (point.dy - from.dy) * edge.dy) / squared)
+            .clamp(0.0, 1.0);
+    return (point - (from + edge * t)).distance;
+  }
+
+  /// Whether [point] is on the inside, by counting how often a ray from it
+  /// crosses the walls.
+  bool _contains(Offset point) {
+    var inside = false;
+    for (var i = 0; i < corners.length; i++) {
+      final from = corners[i];
+      final to = corners[(i + 1) % corners.length];
+      if ((from.dy > point.dy) == (to.dy > point.dy)) continue;
+      final at = from.dx + (point.dy - from.dy) / (to.dy - from.dy) * (to.dx - from.dx);
+      if (point.dx < at) inside = !inside;
+    }
+    return inside;
+  }
 }
 
 /// The angle text written along [edge] runs at, turned back when it would come
@@ -323,28 +440,55 @@ double _alongWall(Offset edge) {
 
 /// How far out of wall [wall] the labels already written beside it reach, so
 /// that the wall's own measurement can go past them instead of on top.
-double _reservedOutside(
-    List<SchemeLabel> labels, List<Offset> floor, List<Offset> normals, int wall) {
+double _reservedOutside(List<SchemeLabel> labels, LaidFloor floor, int wall) {
   var out = 0.0;
   for (final label in labels) {
-    if (_nearestWall(label.centre, floor, normals) != wall) continue;
-    final beyond = -_depth(label.centre, floor, normals, wall) +
-        math.max(label.box.width, label.box.height) / 2;
+    if (floor.nearestWall(label.centre) != wall) continue;
+    final beyond =
+        -floor.depth(label.centre, wall) + math.max(label.box.width, label.box.height) / 2;
     out = math.max(out, beyond);
   }
   return out;
 }
 
-/// [polygon] with everything outside [floor] cut away, by Sutherland–Hodgman.
-/// Convex against convex, so the result is one polygon and no hole.
-List<Offset> _clip(List<Offset> polygon, List<Offset> floor, List<Offset> normals) {
+/// [polygon] with everything outside [floor] cut away.
+///
+/// Sutherland–Hodgman cuts against one wall's line at a time, which needs the
+/// floor to lie on one side of every one of those lines. A room with a corner
+/// cut out of it does not: the wall that stops at the inside corner has a line
+/// that carries on through the other arm, and cutting against it leaves only
+/// the little rectangle where the two arms overlap — which is to say almost
+/// every plank disappears. So the inside corner comes out of the loop and goes
+/// back in as a corner rather than as two lines: what is beyond *both* of its
+/// walls is taken away in one step, by [_withoutCorner].
+///
+/// A convex floor takes exactly the path it always took, wall by wall and in
+/// order, so every drawing made before this keeps every coordinate it had.
+///
+/// One polygon out, never two. The piece taken away is a quarter-plane and
+/// what it is taken from is convex, so what is left is one unbroken ring: a
+/// plank in a room with a cut-away corner comes back as a smaller plank or as
+/// an L, and that is why [PlankShape.outline] is a single list of points.
+List<Offset> clipToFloor(List<Offset> polygon, LaidFloor floor) {
   var out = polygon;
-  for (var i = 0; i < floor.length; i++) {
-    final corner = floor[i];
-    final normal = normals[i];
+  final skip = <int>{};
+  for (final corner in floor.reflex) {
+    skip.add((corner + floor.corners.length - 1) % floor.corners.length);
+    skip.add(corner);
+  }
+  for (var i = 0; i < floor.corners.length; i++) {
+    if (skip.contains(i)) continue;
+    final corner = floor.corners[i];
+    final normal = floor.normals[i];
     out = _clipHalfPlane(
         out, (p) => (p.dx - corner.dx) * normal.dx + (p.dy - corner.dy) * normal.dy);
-    if (out.isEmpty) break;
+    if (out.isEmpty) return out;
+  }
+  for (final corner in floor.reflex) {
+    final before = (corner + floor.corners.length - 1) % floor.corners.length;
+    out = _withoutCorner(
+        out, floor.corners[corner], floor.normals[before], floor.normals[corner]);
+    if (out.isEmpty) return out;
   }
   return out;
 }
@@ -364,6 +508,123 @@ List<Offset> _clipHalfPlane(List<Offset> polygon, double Function(Offset) depth)
       ));
     }
     if (now >= 0) out.add(current);
+  }
+  return out;
+}
+
+/// Two points the same to within this are the same point. Only ever used to
+/// drop a duplicate a cut has just produced on top of a corner that was
+/// already there, so it has to be smaller than anything anyone would draw.
+const double _crumbMm = 1e-6;
+
+/// [polygon], convex, with the quarter-plane beyond a corner cut away.
+///
+/// The corner is at [apex] and its two walls run off it with inward normals
+/// [normalA] and [normalB]; what goes is everything beyond both at once.
+///
+/// The ring is walked once, keeping what the cut leaves and adding a point
+/// wherever the walk crosses one of the two walls. The corner's own tip is put
+/// back wherever the walk leaves on one wall and comes back on the other,
+/// which is the only way it can be reached: between two crossings of the
+/// *same* wall the boundary is a straight chord and the tip is not on it.
+///
+/// Landing exactly on a wall is the ordinary case here, not a rare one — a row
+/// boundary or a plank end sits on the wall of the cut as often as not — so
+/// both decisions are made strictly. A crossing counts only where the edge
+/// passes from one side of a wall clear to the other, and a corner sitting on
+/// a wall is kept only if an edge leads off it back into the room. Keeping
+/// such a corner regardless is what a first draft of this did, and it left a
+/// plank whose end lay along the cut wearing a flat spike into it: no area to
+/// speak of, but enough to send the outline round the wrong way and draw the
+/// plank into the void.
+List<Offset> _withoutCorner(
+    List<Offset> polygon, Offset apex, Offset normalA, Offset normalB) {
+  double depth(Offset p, Offset normal) =>
+      (p.dx - apex.dx) * normal.dx + (p.dy - apex.dy) * normal.dy;
+  double leads(Offset from, Offset to, Offset normal) =>
+      (to.dx - from.dx) * normal.dx + (to.dy - from.dy) * normal.dy;
+
+  bool keeps(int i) {
+    final corner = polygon[i];
+    final a = depth(corner, normalA);
+    final b = depth(corner, normalB);
+    if (a > 0 || b > 0) return true;
+    if (a < 0 && b < 0) return false;
+    // On one of the two walls, with none of the room on the other side of it
+    // just here. Such a corner belongs to the piece only if an edge leads off
+    // it back into the room; otherwise it is the tip of a sliver the cut left
+    // behind, and a sliver is not a shape.
+    for (final to in [
+      polygon[(i + polygon.length - 1) % polygon.length],
+      polygon[(i + 1) % polygon.length],
+    ]) {
+      if (a == 0 && leads(corner, to, normalA) > 0) return true;
+      if (b == 0 && leads(corner, to, normalB) > 0) return true;
+    }
+    return false;
+  }
+
+  final points = <Offset>[];
+  // Which of the two walls each point was cut on, or -1 for a corner of
+  // [polygon] that the cut did not touch.
+  final onWall = <int>[];
+  void add(Offset point, int wall) {
+    if (points.isNotEmpty) {
+      final last = points.last;
+      if ((last.dx - point.dx).abs() < _crumbMm && (last.dy - point.dy).abs() < _crumbMm) {
+        return;
+      }
+    }
+    points.add(point);
+    onWall.add(wall);
+  }
+
+  for (var i = 0; i < polygon.length; i++) {
+    final previous = polygon[(i + polygon.length - 1) % polygon.length];
+    final current = polygon[i];
+    // Where this edge meets each of the two walls, in the order it meets them.
+    final crossings = <double>[];
+    final walls = <int>[];
+    for (var wall = 0; wall < 2; wall++) {
+      final normal = wall == 0 ? normalA : normalB;
+      final other = wall == 0 ? normalB : normalA;
+      final before = depth(previous, normal);
+      final now = depth(current, normal);
+      if (!((before > 0 && now < 0) || (before < 0 && now > 0))) continue;
+      final t = before / (before - now);
+      final at = Offset(
+        previous.dx + (current.dx - previous.dx) * t,
+        previous.dy + (current.dy - previous.dy) * t,
+      );
+      // Past the apex the wall's line is inside the room, and crossing it
+      // there cuts nothing.
+      if (depth(at, other) > 0) continue;
+      crossings.add(t);
+      walls.add(wall);
+    }
+    if (crossings.length == 2 && crossings[0] > crossings[1]) {
+      crossings.insert(0, crossings.removeLast());
+      walls.insert(0, walls.removeLast());
+    }
+    for (var c = 0; c < crossings.length; c++) {
+      final t = crossings[c];
+      add(
+        Offset(
+          previous.dx + (current.dx - previous.dx) * t,
+          previous.dy + (current.dy - previous.dy) * t,
+        ),
+        walls[c],
+      );
+    }
+    if (keeps(i)) add(current, -1);
+  }
+
+  if (points.length < 3) return const [];
+  final out = <Offset>[];
+  for (var i = 0; i < points.length; i++) {
+    out.add(points[i]);
+    final next = (i + 1) % points.length;
+    if (onWall[i] >= 0 && onWall[next] >= 0 && onWall[i] != onWall[next]) out.add(apex);
   }
   return out;
 }
@@ -404,7 +665,8 @@ _Placement _placement(Result result, List<Offset> floor) {
   final angle = result.direction == Direction.diagonal ? -math.pi / 4 : 0.0;
   if (result.shape.isRectangular) {
     final indent = result.indentFromWall.toDouble();
-    final b = (result.shape.widthLeft - result.indentFromWall * 2).toDouble();
+    final rectangle = result.shape as RoomShape;
+    final b = (rectangle.widthLeft - result.indentFromWall * 2).toDouble();
     switch (result.direction) {
       // Rows parallel to a wall are always drawn left to right; laying across
       // the room turns the room instead, in [drawnRoom].

@@ -89,6 +89,66 @@ class AppLocalizationsIt extends AppLocalizations {
   String get walls_do_not_close => 'Le pareti non si chiudono';
 
   @override
+  String get room_shape => 'Forma della stanza';
+
+  @override
+  String get shape_rectangle => 'Rettangolare';
+
+  @override
+  String get shape_l => 'A forma di L';
+
+  @override
+  String get overall_length => 'Lunghezza totale';
+
+  @override
+  String get overall_width => 'Larghezza totale';
+
+  @override
+  String get overall_length_mm => 'Lunghezza totale (mm)';
+
+  @override
+  String get overall_width_mm => 'Larghezza totale (mm)';
+
+  @override
+  String get notch_length => 'Lunghezza del rientro';
+
+  @override
+  String get notch_width => 'Larghezza del rientro';
+
+  @override
+  String get notch_length_mm => 'Lunghezza del rientro (mm)';
+
+  @override
+  String get notch_width_mm => 'Larghezza del rientro (mm)';
+
+  @override
+  String get notch_does_not_fit => 'Il rientro non lascia stanza';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return 'La fila $number attraversa l\'angolo tagliato: le doghe alla sua estremità vanno intagliate attorno, vedi il disegno';
+  }
+
+  @override
+  String get tap_corner_to_cut => 'Tocca l\'angolo tagliato';
+
+  @override
+  String get diagonal_not_for_l_shape =>
+      'La posa in diagonale non è ancora supportata in una stanza a forma di L';
+
+  @override
+  String get corner_top_left => 'In alto a sinistra';
+
+  @override
+  String get corner_top_right => 'In alto a destra';
+
+  @override
+  String get corner_bottom_right => 'In basso a destra';
+
+  @override
+  String get corner_bottom_left => 'In basso a sinistra';
+
+  @override
   String get pieces_per_package => 'Pezzi per confezione';
 
   @override

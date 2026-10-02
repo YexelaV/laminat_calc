@@ -89,6 +89,66 @@ class AppLocalizationsRu extends AppLocalizations {
   String get walls_do_not_close => 'Стены не сходятся';
 
   @override
+  String get room_shape => 'Форма помещения';
+
+  @override
+  String get shape_rectangle => 'Прямоугольное';
+
+  @override
+  String get shape_l => 'Г-образное';
+
+  @override
+  String get overall_length => 'Общая длина';
+
+  @override
+  String get overall_width => 'Общая ширина';
+
+  @override
+  String get overall_length_mm => 'Общая длина (мм)';
+
+  @override
+  String get overall_width_mm => 'Общая ширина (мм)';
+
+  @override
+  String get notch_length => 'Длина выреза';
+
+  @override
+  String get notch_width => 'Ширина выреза';
+
+  @override
+  String get notch_length_mm => 'Длина выреза (мм)';
+
+  @override
+  String get notch_width_mm => 'Ширина выреза (мм)';
+
+  @override
+  String get notch_does_not_fit => 'Вырез не оставляет помещения';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return 'Ряд $number идёт через угол выреза: крайние панели режутся по ступеньке, размер по схеме';
+  }
+
+  @override
+  String get tap_corner_to_cut => 'Нажмите на угол, который срезан';
+
+  @override
+  String get diagonal_not_for_l_shape =>
+      'Диагональная укладка в Г-образном помещении пока не поддерживается';
+
+  @override
+  String get corner_top_left => 'Верхний левый';
+
+  @override
+  String get corner_top_right => 'Верхний правый';
+
+  @override
+  String get corner_bottom_right => 'Нижний правый';
+
+  @override
+  String get corner_bottom_left => 'Нижний левый';
+
+  @override
   String get pieces_per_package => 'В упаковке (штук)';
 
   @override

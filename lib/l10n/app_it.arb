@@ -51,6 +51,32 @@
     "wall_diagonal": "Diagonale",
     "wall_diagonal_mm": "Diagonale (mm)",
     "walls_do_not_close": "Le pareti non si chiudono",
+    "room_shape": "Forma della stanza",
+    "shape_rectangle": "Rettangolare",
+    "shape_l": "A forma di L",
+    "overall_length": "Lunghezza totale",
+    "overall_width": "Larghezza totale",
+    "overall_length_mm": "Lunghezza totale (mm)",
+    "overall_width_mm": "Larghezza totale (mm)",
+    "notch_length": "Lunghezza del rientro",
+    "notch_width": "Larghezza del rientro",
+    "notch_length_mm": "Lunghezza del rientro (mm)",
+    "notch_width_mm": "Larghezza del rientro (mm)",
+    "notch_does_not_fit": "Il rientro non lascia stanza",
+    "row_steps_at_notch": "La fila {number} attraversa l'angolo tagliato: le doghe alla sua estremità vanno intagliate attorno, vedi il disegno",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Tocca l'angolo tagliato",
+    "diagonal_not_for_l_shape": "La posa in diagonale non è ancora supportata in una stanza a forma di L",
+    "corner_top_left": "In alto a sinistra",
+    "corner_top_right": "In alto a destra",
+    "corner_bottom_right": "In basso a destra",
+    "corner_bottom_left": "In basso a sinistra",
     "pieces_per_package": "Pezzi per confezione",
     "laying": "Posa",
     "laying_direction": "Senso di posa",

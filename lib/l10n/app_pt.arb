@@ -51,6 +51,32 @@
     "wall_diagonal": "Diagonal",
     "wall_diagonal_mm": "Diagonal (mm)",
     "walls_do_not_close": "As paredes não fecham",
+    "room_shape": "Formato da divisão",
+    "shape_rectangle": "Retangular",
+    "shape_l": "Em forma de L",
+    "overall_length": "Comprimento total",
+    "overall_width": "Largura total",
+    "overall_length_mm": "Comprimento total (mm)",
+    "overall_width_mm": "Largura total (mm)",
+    "notch_length": "Comprimento do recorte",
+    "notch_width": "Largura do recorte",
+    "notch_length_mm": "Comprimento do recorte (mm)",
+    "notch_width_mm": "Largura do recorte (mm)",
+    "notch_does_not_fit": "O recorte não deixa divisão",
+    "row_steps_at_notch": "A fileira {number} atravessa o canto recortado: as réguas na ponta são recortadas em volta, veja o desenho",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Toque no canto recortado",
+    "diagonal_not_for_l_shape": "A colocação na diagonal ainda não é suportada numa divisão em forma de L",
+    "corner_top_left": "Superior esquerdo",
+    "corner_top_right": "Superior direito",
+    "corner_bottom_right": "Inferior direito",
+    "corner_bottom_left": "Inferior esquerdo",
     "pieces_per_package": "Peças por pacote",
     "laying": "Instalação",
     "laying_direction": "Direção de instalação",

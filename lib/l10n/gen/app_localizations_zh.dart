@@ -89,6 +89,65 @@ class AppLocalizationsZh extends AppLocalizations {
   String get walls_do_not_close => '墙无法闭合';
 
   @override
+  String get room_shape => '房间形状';
+
+  @override
+  String get shape_rectangle => '矩形';
+
+  @override
+  String get shape_l => 'L 形';
+
+  @override
+  String get overall_length => '总长度';
+
+  @override
+  String get overall_width => '总宽度';
+
+  @override
+  String get overall_length_mm => '总长度（毫米）';
+
+  @override
+  String get overall_width_mm => '总宽度（毫米）';
+
+  @override
+  String get notch_length => '缺口长度';
+
+  @override
+  String get notch_width => '缺口宽度';
+
+  @override
+  String get notch_length_mm => '缺口长度（毫米）';
+
+  @override
+  String get notch_width_mm => '缺口宽度（毫米）';
+
+  @override
+  String get notch_does_not_fit => '缺口过大，房间无处可铺';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return '第 $number 行穿过被切掉的角：该行末端的板材需沿缺口开槽，形状见图';
+  }
+
+  @override
+  String get tap_corner_to_cut => '点按被切掉的那个角';
+
+  @override
+  String get diagonal_not_for_l_shape => 'L 形房间暂不支持斜铺';
+
+  @override
+  String get corner_top_left => '左上';
+
+  @override
+  String get corner_top_right => '右上';
+
+  @override
+  String get corner_bottom_right => '右下';
+
+  @override
+  String get corner_bottom_left => '左下';
+
+  @override
   String get pieces_per_package => '每包块数';
 
   @override

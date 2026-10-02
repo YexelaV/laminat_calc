@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'calculate_state.dart';
 
@@ -28,8 +29,31 @@ class CalculateCubit extends Cubit<CalculateState> {
     emit(state.copyWith(roomDiagonal: roomDiagonal));
   }
 
-  void setUnevenWalls(bool unevenWalls) {
-    emit(state.copyWith(unevenWalls: unevenWalls));
+  void setNotchLength(int notchLength) {
+    emit(state.copyWith(notchLength: notchLength));
+  }
+
+  void setNotchWidth(int notchWidth) {
+    emit(state.copyWith(notchWidth: notchWidth));
+  }
+
+  void setNotchCorner(RoomCorner notchCorner) {
+    emit(state.copyWith(notchCorner: notchCorner));
+  }
+
+  /// A 45° layout in a room with a corner cut away is not supported, so
+  /// choosing that room un-chooses it.
+  ///
+  /// Here rather than on the laying screen. The direction is read by the row
+  /// plan, by the field validators and by the drawing, and a screen that only
+  /// greyed the button out would leave all three holding the old answer.
+  void setRoomKind(RoomKind roomKind) {
+    emit(state.copyWith(
+      roomKind: roomKind,
+      direction: roomKind == RoomKind.lShaped && state.direction == Direction.diagonal
+          ? Direction.length
+          : state.direction,
+    ));
   }
 
   void setLaminateLength(int laminateLength) {

@@ -156,7 +156,7 @@ bool _feasibleAnswer = false;
 /// The answer is kept for the last question asked, because the form asks the
 /// same one several times per keystroke.
 bool planFeasible({
-  required RoomShape shape,
+  required RoomOutline shape,
   required int indentFromWall,
   required int laminateLength,
   required int laminateWidth,
@@ -164,8 +164,7 @@ bool planFeasible({
   required int rowOffset,
   required Direction direction,
 }) {
-  final key = '${shape.lengthNear}/${shape.lengthFar}/${shape.widthLeft}/'
-      '${shape.widthRight}/${shape.diagonal}/$indentFromWall/$laminateLength/'
+  final key = '${shape.key}/$indentFromWall/$laminateLength/'
       '$laminateWidth/$minimumLaminateLength/$rowOffset/${direction.index}';
   if (key == _feasibleKey) return _feasibleAnswer;
   _feasibleKey = key;
@@ -183,7 +182,7 @@ bool planFeasible({
 }
 
 class Calculation {
-  final RoomShape shape;
+  final RoomOutline shape;
   final int laminateLength;
   final int laminateWidth;
   final int planksInPack;
@@ -317,15 +316,24 @@ class Calculation {
 
   int get rowLength {
     assert(shape.isRectangular, 'rows of a room with differing walls are not all one length');
+    final rectangle = shape as RoomShape;
     return rowLengthMm(
-      roomLength: shape.lengthNear,
-      roomWidth: shape.widthLeft,
+      roomLength: rectangle.lengthNear,
+      roomWidth: rectangle.widthLeft,
       indentFromWall: indentFromWall,
       direction: direction,
     );
   }
 
   List<Result> calculate() {
+    // A 45° strip crosses a room with a corner cut away twice, so a row there
+    // is two rows and [RowPlan] has no way to say so. The form does not offer
+    // the direction; this is what a release build does if it is reached
+    // anyway, and it ends in the same "no laying variants" the user already
+    // knows rather than in a floor laid across a void.
+    if (direction == Direction.diagonal && shape.floorNotch(indentFromWall) != null) {
+      return [];
+    }
     final plan = planFor(
       shape: shape,
       indentFromWall: indentFromWall,
@@ -353,6 +361,10 @@ class Calculation {
           trash,
           direction: direction,
           indentFromWall: indentFromWall,
+          steppedRows: [
+            for (var i = 0; i < plan.numberOfRows; i++)
+              if (plan.stepped[i]) i
+          ],
         ));
       }
     }

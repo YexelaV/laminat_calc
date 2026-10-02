@@ -258,6 +258,120 @@ abstract class AppLocalizations {
   /// **'Стены не сходятся'**
   String get walls_do_not_close;
 
+  /// No description provided for @room_shape.
+  ///
+  /// In ru, this message translates to:
+  /// **'Форма помещения'**
+  String get room_shape;
+
+  /// No description provided for @shape_rectangle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прямоугольное'**
+  String get shape_rectangle;
+
+  /// No description provided for @shape_l.
+  ///
+  /// In ru, this message translates to:
+  /// **'Г-образное'**
+  String get shape_l;
+
+  /// No description provided for @overall_length.
+  ///
+  /// In ru, this message translates to:
+  /// **'Общая длина'**
+  String get overall_length;
+
+  /// No description provided for @overall_width.
+  ///
+  /// In ru, this message translates to:
+  /// **'Общая ширина'**
+  String get overall_width;
+
+  /// No description provided for @overall_length_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Общая длина (мм)'**
+  String get overall_length_mm;
+
+  /// No description provided for @overall_width_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Общая ширина (мм)'**
+  String get overall_width_mm;
+
+  /// No description provided for @notch_length.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина выреза'**
+  String get notch_length;
+
+  /// No description provided for @notch_width.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина выреза'**
+  String get notch_width;
+
+  /// No description provided for @notch_length_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина выреза (мм)'**
+  String get notch_length_mm;
+
+  /// No description provided for @notch_width_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина выреза (мм)'**
+  String get notch_width_mm;
+
+  /// No description provided for @notch_does_not_fit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вырез не оставляет помещения'**
+  String get notch_does_not_fit;
+
+  /// No description provided for @row_steps_at_notch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ряд {number} идёт через угол выреза: крайние панели режутся по ступеньке, размер по схеме'**
+  String row_steps_at_notch(int number);
+
+  /// No description provided for @tap_corner_to_cut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите на угол, который срезан'**
+  String get tap_corner_to_cut;
+
+  /// No description provided for @diagonal_not_for_l_shape.
+  ///
+  /// In ru, this message translates to:
+  /// **'Диагональная укладка в Г-образном помещении пока не поддерживается'**
+  String get diagonal_not_for_l_shape;
+
+  /// No description provided for @corner_top_left.
+  ///
+  /// In ru, this message translates to:
+  /// **'Верхний левый'**
+  String get corner_top_left;
+
+  /// No description provided for @corner_top_right.
+  ///
+  /// In ru, this message translates to:
+  /// **'Верхний правый'**
+  String get corner_top_right;
+
+  /// No description provided for @corner_bottom_right.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нижний правый'**
+  String get corner_bottom_right;
+
+  /// No description provided for @corner_bottom_left.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нижний левый'**
+  String get corner_bottom_left;
+
   /// No description provided for @pieces_per_package.
   ///
   /// In ru, this message translates to:

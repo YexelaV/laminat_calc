@@ -89,6 +89,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walls_do_not_close => 'The walls do not close';
 
   @override
+  String get room_shape => 'Room shape';
+
+  @override
+  String get shape_rectangle => 'Rectangular';
+
+  @override
+  String get shape_l => 'L-shaped';
+
+  @override
+  String get overall_length => 'Overall length';
+
+  @override
+  String get overall_width => 'Overall width';
+
+  @override
+  String get overall_length_mm => 'Overall length (mm)';
+
+  @override
+  String get overall_width_mm => 'Overall width (mm)';
+
+  @override
+  String get notch_length => 'Notch length';
+
+  @override
+  String get notch_width => 'Notch width';
+
+  @override
+  String get notch_length_mm => 'Notch length (mm)';
+
+  @override
+  String get notch_width_mm => 'Notch width (mm)';
+
+  @override
+  String get notch_does_not_fit => 'The notch leaves no room';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return 'Row $number crosses the cut-away corner: the planks at its end are notched round it, see the drawing for the shape';
+  }
+
+  @override
+  String get tap_corner_to_cut => 'Tap the corner that is cut away';
+
+  @override
+  String get diagonal_not_for_l_shape =>
+      'Diagonal laying is not supported in an L-shaped room yet';
+
+  @override
+  String get corner_top_left => 'Top left';
+
+  @override
+  String get corner_top_right => 'Top right';
+
+  @override
+  String get corner_bottom_right => 'Bottom right';
+
+  @override
+  String get corner_bottom_left => 'Bottom left';
+
+  @override
   String get pieces_per_package => 'Pieces per package';
 
   @override

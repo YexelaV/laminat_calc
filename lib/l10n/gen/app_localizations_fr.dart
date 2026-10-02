@@ -89,6 +89,66 @@ class AppLocalizationsFr extends AppLocalizations {
   String get walls_do_not_close => 'Les murs ne se referment pas';
 
   @override
+  String get room_shape => 'Forme de la pièce';
+
+  @override
+  String get shape_rectangle => 'Rectangulaire';
+
+  @override
+  String get shape_l => 'En forme de L';
+
+  @override
+  String get overall_length => 'Longueur totale';
+
+  @override
+  String get overall_width => 'Largeur totale';
+
+  @override
+  String get overall_length_mm => 'Longueur totale (mm)';
+
+  @override
+  String get overall_width_mm => 'Largeur totale (mm)';
+
+  @override
+  String get notch_length => 'Longueur de la découpe';
+
+  @override
+  String get notch_width => 'Largeur de la découpe';
+
+  @override
+  String get notch_length_mm => 'Longueur de la découpe (mm)';
+
+  @override
+  String get notch_width_mm => 'Largeur de la découpe (mm)';
+
+  @override
+  String get notch_does_not_fit => 'La découpe ne laisse plus de pièce';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return 'La rangée $number traverse le coin découpé : les lames de son extrémité sont entaillées autour, voir le dessin';
+  }
+
+  @override
+  String get tap_corner_to_cut => 'Touchez le coin découpé';
+
+  @override
+  String get diagonal_not_for_l_shape =>
+      'La pose en diagonale n\'est pas encore prise en charge dans une pièce en L';
+
+  @override
+  String get corner_top_left => 'En haut à gauche';
+
+  @override
+  String get corner_top_right => 'En haut à droite';
+
+  @override
+  String get corner_bottom_right => 'En bas à droite';
+
+  @override
+  String get corner_bottom_left => 'En bas à gauche';
+
+  @override
   String get pieces_per_package => 'Pièces par paquet';
 
   @override

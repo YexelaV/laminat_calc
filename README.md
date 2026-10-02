@@ -8,6 +8,7 @@ A Flutter app that calculates how much laminate flooring you need for a room and
 
 - Calculates the number of planks and packs required for a room
 - Rooms that are not square: each of the four walls is measured on its own, and the diagonal closes the outline exactly, so the rows come out at the lengths they will actually be cut to
+- Г-shaped rooms: a rectangle with one corner cut away — overall length and width, the two sides of the cut, and the corner picked by tapping the sketch. Laid along the room or across it; 45° is not offered there, because a diagonal strip crosses such an outline twice and a row would be two rows
 - Builds several laying layout options, minimizing waste by reusing offcuts
 - Respects laying constraints: expansion gap from walls, exact joint offset between rows, minimum plank length
 - Plank offset level selection: 1/2, 1/3, 1/4 of the plank length or an exact value
@@ -33,12 +34,14 @@ Laying at 45° changes only the shape of the rows (`lib/row_plan.dart`): they gr
 
 A room whose walls differ is the same idea taken one step further. Four wall lengths are one measurement short of a shape — a quadrilateral has five degrees of freedom, and four sides leave the outline hinged — so the form asks for the diagonal too, which cuts the room into two triangles and fixes it without assuming anything about right angles (`lib/room_shape.dart`). The rows are then found by turning the outline until they run along one axis and cutting it into strips a plank wide (`scanPlan`): where a strip's centreline crosses the floor is the row, and how the walls lean at those two crossings is the slant of its ends, never steeper than 45°. A true rectangle keeps the closed forms it has always used, so nothing about it moves; `test/scan_plan_test.dart` holds the strip walk to what they produce.
 
+A room with a corner cut away is the other direction: square throughout, but no longer convex (`LRoomShape`). That costs it the diagonal and buys back something worth more — the outline is one unbroken run of floor across every row, so the engine needs nothing new. What it does need is three things of its own (`rectilinearPlan`). The rows keep a rectangle's width rule, because the outer walls are still parallel both ways and a rectangle that grows a small notch must not have every row re-ripped. Each row is measured across the whole of its strip rather than along one line through it: exactly one row has the inside corner inside it, and laid to the shorter of the two reaches it would leave a ribbon of real floor bare, so it is laid to the longer and notched round the corner, which is what a fitter does anyway. And the drawing stops cutting planks against one wall's line at a time — against a floor that bends back on itself that leaves only the little rectangle where the two arms overlap — and takes the inside corner away as a corner instead (`clipToFloor`). A plank there comes back as a plank, or as an L, never as two pieces: the piece removed is a quarter-plane and what it is removed from is convex.
+
 ## Project structure
 
 ```
 lib/
   calculate.dart      # Core laying/count algorithm
-  room_shape.dart     # The floor as four walls and a diagonal, and the outline they close into
+  room_shape.dart     # The floor as an outline: four walls and a diagonal, or a rectangle less a corner
   row_plan.dart       # The shape of the rows: the only file the laying directions differ in
   models.dart         # Plank, Line, Bevel, Result models
   scheme_geometry.dart # Result to polygons and label anchors in millimetres of room
@@ -53,10 +56,12 @@ test/
   stress_test.dart       # Randomized stress test of algorithm invariants
   diagonal_stress_test.dart # The same, for 45° laying: row lengths, bevels, material balance
   uneven_stress_test.dart # The same, for rooms measured wall by wall, in all three directions
+  l_shape_stress_test.dart # The same, for rooms with a corner cut away, both ways round
   row_geometry_test.dart # The geometry the validators derive must match what the algorithm lays out
   row_plan_test.dart     # Row lengths and starts at 45°, against a numeric oracle
   room_shape_test.dart   # Measuring the outline built from five numbers gives the five numbers back
   scan_plan_test.dart    # The strip walk against the closed forms it has to subsume on a rectangle
+  rectilinear_plan_test.dart # Rows round a cut-away corner: the rectangle oracle and the coverage bounds
   scheme_geometry_test.dart # The drawn planks cover the floor, stay inside the walls and are labelled
   scheme_pdf_test.dart   # The pages save, the sheet turns with the drawing, and every alphabet prints
   l10n_test.dart         # .arb key parity, CLDR plural categories, unit-label collisions
@@ -65,6 +70,7 @@ test/
   inch_field_test.dart   # The whole-inch field and its fraction picker stay one value
   imperial_form_test.dart # What the imperial form accepts, and the millimetres it stores
   uneven_form_test.dart  # Measuring wall by wall from the form's side, and what it refuses
+  l_shape_form_test.dart # Picking the shape, the cut and the corner, and the 45° the room cannot have
   measurement_system_test.dart # The system picked at launch reaches the calculation and the disk
   settings_test.dart     # The gear sheet: relocalising in place, and switching units under typed values
   golden_test.dart       # Rendered result and scheme screens, plural forms, language picker

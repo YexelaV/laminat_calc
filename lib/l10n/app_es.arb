@@ -51,6 +51,32 @@
     "wall_diagonal": "Diagonal",
     "wall_diagonal_mm": "Diagonal (mm)",
     "walls_do_not_close": "Las paredes no cierran",
+    "room_shape": "Forma de la habitación",
+    "shape_rectangle": "Rectangular",
+    "shape_l": "En forma de L",
+    "overall_length": "Longitud total",
+    "overall_width": "Ancho total",
+    "overall_length_mm": "Longitud total (mm)",
+    "overall_width_mm": "Ancho total (mm)",
+    "notch_length": "Longitud del hueco",
+    "notch_width": "Ancho del hueco",
+    "notch_length_mm": "Longitud del hueco (mm)",
+    "notch_width_mm": "Ancho del hueco (mm)",
+    "notch_does_not_fit": "El hueco no deja habitación",
+    "row_steps_at_notch": "La fila {number} cruza la esquina recortada: las lamas de su extremo se recortan alrededor, consulte el dibujo",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Toque la esquina recortada",
+    "diagonal_not_for_l_shape": "La colocación en diagonal aún no se admite en una habitación en forma de L",
+    "corner_top_left": "Superior izquierda",
+    "corner_top_right": "Superior derecha",
+    "corner_bottom_right": "Inferior derecha",
+    "corner_bottom_left": "Inferior izquierda",
     "pieces_per_package": "Piezas por paquete",
     "laying": "Instalación",
     "laying_direction": "Dirección de instalación",

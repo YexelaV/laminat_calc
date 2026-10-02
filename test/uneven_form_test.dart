@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/calculate_state.dart';
 import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/room_shape.dart';
@@ -46,10 +47,20 @@ void main() {
     }
   }
 
-  Future<void> turnOnUnevenWalls(WidgetTester tester) async {
-    await tester.tap(find.byType(Checkbox));
+  // The shape is a choice of three now, so turning the walls on means picking
+  // them out of the list rather than ticking a box.
+  Future<void> pickShape(WidgetTester tester, String name) async {
+    await tester.tap(find.byType(DropdownButtonFormField<RoomKind>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(name).last);
     await tester.pumpAndSettle();
   }
+
+  Future<void> turnOnUnevenWalls(WidgetTester tester) =>
+      pickShape(tester, 'Walls of different lengths');
+
+  Future<void> turnOffUnevenWalls(WidgetTester tester) =>
+      pickShape(tester, 'Rectangular');
 
   bool nextEnabled(WidgetTester tester) =>
       tester.widget<TextButton>(find.widgetWithText(TextButton, 'Next')).onPressed != null;
@@ -67,7 +78,7 @@ void main() {
         reason: 'turning the switch on must not change the room on its own');
 
     await fill(tester, ['4980', '3025', '5840'], from: 2);
-    final shape = cubit.state.shape!;
+    final shape = cubit.state.shape! as RoomShape;
     expect(shape.lengthNear, 5010);
     expect(shape.widthLeft, 3000);
     expect(shape.lengthFar, 4980);
@@ -87,11 +98,11 @@ void main() {
     await fill(tester, ['4980', '3025', '5840'], from: 2);
     expect(cubit.state.shape!.isRectangular, isFalse);
 
-    await turnOnUnevenWalls(tester);
+    await turnOffUnevenWalls(tester);
     expect(cubit.state.unevenWalls, isFalse);
     // The extra measurements are still in the state, but they are off screen
     // and out of the room: the shape is the rectangle it was before.
-    final shape = cubit.state.shape!;
+    final shape = cubit.state.shape! as RoomShape;
     expect(shape.isRectangular, isTrue);
     expect(shape.lengthNear, 5010);
     expect(shape.lengthFar, 5010);
@@ -157,7 +168,7 @@ void main() {
 
     // The second pair and the diagonal follow in the same shape.
     await fill(tester, ['16', '4', '9', '11'], from: 4);
-    final shape = cubit.state.shape!;
+    final shape = cubit.state.shape! as RoomShape;
     expect(shape.lengthFar, feetInchesToMm(16, 4));
     expect(shape.widthRight, feetInchesToMm(9, 11));
     expect(shape.problem, isNull);

@@ -29,6 +29,15 @@ List<String> cutList(
     lines.add('${s.row(line.number + 1)}: $planks');
   }
   lines.add('');
+  // The row that crosses the inside corner of a cut-away corner is laid to the
+  // longer of the two lengths the floor has there, and the planks at its far
+  // end are notched round that corner rather than cut straight across. Their
+  // lengths above are the long side of that cut; the step itself is only on
+  // the drawing, so this says where to look for it.
+  for (final row in result.steppedRows) {
+    lines.add(s.row_steps_at_notch(row + 1));
+    lines.add('');
+  }
   if (result.pieces.isNotEmpty) {
     lines.add('${s.leftovers}: ${grouped(groupByLength(result.pieces))}');
   }

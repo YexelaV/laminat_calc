@@ -31,16 +31,8 @@ double _area(List<Offset> polygon) {
 }
 
 /// How far inside [polygon] a point is; negative when it is out.
-double _depthInside(Offset point, List<Offset> polygon) {
-  final normals = normalsOf(polygon);
-  var least = double.infinity;
-  for (var i = 0; i < polygon.length; i++) {
-    final depth = (point.dx - polygon[i].dx) * normals[i].dx +
-        (point.dy - polygon[i].dy) * normals[i].dy;
-    least = min(least, depth);
-  }
-  return least;
-}
+double _depthInside(Offset point, List<Offset> polygon) =>
+    LaidFloor(polygon).insideDepth(point);
 
 void checkResult(String cfg, Calculation c, Result r, RowPlan plan) {
   void bad(String message) => violations.add('$message  [$cfg]');

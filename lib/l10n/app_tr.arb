@@ -51,6 +51,32 @@
     "wall_diagonal": "Köşegen",
     "wall_diagonal_mm": "Köşegen (mm)",
     "walls_do_not_close": "Duvarlar kapanmıyor",
+    "room_shape": "Oda şekli",
+    "shape_rectangle": "Dikdörtgen",
+    "shape_l": "L şeklinde",
+    "overall_length": "Toplam uzunluk",
+    "overall_width": "Toplam genişlik",
+    "overall_length_mm": "Toplam uzunluk (mm)",
+    "overall_width_mm": "Toplam genişlik (mm)",
+    "notch_length": "Girinti uzunluğu",
+    "notch_width": "Girinti genişliği",
+    "notch_length_mm": "Girinti uzunluğu (mm)",
+    "notch_width_mm": "Girinti genişliği (mm)",
+    "notch_does_not_fit": "Girinti odadan yer bırakmıyor",
+    "row_steps_at_notch": "{number}. sıra kesilen köşeden geçiyor: ucundaki paneller köşenin etrafından kesilir, şekli çizimde",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Kesilen köşeye dokunun",
+    "diagonal_not_for_l_shape": "L şeklinde odada çapraz döşeme henüz desteklenmiyor",
+    "corner_top_left": "Sol üst",
+    "corner_top_right": "Sağ üst",
+    "corner_bottom_right": "Sağ alt",
+    "corner_bottom_left": "Sol alt",
     "pieces_per_package": "Paketteki adet",
     "laying": "Döşeme",
     "laying_direction": "Döşeme yönü",

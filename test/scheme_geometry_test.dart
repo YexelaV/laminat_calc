@@ -25,17 +25,13 @@ double _depthOf(Offset point, Offset corner, Offset inward) =>
 
 /// How far inside [polygon] a point is, in millimetres; negative when it is
 /// out. A polygon rather than a bounding box, because a room whose opposite
-/// walls differ has planks that a box would let stray past a wall unnoticed.
-double _depthInside(Offset point, List<Offset> polygon) {
-  final normals = normalsOf(polygon);
-  var least = double.infinity;
-  for (var i = 0; i < polygon.length; i++) {
-    final depth = (point.dx - polygon[i].dx) * normals[i].dx +
-        (point.dy - polygon[i].dy) * normals[i].dy;
-    least = math.min(least, depth);
-  }
-  return least;
-}
+/// walls differ has planks that a box would let stray past a wall unnoticed —
+/// and a polygon measured against its walls rather than against their lines,
+/// because the line of a wall that stops at an inside corner carries on
+/// through the other arm of the room and would report the planks there as
+/// being nowhere near the floor.
+double _depthInside(Offset point, List<Offset> polygon) =>
+    LaidFloor(polygon).insideDepth(point);
 
 // A room measured wall by wall, with all four walls different, so that a label
 // can be told from the wall it belongs to.
@@ -358,5 +354,199 @@ void main() {
     // reflection reverses it.
     expect(twiceArea(across).sign, twiceArea(along).sign,
         reason: 'the corners run the other way round, so the room is mirrored');
+  });
+
+  group('a room with a corner cut away', () {
+    // 4000 by 3000 with 1500 by 1000 out of the far right corner. Big enough
+    // that rows run above the cut, below it and across it.
+    const cutLength = 1500;
+    const cutWidth = 1000;
+
+    Result laidCut(Direction direction, {RoomCorner corner = RoomCorner.farRight}) {
+      final results = Calculation(
+        shape: LRoomShape(
+          length: 4000,
+          width: 3000,
+          notchLength: cutLength,
+          notchWidth: cutWidth,
+          corner: corner,
+        ),
+        laminateLength: 1200,
+        laminateWidth: 190,
+        planksInPack: 8,
+        indentFromWall: indent,
+        minimumLaminateLength: 300,
+        rowOffset: 300,
+        direction: direction,
+      ).calculate();
+      expect(results, isNotEmpty, reason: 'the fixture must be layable');
+      return results.first;
+    }
+
+    test('a plank beside the cut is cut to the cut, not to its line', () {
+      // The failure this replaces: Sutherland–Hodgman against every wall's
+      // line leaves only the little rectangle where the two arms of the room
+      // overlap, so a plank standing in either arm came back empty.
+      final floor = LaidFloor([
+        const Offset(10, 10),
+        const Offset(3990, 10),
+        const Offset(3990, 1990),
+        const Offset(2490, 1990),
+        const Offset(2490, 2990),
+        const Offset(10, 2990),
+      ]);
+      expect(floor.isConvex, isFalse);
+
+      List<Offset> clipRect(double x0, double y0, double x1, double y1) => clipToFloor(
+          [Offset(x0, y0), Offset(x1, y0), Offset(x1, y1), Offset(x0, y1)], floor);
+
+      // Wholly in the long arm, below the step: untouched.
+      expect(clipRect(2600, 100, 3800, 290), [
+        const Offset(2600, 100),
+        const Offset(3800, 100),
+        const Offset(3800, 290),
+        const Offset(2600, 290),
+      ]);
+      // Wholly in the short arm, past the step: untouched.
+      expect(clipRect(100, 2100, 1300, 2290), [
+        const Offset(100, 2100),
+        const Offset(1300, 2100),
+        const Offset(1300, 2290),
+        const Offset(100, 2290),
+      ]);
+      // Across the step: an L of its own, with the inside corner put back.
+      expect(clipRect(1800, 1900, 3000, 2090), [
+        const Offset(1800, 1900),
+        const Offset(3000, 1900),
+        const Offset(3000, 1990),
+        const Offset(2490, 1990),
+        const Offset(2490, 2090),
+        const Offset(1800, 2090),
+      ]);
+      // Wholly inside the cut: nothing left.
+      expect(clipRect(2700, 2100, 3500, 2290), isEmpty);
+    });
+
+    for (final direction in [Direction.length, Direction.width]) {
+      test('$direction planks add up to the laid area', () {
+        final scheme = schemeOf(laidCut(direction));
+        final area = scheme.planks
+            .map((s) => twiceArea(s.outline).abs() / 2)
+            .fold<double>(0, (a, b) => a + b);
+        final floor = (4000 - 2 * indent) * (3000 - 2 * indent) - cutLength * cutWidth;
+        expect(area, closeTo(floor, 1));
+      });
+
+      test('$direction planks stay inside the walls', () {
+        final scheme = schemeOf(laidCut(direction));
+        for (final shape in scheme.planks) {
+          for (final point in shape.outline) {
+            expect(_depthInside(point, scheme.room), greaterThanOrEqualTo(-0.5),
+                reason: 'plank ${shape.plank.number}');
+          }
+        }
+      });
+
+      test('$direction draws every plank as one piece, six-sided at most', () {
+        final scheme = schemeOf(laidCut(direction));
+        final result = laidCut(direction);
+        expect(scheme.planks.length,
+            result.lines.fold<int>(0, (n, line) => n + line.planks.length));
+        for (final shape in scheme.planks) {
+          expect(shape.outline.length, inInclusiveRange(3, 6),
+              reason: 'plank ${shape.plank.number}');
+          // Every wall of this room is square to the rows, so every edge of
+          // every plank is too.
+          for (var i = 0; i < shape.outline.length; i++) {
+            final from = shape.outline[i];
+            final to = shape.outline[(i + 1) % shape.outline.length];
+            expect(
+                (from.dx - to.dx).abs() < 1e-6 || (from.dy - to.dy).abs() < 1e-6, isTrue,
+                reason: 'plank ${shape.plank.number} edge $i');
+          }
+        }
+      });
+
+      test('$direction writes all six wall measurements, each outside its wall', () {
+        final result = laidCut(direction);
+        final scheme = schemeOf(result);
+        final measured = LRoomShape(
+          length: 4000,
+          width: 3000,
+          notchLength: cutLength,
+          notchWidth: cutWidth,
+          corner: RoomCorner.farRight,
+        ).wallLengths();
+        expect(scheme.room.length, 6);
+        for (final wall in measured) {
+          expect(scheme.labels.where((l) => l.text == '$wall').length, greaterThanOrEqualTo(1),
+              reason: 'the $wall mm wall carries its own measurement');
+        }
+        // And none of them is written on the floor.
+        final floor = LaidFloor(drawnFloor(result));
+        for (final wall in measured.toSet()) {
+          for (final label in scheme.labels.where((l) => l.text == '$wall')) {
+            expect(floor.insideDepth(label.centre), lessThan(1),
+                reason: 'the $wall mm measurement is written on the floor');
+          }
+        }
+      });
+
+      test('$direction writes one row width per row, outside the floor', () {
+        // The regression test for the inside corner. Read off a wall's line
+        // rather than the wall itself, every row above the step would have
+        // its width written into the middle of the room.
+        final result = laidCut(direction);
+        final scheme = schemeOf(result);
+        final floor = LaidFloor(drawnFloor(result));
+        final widths = result.lines.map((l) => '${l.planks.first.width} ').toSet();
+        var written = 0;
+        for (final label in scheme.labels.where((l) => widths.contains(l.text))) {
+          written++;
+          expect(floor.insideDepth(label.centre), lessThan(1),
+              reason: 'the row width "${label.text}" is written on the floor');
+        }
+        expect(written, greaterThanOrEqualTo(result.lines.length));
+      });
+    }
+
+    test('every corner can be the one cut away', () {
+      for (final corner in RoomCorner.values) {
+        for (final direction in [Direction.length, Direction.width]) {
+          final scheme = schemeOf(laidCut(direction, corner: corner));
+          final area = scheme.planks
+              .map((s) => twiceArea(s.outline).abs() / 2)
+              .fold<double>(0, (a, b) => a + b);
+          final floor = (4000 - 2 * indent) * (3000 - 2 * indent) - cutLength * cutWidth;
+          expect(area, closeTo(floor, 1), reason: '$corner $direction');
+          for (final shape in scheme.planks) {
+            for (final point in shape.outline) {
+              expect(_depthInside(point, scheme.room), greaterThanOrEqualTo(-0.5),
+                  reason: '$corner $direction: plank ${shape.plank.number}');
+            }
+          }
+        }
+      }
+    });
+
+    test('a 45° layout in such a room yields nothing rather than nonsense', () {
+      final results = Calculation(
+        shape: LRoomShape(
+          length: 4000,
+          width: 3000,
+          notchLength: cutLength,
+          notchWidth: cutWidth,
+          corner: RoomCorner.farRight,
+        ),
+        laminateLength: 1200,
+        laminateWidth: 190,
+        planksInPack: 8,
+        indentFromWall: indent,
+        minimumLaminateLength: 300,
+        rowOffset: 300,
+        direction: Direction.diagonal,
+      ).calculate();
+      expect(results, isEmpty);
+    });
   });
 }

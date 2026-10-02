@@ -89,6 +89,66 @@ class AppLocalizationsDe extends AppLocalizations {
   String get walls_do_not_close => 'Die Wände schließen nicht';
 
   @override
+  String get room_shape => 'Raumform';
+
+  @override
+  String get shape_rectangle => 'Rechteckig';
+
+  @override
+  String get shape_l => 'L-förmig';
+
+  @override
+  String get overall_length => 'Gesamtlänge';
+
+  @override
+  String get overall_width => 'Gesamtbreite';
+
+  @override
+  String get overall_length_mm => 'Gesamtlänge (mm)';
+
+  @override
+  String get overall_width_mm => 'Gesamtbreite (mm)';
+
+  @override
+  String get notch_length => 'Länge der Aussparung';
+
+  @override
+  String get notch_width => 'Breite der Aussparung';
+
+  @override
+  String get notch_length_mm => 'Länge der Aussparung (mm)';
+
+  @override
+  String get notch_width_mm => 'Breite der Aussparung (mm)';
+
+  @override
+  String get notch_does_not_fit => 'Die Aussparung lässt keinen Raum übrig';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return 'Reihe $number verläuft über die ausgesparte Ecke: die Dielen an ihrem Ende werden um die Ecke ausgeklinkt, Form siehe Zeichnung';
+  }
+
+  @override
+  String get tap_corner_to_cut => 'Tippen Sie auf die ausgesparte Ecke';
+
+  @override
+  String get diagonal_not_for_l_shape =>
+      'Diagonale Verlegung wird in einem L-förmigen Raum noch nicht unterstützt';
+
+  @override
+  String get corner_top_left => 'Oben links';
+
+  @override
+  String get corner_top_right => 'Oben rechts';
+
+  @override
+  String get corner_bottom_right => 'Unten rechts';
+
+  @override
+  String get corner_bottom_left => 'Unten links';
+
+  @override
   String get pieces_per_package => 'Stück pro Paket';
 
   @override

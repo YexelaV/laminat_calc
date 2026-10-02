@@ -51,6 +51,27 @@ Result laidSkewed(Direction direction) {
   return results.first;
 }
 
+Result laidCutCorner(Direction direction) {
+  final results = Calculation(
+    shape: LRoomShape(
+      length: 4000,
+      width: 3000,
+      notchLength: 1500,
+      notchWidth: 1000,
+      corner: RoomCorner.farRight,
+    ),
+    laminateLength: 1200,
+    laminateWidth: 190,
+    planksInPack: 8,
+    indentFromWall: 10,
+    minimumLaminateLength: 300,
+    rowOffset: 300,
+    direction: direction,
+  ).calculate();
+  expect(results, isNotEmpty, reason: 'the fixture must be layable');
+  return results.first;
+}
+
 void main() {
   // rootBundle needs the binding, and the fonts are read once for every test.
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +99,22 @@ void main() {
       final result = laidSkewed(direction);
       final pdf = schemePdf(result, MeasurementSystem.metric, fonts,
           cutList: await report(result, MeasurementSystem.metric, 'ru'));
+      final bytes = await pdf.save();
+      expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+      expect(bytes.length, greaterThan(1000));
+    });
+  }
+
+  // Six walls instead of four, planks with six corners instead of four, and a
+  // line in the report that no other room has. The page draws whatever list of
+  // corners it is handed, so this is a check that it really is handed one.
+  for (final direction in [Direction.length, Direction.width]) {
+    test('$direction in a room with a corner cut away saves', () async {
+      final result = laidCutCorner(direction);
+      final report_ = await report(result, MeasurementSystem.metric, 'ru');
+      expect(report_.where((line) => line.startsWith('Ряд') && line.contains('выреза')).length, 1,
+          reason: 'the row across the cut is called out');
+      final pdf = schemePdf(result, MeasurementSystem.metric, fonts, cutList: report_);
       final bytes = await pdf.save();
       expect(String.fromCharCodes(bytes.take(4)), '%PDF');
       expect(bytes.length, greaterThan(1000));

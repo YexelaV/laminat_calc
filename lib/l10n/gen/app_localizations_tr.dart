@@ -89,6 +89,66 @@ class AppLocalizationsTr extends AppLocalizations {
   String get walls_do_not_close => 'Duvarlar kapanmıyor';
 
   @override
+  String get room_shape => 'Oda şekli';
+
+  @override
+  String get shape_rectangle => 'Dikdörtgen';
+
+  @override
+  String get shape_l => 'L şeklinde';
+
+  @override
+  String get overall_length => 'Toplam uzunluk';
+
+  @override
+  String get overall_width => 'Toplam genişlik';
+
+  @override
+  String get overall_length_mm => 'Toplam uzunluk (mm)';
+
+  @override
+  String get overall_width_mm => 'Toplam genişlik (mm)';
+
+  @override
+  String get notch_length => 'Girinti uzunluğu';
+
+  @override
+  String get notch_width => 'Girinti genişliği';
+
+  @override
+  String get notch_length_mm => 'Girinti uzunluğu (mm)';
+
+  @override
+  String get notch_width_mm => 'Girinti genişliği (mm)';
+
+  @override
+  String get notch_does_not_fit => 'Girinti odadan yer bırakmıyor';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return '$number. sıra kesilen köşeden geçiyor: ucundaki paneller köşenin etrafından kesilir, şekli çizimde';
+  }
+
+  @override
+  String get tap_corner_to_cut => 'Kesilen köşeye dokunun';
+
+  @override
+  String get diagonal_not_for_l_shape =>
+      'L şeklinde odada çapraz döşeme henüz desteklenmiyor';
+
+  @override
+  String get corner_top_left => 'Sol üst';
+
+  @override
+  String get corner_top_right => 'Sağ üst';
+
+  @override
+  String get corner_bottom_right => 'Sağ alt';
+
+  @override
+  String get corner_bottom_left => 'Sol alt';
+
+  @override
   String get pieces_per_package => 'Paketteki adet';
 
   @override

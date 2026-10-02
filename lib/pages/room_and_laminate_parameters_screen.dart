@@ -46,6 +46,14 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
   final width2InchFocusNode = FocusNode();
   final diagonalFocusNode = FocusNode();
   final diagonalInchFocusNode = FocusNode();
+  // The cut-away corner, on screen only while the room is Г-shaped. Its own
+  // boxes rather than the ones above: the two shapes are alternatives, and a
+  // user who tries one and goes back to the other must find their numbers
+  // where they left them.
+  final notchLengthFocusNode = FocusNode();
+  final notchLengthInchFocusNode = FocusNode();
+  final notchWidthFocusNode = FocusNode();
+  final notchWidthInchFocusNode = FocusNode();
   final laminateLengthFocusNode = FocusNode();
   final laminateWidthFocusNode = FocusNode();
   final piecesPerPackageFocusNode = FocusNode();
@@ -62,6 +70,10 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
   final width2InchController = TextEditingController(text: '0');
   final diagonalController = TextEditingController();
   final diagonalInchController = TextEditingController(text: '0');
+  final notchLengthController = TextEditingController();
+  final notchLengthInchController = TextEditingController(text: '0');
+  final notchWidthController = TextEditingController();
+  final notchWidthInchController = TextEditingController(text: '0');
   final laminateLengthController = TextEditingController();
   final laminateWidthController = TextEditingController();
   final piecesPerPackageController = TextEditingController();
@@ -78,6 +90,10 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
         width2InchController,
         diagonalController,
         diagonalInchController,
+        notchLengthController,
+        notchLengthInchController,
+        notchWidthController,
+        notchWidthInchController,
         laminateLengthController,
         laminateWidthController,
         piecesPerPackageController,
@@ -114,6 +130,10 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     width2InchController.dispose();
     diagonalController.dispose();
     diagonalInchController.dispose();
+    notchLengthController.dispose();
+    notchLengthInchController.dispose();
+    notchWidthController.dispose();
+    notchWidthInchController.dispose();
     laminateLengthController.dispose();
     laminateWidthController.dispose();
     piecesPerPackageController.dispose();
@@ -127,6 +147,10 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     width2InchFocusNode.dispose();
     diagonalFocusNode.dispose();
     diagonalInchFocusNode.dispose();
+    notchLengthFocusNode.dispose();
+    notchLengthInchFocusNode.dispose();
+    notchWidthFocusNode.dispose();
+    notchWidthInchFocusNode.dispose();
     laminateLengthFocusNode.dispose();
     laminateWidthFocusNode.dispose();
     piecesPerPackageFocusNode.dispose();
@@ -163,25 +187,36 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     setRoomField(state.roomLength2, length2Controller, length2InchController);
     setRoomField(state.roomWidth2, width2Controller, width2InchController);
     setRoomField(state.roomDiagonal, diagonalController, diagonalInchController);
+    setRoomField(state.notchLength, notchLengthController, notchLengthInchController);
+    setRoomField(state.notchWidth, notchWidthController, notchWidthInchController);
     setPlankField(state.laminateLength, laminateLengthController);
     setPlankField(state.laminateWidth, laminateWidthController);
   }
 
-  // Turning the walls on fills the second pair and the diagonal with the room
-  // already typed, so the form is valid the moment it opens and the user only
-  // changes what they actually measured. Someone who never measured across gets
-  // exactly the rectangle they had before.
-  void toggleUnevenWalls(BuildContext context, bool on) {
+  // Changing the shape fills whatever the new shape needs with something that
+  // already makes a room, so the form is valid the moment it changes and the
+  // user only touches what they actually measured. Someone who picks the walls
+  // and picks them back gets exactly the rectangle they had before, and what
+  // was typed under the other shape stays in the state waiting for them.
+  void setRoomKind(BuildContext context, RoomKind kind) {
     final cubit = context.read<CalculateCubit>();
     final state = cubit.state;
     final length = state.roomLength;
     final width = state.roomWidth;
-    if (on && length != null && width != null) {
-      cubit.setRoomLength2(state.roomLength2 ?? length);
-      cubit.setRoomWidth2(state.roomWidth2 ?? width);
-      cubit.setRoomDiagonal(state.roomDiagonal ?? RoomShape.rectangleDiagonal(length, width));
+    if (length != null && width != null) {
+      if (kind == RoomKind.uneven) {
+        cubit.setRoomLength2(state.roomLength2 ?? length);
+        cubit.setRoomWidth2(state.roomWidth2 ?? width);
+        cubit.setRoomDiagonal(state.roomDiagonal ?? RoomShape.rectangleDiagonal(length, width));
+      } else if (kind == RoomKind.lShaped) {
+        cubit.setNotchLength(
+            (state.notchLength ?? CalculateState.defaultNotch(length))
+                .clamp(MIN_NOTCH_MM, notchMax(length)));
+        cubit.setNotchWidth((state.notchWidth ?? CalculateState.defaultNotch(width))
+            .clamp(MIN_NOTCH_MM, notchMax(width)));
+      }
     }
-    cubit.setUnevenWalls(on);
+    cubit.setRoomKind(kind);
     rewriteFieldsFor(cubit.state.system, cubit.state);
   }
 
@@ -219,7 +254,15 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     apply(length2Controller, length2InchController, cubit.setRoomLength2);
     apply(width2Controller, width2InchController, cubit.setRoomWidth2);
     apply(diagonalController, diagonalInchController, cubit.setRoomDiagonal);
+    apply(notchLengthController, notchLengthInchController, cubit.setNotchLength);
+    apply(notchWidthController, notchWidthInchController, cubit.setNotchWidth);
   }
+
+  // What a cut-away corner is allowed to be, given the overall size typed so
+  // far: big enough to be a cut, and small enough to leave a room beside it.
+  // Asking the shape itself, as the diagonal's bounds do, means the number the
+  // user is shown is the one that actually makes an L.
+  int notchMax(int? overall) => LRoomShape.maxNotchLength(overall ?? MIN_ROOM_MM);
 
   // What the diagonal field is allowed to be, given the four walls typed so
   // far: the triangle inequality on each half of the room. Asking the shape
@@ -247,6 +290,9 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     required TextEditingController inchController,
     required int minMm,
     required int maxMm,
+    // Every room measurement is at least a foot, so the feet box may insist on
+    // one. A cut-away corner may be a hand's width, and then it may not.
+    int minFeet = MIN_ROOM_FT,
   }) {
     final appStrings = AppStrings.of(context);
     final value = controller.text.trim();
@@ -257,7 +303,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     final inchValue = inchController.text.trim();
     if (inchValue.isEmpty) return false;
     return Validators.sizeValidator(
-                context, value, MIN_ROOM_FT, maxWholeFeet(maxMm), appStrings.ft) ==
+                context, value, minFeet, maxWholeFeet(maxMm), appStrings.ft) ==
             null &&
         Validators.sizeValidator(context, inchValue, 0, MAX_INCHES_IN_FOOT, appStrings.inch) ==
             null;
@@ -312,11 +358,31 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
           maxMm: diagonalMax(state))) {
         return false;
       }
-      // The last word is the outline's, not the fields': every measurement can
-      // be in range and still describe no room. In feet and inches it is the
-      // only word, because a box of whole feet cannot carry the bound.
-      if (state.shape?.problem != null) return false;
     }
+    if (state.lShaped) {
+      // A cut-away corner may be under a foot, so the feet box has no floor of
+      // its own here and the millimetre bound is the whole of it.
+      if (!roomSizeValid(context, system,
+          controller: notchLengthController,
+          inchController: notchLengthInchController,
+          minMm: MIN_NOTCH_MM,
+          maxMm: notchMax(state.roomLength),
+          minFeet: 0)) {
+        return false;
+      }
+      if (!roomSizeValid(context, system,
+          controller: notchWidthController,
+          inchController: notchWidthInchController,
+          minMm: MIN_NOTCH_MM,
+          maxMm: notchMax(state.roomWidth),
+          minFeet: 0)) {
+        return false;
+      }
+    }
+    // The last word is the outline's, not the fields': every measurement can
+    // be in range and still describe no room. In feet and inches it is the
+    // only word, because a box of whole feet cannot carry the bound.
+    if (state.shape?.problem != null) return false;
 
     final bool laminateLengthValid;
     final bool laminateWidthValid;
@@ -423,6 +489,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     required FocusNode nextFocusNode,
     required int maxFeet,
     required int? valueMm,
+    int minFeet = MIN_ROOM_FT,
   }) {
     final appStrings = AppStrings.of(context);
     return Column(
@@ -441,8 +508,8 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
               focusNode: feetFocusNode,
               nextFocusNode: inchFocusNode,
               labelText: appStrings.ft,
-              validator: (value) => Validators.sizeValidator(
-                  context, value ?? '', MIN_ROOM_FT, maxFeet, appStrings.ft),
+              validator: (value) =>
+                  Validators.sizeValidator(context, value ?? '', minFeet, maxFeet, appStrings.ft),
               callback: (value) => setRoomFromImperial(context),
             ),
           ),
@@ -500,46 +567,81 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
     );
   }
 
-  // The switch that turns two numbers into five, the sketch that says which
-  // wall is which, and the one thing the fields cannot say on their own: that
-  // the measurements close into no room at all.
-  Widget unevenWalls(BuildContext context, CalculateState state) {
+  /// What the room is: a rectangle, a quadrilateral measured wall by wall, or
+  /// a rectangle with a corner cut out of it.
+  ///
+  /// A dropdown rather than the segmented buttons the laying screen uses. Three
+  /// segments on a 360 dp phone leave about a word each, and "Wände
+  /// unterschiedlicher Länge" is not a word — the field decoration at least
+  /// shrinks its own label and gives the choice a full line to be read on.
+  Widget roomKindField(BuildContext context, CalculateState state) {
+    final appStrings = AppStrings.of(context);
+    String name(RoomKind kind) {
+      switch (kind) {
+        case RoomKind.rectangle:
+          return appStrings.shape_rectangle;
+        case RoomKind.uneven:
+          return appStrings.uneven_walls;
+        case RoomKind.lShaped:
+          return appStrings.shape_l;
+      }
+    }
+
+    return DropdownButtonFormField<RoomKind>(
+      initialValue: state.roomKind,
+      isExpanded: true,
+      decoration: appInputDecoration(labelText: appStrings.room_shape),
+      items: [
+        for (final kind in RoomKind.values)
+          DropdownMenuItem(
+            value: kind,
+            child: Text(name(kind), overflow: TextOverflow.ellipsis),
+          ),
+      ],
+      onChanged: (kind) {
+        if (kind != null) setRoomKind(context, kind);
+      },
+    );
+  }
+
+  // The sketch that says which wall is which and which corner is cut, and the
+  // one thing the fields cannot say on their own: that the measurements
+  // describe no room at all.
+  Widget roomSketch(BuildContext context, CalculateState state) {
     final appStrings = AppStrings.of(context);
     final shape = state.shape;
+    if (state.roomKind == RoomKind.rectangle || shape == null) {
+      return const SizedBox.shrink();
+    }
+    final problem = shape.problem;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 4),
-        InkWell(
-          onTap: () => toggleUnevenWalls(context, !state.unevenWalls),
-          child: Row(children: [
-            SizedBox(
-              width: 40,
-              height: 32,
-              child: Checkbox(
-                value: state.unevenWalls,
-                onChanged: (on) => toggleUnevenWalls(context, on ?? false),
-              ),
-            ),
-            Flexible(
-              child: Text(
-                appStrings.uneven_walls,
-                style: TextStyle(color: Colors.black.withValues(alpha: 0.8), fontSize: 15),
-              ),
-            ),
-          ]),
+        RoomSketch(
+          shape: shape,
+          system: state.system,
+          cutCorner: state.lShaped ? state.notchCorner : null,
+          onCorner: state.lShaped
+              ? (corner) => context.read<CalculateCubit>().setNotchCorner(corner)
+              : null,
         ),
-        if (state.unevenWalls && shape != null) ...[
-          RoomSketch(shape: shape, system: state.system),
-          if (shape.problem != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                appStrings.walls_do_not_close,
-                style: TextStyle(color: Colors.red.shade700, fontSize: 13),
-              ),
+        if (state.lShaped && problem == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              appStrings.tap_corner_to_cut,
+              style: TextStyle(color: Colors.black.withValues(alpha: 0.6), fontSize: 13),
             ),
-        ],
+          ),
+        if (problem != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              state.lShaped ? appStrings.notch_does_not_fit : appStrings.walls_do_not_close,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+            ),
+          ),
       ],
     );
   }
@@ -599,6 +701,11 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                               constraints: BoxConstraints.tightFor(width: 36, height: 36),
                             ),
                           ),
+                          // Above the sizes, because it decides what they are
+                          // called: a length, a first wall, or an overall
+                          // length the cut is taken out of.
+                          SizedBox(height: _GAP),
+                          roomKindField(context, state),
                           if (state.system == MeasurementSystem.metric) ...[
                             SizedBox(height: _GAP),
                             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -610,7 +717,9 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                                   nextFocusNode: widthFocusNode,
                                   labelText: state.unevenWalls
                                       ? appStrings.wall_length_mm(1)
-                                      : appStrings.length_mm,
+                                      : state.lShaped
+                                          ? appStrings.overall_length_mm
+                                          : appStrings.length_mm,
                                   minMm: MIN_ROOM_MM,
                                   maxMm: MAX_LENGTH_MM,
                                   apply: context.read<CalculateCubit>().setRoomLength,
@@ -624,16 +733,50 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                                   focusNode: widthFocusNode,
                                   nextFocusNode: state.unevenWalls
                                       ? length2FocusNode
-                                      : laminateLengthFocusNode,
+                                      : state.lShaped
+                                          ? notchLengthFocusNode
+                                          : laminateLengthFocusNode,
                                   labelText: state.unevenWalls
                                       ? appStrings.wall_width_mm(1)
-                                      : appStrings.width_mm,
+                                      : state.lShaped
+                                          ? appStrings.overall_width_mm
+                                          : appStrings.width_mm,
                                   minMm: MIN_ROOM_MM,
                                   maxMm: MAX_WIDTH_MM,
                                   apply: context.read<CalculateCubit>().setRoomWidth,
                                 ),
                               ),
                             ]),
+                            if (state.lShaped) ...[
+                              SizedBox(height: _GAP),
+                              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Expanded(
+                                  child: metricRoomSize(
+                                    context,
+                                    controller: notchLengthController,
+                                    focusNode: notchLengthFocusNode,
+                                    nextFocusNode: notchWidthFocusNode,
+                                    labelText: appStrings.notch_length_mm,
+                                    minMm: MIN_NOTCH_MM,
+                                    maxMm: notchMax(state.roomLength),
+                                    apply: context.read<CalculateCubit>().setNotchLength,
+                                  ),
+                                ),
+                                SizedBox(width: _GAP),
+                                Expanded(
+                                  child: metricRoomSize(
+                                    context,
+                                    controller: notchWidthController,
+                                    focusNode: notchWidthFocusNode,
+                                    nextFocusNode: laminateLengthFocusNode,
+                                    labelText: appStrings.notch_width_mm,
+                                    minMm: MIN_NOTCH_MM,
+                                    maxMm: notchMax(state.roomWidth),
+                                    apply: context.read<CalculateCubit>().setNotchWidth,
+                                  ),
+                                ),
+                              ]),
+                            ],
                             if (state.unevenWalls) ...[
                               SizedBox(height: _GAP),
                               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -686,7 +829,9 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                               context,
                               title: state.unevenWalls
                                   ? appStrings.wall_length(1)
-                                  : appStrings.length,
+                                  : state.lShaped
+                                      ? appStrings.overall_length
+                                      : appStrings.length,
                               feetController: lengthController,
                               feetFocusNode: lengthFocusNode,
                               inchController: lengthInchController,
@@ -697,17 +842,49 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                             ),
                             imperialRoomSize(
                               context,
-                              title:
-                                  state.unevenWalls ? appStrings.wall_width(1) : appStrings.width,
+                              title: state.unevenWalls
+                                  ? appStrings.wall_width(1)
+                                  : state.lShaped
+                                      ? appStrings.overall_width
+                                      : appStrings.width,
                               feetController: widthController,
                               feetFocusNode: widthFocusNode,
                               inchController: widthInchController,
                               inchFocusNode: widthInchFocusNode,
-                              nextFocusNode:
-                                  state.unevenWalls ? length2FocusNode : laminateLengthFocusNode,
+                              nextFocusNode: state.unevenWalls
+                                  ? length2FocusNode
+                                  : state.lShaped
+                                      ? notchLengthFocusNode
+                                      : laminateLengthFocusNode,
                               maxFeet: maxWholeFeet(MAX_WIDTH_MM),
                               valueMm: state.roomWidth,
                             ),
+                            if (state.lShaped) ...[
+                              imperialRoomSize(
+                                context,
+                                title: appStrings.notch_length,
+                                feetController: notchLengthController,
+                                feetFocusNode: notchLengthFocusNode,
+                                inchController: notchLengthInchController,
+                                inchFocusNode: notchLengthInchFocusNode,
+                                nextFocusNode: notchWidthFocusNode,
+                                maxFeet: maxWholeFeet(notchMax(state.roomLength)),
+                                valueMm: state.notchLength,
+                                minFeet: 0,
+                              ),
+                              imperialRoomSize(
+                                context,
+                                title: appStrings.notch_width,
+                                feetController: notchWidthController,
+                                feetFocusNode: notchWidthFocusNode,
+                                inchController: notchWidthInchController,
+                                inchFocusNode: notchWidthInchFocusNode,
+                                nextFocusNode: laminateLengthFocusNode,
+                                maxFeet: maxWholeFeet(notchMax(state.roomWidth)),
+                                valueMm: state.notchWidth,
+                                minFeet: 0,
+                              ),
+                            ],
                             if (state.unevenWalls) ...[
                               imperialRoomSize(
                                 context,
@@ -744,7 +921,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
                               ),
                             ],
                           ],
-                          unevenWalls(context, state),
+                          roomSketch(context, state),
                           SizedBox(height: _SECTION_GAP),
                           titleText(appStrings.laminate, Icons.horizontal_split_sharp),
                           SizedBox(height: _GAP),

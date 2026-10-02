@@ -157,8 +157,8 @@ class Result extends Equatable {
 
   /// The room the planks were laid in. The drawing rebuilds the outline from it
   /// rather than being handed one, so the floor that is drawn and the floor
-  /// that was laid are the same five numbers.
-  final RoomShape shape;
+  /// that was laid are the same measurements.
+  final RoomOutline shape;
   final int quantityPerPack;
   final Direction direction;
 
@@ -166,6 +166,14 @@ class Result extends Equatable {
   /// where the laid area sits inside the room, which for a 45° layout is the
   /// difference between meeting the walls and floating free of them.
   final int indentFromWall;
+
+  /// Rows the floor steps sideways inside, by their numbers.
+  ///
+  /// At most one, and only in a room with a corner cut away. The planks there
+  /// are cut round the inside corner rather than straight across, and their
+  /// lengths in the cut list are the longer side of that cut — the drawing is
+  /// the only place the step itself is shown, so the list has to point at it.
+  final List<int> steppedRows;
 
   Result(
     this.laminateLength,
@@ -177,6 +185,7 @@ class Result extends Equatable {
     List<Plank> trash, {
     required this.direction,
     required this.indentFromWall,
+    this.steppedRows = const [],
   }) {
     this.lines.addAll(lines);
     this.pieces.addAll(pieces);

@@ -89,6 +89,66 @@ class AppLocalizationsEs extends AppLocalizations {
   String get walls_do_not_close => 'Las paredes no cierran';
 
   @override
+  String get room_shape => 'Forma de la habitación';
+
+  @override
+  String get shape_rectangle => 'Rectangular';
+
+  @override
+  String get shape_l => 'En forma de L';
+
+  @override
+  String get overall_length => 'Longitud total';
+
+  @override
+  String get overall_width => 'Ancho total';
+
+  @override
+  String get overall_length_mm => 'Longitud total (mm)';
+
+  @override
+  String get overall_width_mm => 'Ancho total (mm)';
+
+  @override
+  String get notch_length => 'Longitud del hueco';
+
+  @override
+  String get notch_width => 'Ancho del hueco';
+
+  @override
+  String get notch_length_mm => 'Longitud del hueco (mm)';
+
+  @override
+  String get notch_width_mm => 'Ancho del hueco (mm)';
+
+  @override
+  String get notch_does_not_fit => 'El hueco no deja habitación';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return 'La fila $number cruza la esquina recortada: las lamas de su extremo se recortan alrededor, consulte el dibujo';
+  }
+
+  @override
+  String get tap_corner_to_cut => 'Toque la esquina recortada';
+
+  @override
+  String get diagonal_not_for_l_shape =>
+      'La colocación en diagonal aún no se admite en una habitación en forma de L';
+
+  @override
+  String get corner_top_left => 'Superior izquierda';
+
+  @override
+  String get corner_top_right => 'Superior derecha';
+
+  @override
+  String get corner_bottom_right => 'Inferior derecha';
+
+  @override
+  String get corner_bottom_left => 'Inferior izquierda';
+
+  @override
   String get pieces_per_package => 'Piezas por paquete';
 
   @override

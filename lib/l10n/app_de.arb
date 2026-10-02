@@ -51,6 +51,32 @@
     "wall_diagonal": "Diagonale",
     "wall_diagonal_mm": "Diagonale (mm)",
     "walls_do_not_close": "Die Wände schließen nicht",
+    "room_shape": "Raumform",
+    "shape_rectangle": "Rechteckig",
+    "shape_l": "L-förmig",
+    "overall_length": "Gesamtlänge",
+    "overall_width": "Gesamtbreite",
+    "overall_length_mm": "Gesamtlänge (mm)",
+    "overall_width_mm": "Gesamtbreite (mm)",
+    "notch_length": "Länge der Aussparung",
+    "notch_width": "Breite der Aussparung",
+    "notch_length_mm": "Länge der Aussparung (mm)",
+    "notch_width_mm": "Breite der Aussparung (mm)",
+    "notch_does_not_fit": "Die Aussparung lässt keinen Raum übrig",
+    "row_steps_at_notch": "Reihe {number} verläuft über die ausgesparte Ecke: die Dielen an ihrem Ende werden um die Ecke ausgeklinkt, Form siehe Zeichnung",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Tippen Sie auf die ausgesparte Ecke",
+    "diagonal_not_for_l_shape": "Diagonale Verlegung wird in einem L-förmigen Raum noch nicht unterstützt",
+    "corner_top_left": "Oben links",
+    "corner_top_right": "Oben rechts",
+    "corner_bottom_right": "Unten rechts",
+    "corner_bottom_left": "Unten links",
     "pieces_per_package": "Stück pro Paket",
     "laying": "Verlegung",
     "laying_direction": "Verlegerichtung",

@@ -51,6 +51,32 @@
     "wall_diagonal": "Diagonale",
     "wall_diagonal_mm": "Diagonale (mm)",
     "walls_do_not_close": "Les murs ne se referment pas",
+    "room_shape": "Forme de la pièce",
+    "shape_rectangle": "Rectangulaire",
+    "shape_l": "En forme de L",
+    "overall_length": "Longueur totale",
+    "overall_width": "Largeur totale",
+    "overall_length_mm": "Longueur totale (mm)",
+    "overall_width_mm": "Largeur totale (mm)",
+    "notch_length": "Longueur de la découpe",
+    "notch_width": "Largeur de la découpe",
+    "notch_length_mm": "Longueur de la découpe (mm)",
+    "notch_width_mm": "Largeur de la découpe (mm)",
+    "notch_does_not_fit": "La découpe ne laisse plus de pièce",
+    "row_steps_at_notch": "La rangée {number} traverse le coin découpé : les lames de son extrémité sont entaillées autour, voir le dessin",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Touchez le coin découpé",
+    "diagonal_not_for_l_shape": "La pose en diagonale n'est pas encore prise en charge dans une pièce en L",
+    "corner_top_left": "En haut à gauche",
+    "corner_top_right": "En haut à droite",
+    "corner_bottom_right": "En bas à droite",
+    "corner_bottom_left": "En bas à gauche",
     "pieces_per_package": "Pièces par paquet",
     "laying": "Pose",
     "laying_direction": "Sens de pose",

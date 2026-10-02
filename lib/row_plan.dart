@@ -73,6 +73,16 @@ class RowPlan {
   final List<Bevel> startBevel;
   final List<Bevel> endBevel;
 
+  /// Rows the floor steps sideways inside, so that the row runs out level with
+  /// one wall at one edge of itself and another at the other.
+  ///
+  /// There is at most one per cut-away corner, and nothing else in this class
+  /// can say so: the row is one length, laid to the longer of the two, and
+  /// what the cut takes off it is a step rather than an end. The list exists
+  /// because the cut list has to warn about that plank — everything else on
+  /// the drawing shows it.
+  final List<bool> stepped;
+
   RowPlan._({
     required this.lengths,
     required this.widths,
@@ -83,6 +93,7 @@ class RowPlan {
     required this.capWhole,
     required this.startBevel,
     required this.endBevel,
+    required this.stepped,
   });
 
   /// The caps follow from the ends, so no plan works them out for itself: a
@@ -96,6 +107,7 @@ class RowPlan {
     required List<Bevel> endBevel,
     required int laminateLength,
     required int laminateWidth,
+    List<bool>? stepped,
   }) {
     final rows = lengths.length;
     return RowPlan._(
@@ -103,6 +115,7 @@ class RowPlan {
       widths: widths,
       startU: startU,
       shift: shift,
+      stepped: stepped ?? List.filled(rows, false),
       capFirst: [
         for (var i = 0; i < rows; i++) laminateLength - startBevel[i].reachMm(laminateWidth)
       ],
@@ -142,15 +155,16 @@ class RowPlan {
 /// because a rectangle is what every room was until walls could differ, and it
 /// has to keep laying out to the same millimetre it always did.
 RowPlan planFor({
-  required RoomShape shape,
+  required RoomOutline shape,
   required int indentFromWall,
   required int laminateLength,
   required int laminateWidth,
   required Direction direction,
 }) {
   if (shape.isRectangular) {
-    final a = shape.lengthNear - indentFromWall * 2;
-    final b = shape.widthLeft - indentFromWall * 2;
+    final rectangle = shape as RoomShape;
+    final a = rectangle.lengthNear - indentFromWall * 2;
+    final b = rectangle.widthLeft - indentFromWall * 2;
     if (direction == Direction.diagonal) {
       return diagonalPlan(a: a, b: b, laminateLength: laminateLength, laminateWidth: laminateWidth);
     }
@@ -162,37 +176,47 @@ RowPlan planFor({
     );
   }
   final floor = shape.floor(indentFromWall);
+  // Rows are always drawn and cut running along `u`. Laying across the room
+  // turns the room rather than the rows, and [drawnRoom] turns it the same
+  // way on the drawing side — through the same [RoomOutline.turned], so the two
+  // cannot end up looking at different rooms.
+  final laid = direction == Direction.width ? shape.turned(floor) : floor;
+  // A floor that is its own bounding box less a corner is exactly what
+  // [rectilinearPlan] is for: square walls, and one unbroken run of floor
+  // across every row.
+  if (shape.floorNotch(indentFromWall) != null) {
+    assert(direction != Direction.diagonal,
+        'a 45° row crosses a cut-away corner twice and is two rows, not one');
+    return rectilinearPlan(
+      floor: laid,
+      laminateLength: laminateLength,
+      laminateWidth: laminateWidth,
+    );
+  }
   return scanPlan(
-    // Rows are always drawn and cut running along `u`. Laying across the room
-    // turns the room rather than the rows, and [drawnRoom] turns it the same
-    // way on the drawing side — through the same [RoomShape.turned], so the two
-    // cannot end up looking at different rooms.
-    floor: direction == Direction.width ? shape.turned(floor) : floor,
+    floor: laid,
     angle: direction == Direction.diagonal ? -math.pi / 4 : 0,
     laminateLength: laminateLength,
     laminateWidth: laminateWidth,
   );
 }
 
-/// Rows parallel to a wall: all the same length, square at both ends, and all
-/// starting from the same place.
+/// How wide to rip each row across [across] millimetres of room.
 ///
-/// [across] is the room the other way. A whole number of planks rarely covers
-/// it, and the shortfall is settled here rather than after the laying, because
-/// how wide a row is ripped is a property of the room and not of what went into
-/// it. The last row takes what is left; when that is too narrow to lay, the
-/// first row gives up half of its own width so that the floor ends the same way
-/// it begins and neither end is a sliver.
+/// A whole number of planks rarely covers it, and the shortfall is settled
+/// here rather than after the laying, because how wide a row is ripped is a
+/// property of the room and not of what went into it. The last row takes what
+/// is left; when that is too narrow to lay, the first row gives up half of its
+/// own width so that the floor ends the same way it begins and neither end is
+/// a sliver.
 ///
-/// Only parallel walls can be evened out like this. A room whose opposite walls
-/// are not parallel has nothing to share the shortfall with, and [scanPlan]
-/// leaves the last strip as the geometry gives it.
-RowPlan straightPlan({
-  required int rowLength,
-  required int across,
-  required int laminateLength,
-  required int laminateWidth,
-}) {
+/// Only parallel walls can be evened out like this. A room whose opposite
+/// walls are not parallel has nothing to share the shortfall with, and
+/// [scanPlan] leaves the last strip as the geometry gives it. A room with a
+/// corner cut away still has two parallel walls each way — the far wall is in
+/// two pieces but both run the same way — so it shares the shortfall, and a
+/// rectangle that grows a small notch keeps the row widths it had.
+List<int> rowWidths({required int across, required int laminateWidth}) {
   final numberOfRows = (across / laminateWidth).ceil();
   final widths = List.filled(numberOfRows, laminateWidth);
   final leftOver = laminateWidth - (laminateWidth * numberOfRows - across);
@@ -203,13 +227,108 @@ RowPlan straightPlan({
     widths[0] = shared;
     widths[numberOfRows - 1] = shared;
   }
+  return widths;
+}
+
+/// Rows parallel to a wall: all the same length, square at both ends, and all
+/// starting from the same place.
+///
+/// [across] is the room the other way; how the shortfall in it is settled is
+/// [rowWidths].
+RowPlan straightPlan({
+  required int rowLength,
+  required int across,
+  required int laminateLength,
+  required int laminateWidth,
+}) {
+  final widths = rowWidths(across: across, laminateWidth: laminateWidth);
   return RowPlan(
-    lengths: List.filled(numberOfRows, rowLength),
+    lengths: List.filled(widths.length, rowLength),
     widths: widths,
-    startU: List.filled(numberOfRows, 0),
-    shift: List.filled(numberOfRows, 0),
-    startBevel: List.filled(numberOfRows, Bevel.square),
-    endBevel: List.filled(numberOfRows, Bevel.square),
+    startU: List.filled(widths.length, 0),
+    shift: List.filled(widths.length, 0),
+    startBevel: List.filled(widths.length, Bevel.square),
+    endBevel: List.filled(widths.length, Bevel.square),
+    laminateLength: laminateLength,
+    laminateWidth: laminateWidth,
+  );
+}
+
+/// The rows of a floor whose walls are all square to each other but whose
+/// outline is not a rectangle — today, a room with one corner cut away.
+///
+/// Between the two closed forms and the general walk, and it takes one thing
+/// from each. Like [straightPlan] it shares the width shortfall between the
+/// first row and the last, because the walls those two lie against are
+/// parallel: a rectangle that grows a small notch must keep the row widths it
+/// had, or the user sees the whole layout move for a change they made to one
+/// corner. Like [scanPlan] it measures every row against the outline, because
+/// the outline steps sideways partway up.
+///
+/// Unlike either, it measures a row across the *whole* of its strip rather
+/// than along one line through it — see [widestSpanOver] for why the wider of
+/// the two is the honest answer.
+///
+/// No angle. A 45° row crosses a cut-away corner twice and is two rows, which
+/// [RowPlan] has no way of saying; [planFor] refuses the direction and
+/// [Calculation.calculate] refuses it again in a build with no asserts.
+RowPlan rectilinearPlan({
+  required List<Point<double>> floor,
+  required int laminateLength,
+  required int laminateWidth,
+}) {
+  var uMin = double.infinity;
+  var vMin = double.infinity;
+  var vMax = double.negativeInfinity;
+  for (final corner in floor) {
+    uMin = math.min(uMin, corner.x);
+    vMin = math.min(vMin, corner.y);
+    vMax = math.max(vMax, corner.y);
+  }
+  final widths = rowWidths(across: (vMax - vMin).round(), laminateWidth: laminateWidth);
+
+  final lengths = <int>[];
+  final startU = <int>[];
+  final startBevel = <Bevel>[];
+  final endBevel = <Bevel>[];
+  final stepped = <bool>[];
+  var v = vMin;
+  for (var i = 0; i < widths.length; i++) {
+    final vLo = v;
+    final vHi = v + widths[i];
+    v = vHi;
+    final runs = spansOver(floor, vLo, vHi);
+    final span = widestSpanOver(floor, vLo, vHi);
+    // The floor reaches one distance through part of this row and another
+    // through the rest of it — which happens in exactly one row per cut. That
+    // row is notched round the inside corner rather than cut straight across,
+    // and the cut list has to say so, because nothing in a list of lengths
+    // can.
+    stepped.add(runs.any((run) =>
+        (run.lo - runs.first.lo).abs() > 0.5 || (run.hi - runs.first.hi).abs() > 0.5));
+    lengths.add(span == null ? 0 : math.max(0, span.length.round()));
+    startU.add(span == null ? 0 : (span.lo - uMin).round());
+    // Square, every one of them: every wall of this room is square to the
+    // rows, so there is no lean to cut to. Taken from the span all the same,
+    // rather than assumed, so that the one place a bevel comes from stays the
+    // one place.
+    startBevel.add(span == null ? Bevel.square : Bevel.fromLean(-span.loLean, laminateWidth));
+    endBevel.add(span == null ? Bevel.square : Bevel.fromLean(span.hiLean, laminateWidth));
+  }
+
+  final shift = <int>[];
+  for (var i = 0; i < widths.length; i++) {
+    shift.add(i + 1 < widths.length ? startU[i] - startU[i + 1] : 0);
+  }
+
+  return RowPlan(
+    lengths: lengths,
+    widths: widths,
+    startU: startU,
+    shift: shift,
+    startBevel: startBevel,
+    endBevel: endBevel,
+    stepped: stepped,
     laminateLength: laminateLength,
     laminateWidth: laminateWidth,
   );

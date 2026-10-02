@@ -10,6 +10,7 @@ import 'dart:math' show Point;
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:floor_calculator/constants.dart';
 import 'package:floor_calculator/room_shape.dart';
 
 double _side(List<Point<double>> corners, int from, int to) =>
@@ -179,4 +180,183 @@ void main() {
       expect(folded.problem, RoomProblem.notConvex);
     });
   });
+
+  group('a room with a corner cut away', () {
+    // The room every other test in this group is cut from, and the piece taken
+    // out of it. A notch deeper than one plank and wider than one, so that the
+    // rows above it, the rows below it and the row across the step are all
+    // real rows rather than edge cases.
+    const length = 4000;
+    const width = 3000;
+    const notchLength = 1500;
+    const notchWidth = 1000;
+
+    LRoomShape cut(RoomCorner corner) => LRoomShape(
+          length: length,
+          width: width,
+          notchLength: notchLength,
+          notchWidth: notchWidth,
+          corner: corner,
+        );
+
+    test('it has six corners, filling its bounding box but for the cut', () {
+      for (final corner in RoomCorner.values) {
+        final corners = cut(corner).corners();
+        expect(corners.length, 6, reason: '$corner');
+        expect(corners.map((p) => p.x).reduce(math.min), 0, reason: '$corner');
+        expect(corners.map((p) => p.x).reduce(math.max), length, reason: '$corner');
+        expect(corners.map((p) => p.y).reduce(math.min), 0, reason: '$corner');
+        expect(corners.map((p) => p.y).reduce(math.max), width, reason: '$corner');
+        // Area of the rectangle less the piece taken out of it, read off the
+        // outline rather than off the four numbers it was built from.
+        expect(_area(corners), length * width - notchLength * notchWidth,
+            reason: '$corner');
+      }
+    });
+
+    test('exactly one corner turns the wrong way, and it is the cut one', () {
+      for (final corner in RoomCorner.values) {
+        final corners = cut(corner).corners();
+        final reflex = reflexCorners(corners);
+        expect(reflex.length, 1, reason: '$corner');
+        expect(isConvexPolygon(corners), isFalse, reason: '$corner');
+      }
+    });
+
+    test('each wall is written down at the length the outline gives it', () {
+      for (final corner in RoomCorner.values) {
+        final shape = cut(corner);
+        final corners = shape.corners();
+        final walls = shape.wallLengths();
+        expect(walls.length, 6, reason: '$corner');
+        for (var i = 0; i < 6; i++) {
+          expect(_side(corners, i, (i + 1) % 6), closeTo(walls[i], 0.001),
+              reason: '$corner: wall $i');
+        }
+        // The two walls each side of the cut add up to the wall they replace.
+        expect(walls.where((w) => w == length - notchLength).length, 1, reason: '$corner');
+        expect(walls.where((w) => w == width - notchWidth).length, 1, reason: '$corner');
+      }
+    });
+
+    test('the cut keeps its size when the floor steps in from the walls', () {
+      // An inward offset normally shrinks everything. Here it does not: both
+      // walls of the cut move away from it by the gap and both walls opposite
+      // move towards it, so the piece missing from the floor is the same piece
+      // that is missing from the room, sitting in the corner of the floor's
+      // own bounding box. [floorNotch] says so in closed form; [floor] arrives
+      // the long way round through [insetPolygon], and the two have to agree
+      // or the drawing cuts planks against a different floor than the one laid.
+      for (final corner in RoomCorner.values) {
+        for (final gap in [0, 10, 12, 50]) {
+          final shape = cut(corner);
+          final floor = shape.floor(gap);
+          final smaller = LRoomShape(
+            length: length - gap * 2,
+            width: width - gap * 2,
+            notchLength: notchLength,
+            notchWidth: notchWidth,
+            corner: corner,
+          ).corners();
+          for (var i = 0; i < 6; i++) {
+            expect(floor[i].x, closeTo(smaller[i].x + gap, 1e-9),
+                reason: '$corner gap $gap: corner $i');
+            expect(floor[i].y, closeTo(smaller[i].y + gap, 1e-9),
+                reason: '$corner gap $gap: corner $i');
+          }
+          // And the rectangle handed to the drawing is the one missing from it.
+          final notch = shape.floorNotch(gap);
+          expect(_area(notch), closeTo(notchLength * notchWidth, 1e-6),
+              reason: '$corner gap $gap');
+          expect(_area(floor),
+              closeTo((length - gap * 2) * (width - gap * 2) - notchLength * notchWidth, 1e-6),
+              reason: '$corner gap $gap');
+        }
+      }
+    });
+
+    test('a worked floor, corner for corner', () {
+      // The fixture the row and drawing tests are built on, written out so a
+      // change to the arithmetic has to be looked at rather than absorbed.
+      expect(cut(RoomCorner.farRight).floor(10), [
+        const Point<double>(10, 10),
+        const Point<double>(3990, 10),
+        const Point<double>(3990, 1990),
+        const Point<double>(2490, 1990),
+        const Point<double>(2490, 2990),
+        const Point<double>(10, 2990),
+      ]);
+    });
+
+    test('a quarter turn leaves it square to the axes, the other way round', () {
+      for (final corner in RoomCorner.values) {
+        final shape = cut(corner);
+        final turned = shape.turned(shape.floor(10));
+        for (var i = 0; i < 6; i++) {
+          final from = turned[i];
+          final to = turned[(i + 1) % 6];
+          expect(from.x == to.x || from.y == to.y, isTrue, reason: '$corner: wall $i');
+        }
+        expect(turned.map((p) => p.x).reduce(math.max) - turned.map((p) => p.x).reduce(math.min),
+            closeTo(width - 20, 1e-9),
+            reason: '$corner');
+        expect(turned.map((p) => p.y).reduce(math.max) - turned.map((p) => p.y).reduce(math.min),
+            closeTo(length - 20, 1e-9),
+            reason: '$corner');
+      }
+    });
+
+    test('it is never the rectangle it was cut from', () {
+      // [isRectangular] is the gate on every closed form downstream. A room
+      // whose four walls read like a rectangle's still is not one.
+      expect(cut(RoomCorner.farRight).isRectangular, isFalse);
+    });
+
+    test('two rooms that differ anywhere are told apart by their key', () {
+      final keys = <String>{};
+      for (final corner in RoomCorner.values) {
+        keys.add(cut(corner).key);
+      }
+      keys.add(LRoomShape(
+        length: length,
+        width: width,
+        notchLength: notchLength + 1,
+        notchWidth: notchWidth,
+        corner: RoomCorner.farRight,
+      ).key);
+      keys.add(RoomShape.rectangle(length, width).key);
+      expect(keys.length, 6);
+    });
+
+    test('a cut that is no cut, or leaves no room, is rejected', () {
+      LRoomShape sized(int a, int b) => LRoomShape(
+            length: length,
+            width: width,
+            notchLength: a,
+            notchWidth: b,
+            corner: RoomCorner.farRight,
+          );
+      expect(sized(0, notchWidth).problem, RoomProblem.notchNotCut);
+      expect(sized(notchLength, 0).problem, RoomProblem.notchNotCut);
+      expect(sized(MIN_NOTCH_MM - 1, notchWidth).problem, RoomProblem.notchNotCut);
+      expect(sized(length, notchWidth).problem, RoomProblem.notchLeavesNoRoom);
+      expect(sized(length - LRoomShape.minArmMm + 1, notchWidth).problem,
+          RoomProblem.notchLeavesNoRoom);
+      expect(sized(notchLength, width).problem, RoomProblem.notchLeavesNoRoom);
+      // And the bounds themselves are rooms.
+      expect(sized(MIN_NOTCH_MM, MIN_NOTCH_MM).problem, isNull);
+      expect(sized(length - LRoomShape.minArmMm, width - LRoomShape.minArmMm).problem, isNull);
+    });
+  });
+}
+
+/// The area the outline encloses, by the shoelace formula.
+double _area(List<Point<double>> polygon) {
+  var sum = 0.0;
+  for (var i = 0; i < polygon.length; i++) {
+    final from = polygon[i];
+    final to = polygon[(i + 1) % polygon.length];
+    sum += from.x * to.y - to.x * from.y;
+  }
+  return (sum / 2).abs();
 }

@@ -349,6 +349,13 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                 ButtonSegment(
                                   value: Direction.diagonal,
                                   label: Text(appStrings.diagonally),
+                                  // A 45° strip crosses a cut-away corner
+                                  // twice, so a row there is two rows, and the
+                                  // engine lays one plank after another along
+                                  // a single one. The room is chosen on the
+                                  // screen before this, so the segment is
+                                  // already out of reach when it opens.
+                                  enabled: !state.lShaped,
                                 ),
                               ],
                               selected: {state.direction},
@@ -356,6 +363,21 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
                                   context.read<CalculateCubit>().setDirection(selection.first),
                             ),
                           ),
+                          // Said on screen rather than in a tooltip: a tooltip
+                          // on a phone needs a long press, and nobody long
+                          // presses a button that is greyed out.
+                          if (state.lShaped)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  appStrings.diagonal_not_for_l_shape,
+                                  style: TextStyle(
+                                      color: Colors.black.withValues(alpha: 0.6), fontSize: 13),
+                                ),
+                              ),
+                            ),
                           SizedBox(height: _GAP),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,

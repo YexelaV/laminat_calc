@@ -28,6 +28,9 @@ List<Result> fixtures() => Calculation(
 
 Result fixture() => fixtures().first;
 
+/// The strings the sheet renders, without a widget tree to render them in.
+final ru = lookupAppLocalizations(const Locale('ru'));
+
 Future<void> pumpRu(WidgetTester tester, Widget child, Size size) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -110,6 +113,39 @@ void main() {
       // rounded into the same 3'-11.2''.
       expect(find.text("Ряд 1: №1 3'-11 3/16'', №2 3'-11 1/4'', №3 1'-10 7/8''"), findsOneWidget);
       expect(find.text("Остатки: 2'-0 3/8'' × 1, 1'-0 9/16'' × 2, 11 7/8'' × 2"), findsOneWidget);
+    });
+
+    test('the row that crosses a cut-away corner says so', () {
+      // The one plank the list cannot describe with a length. Everywhere else
+      // a number in this list is a straight cut; here it is the long side of
+      // a notch, and the list has to send the fitter to the drawing for the
+      // rest of it.
+      final result = Calculation(
+        shape: LRoomShape(
+          length: 4000,
+          width: 3000,
+          notchLength: 1500,
+          notchWidth: 1000,
+          corner: RoomCorner.farRight,
+        ),
+        laminateLength: 1200,
+        laminateWidth: 190,
+        planksInPack: 8,
+        indentFromWall: 10,
+        minimumLaminateLength: 300,
+        rowOffset: 300,
+        direction: Direction.length,
+      ).calculate().first;
+      expect(result.steppedRows.length, 1, reason: 'one cut, one row across it');
+      final lines = cutList(result, 1, MeasurementSystem.metric, ru);
+      expect(
+          lines.where((l) => l.startsWith('Ряд ${result.steppedRows.first + 1} идёт через')).length,
+          1);
+
+      // And a room with no cut says nothing of the kind.
+      expect(fixture().steppedRows, isEmpty);
+      expect(cutList(fixture(), 1, MeasurementSystem.metric, ru).where((l) => l.contains('вырез')),
+          isEmpty);
     });
   });
 

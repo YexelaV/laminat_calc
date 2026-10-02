@@ -51,6 +51,32 @@
     "wall_diagonal": "Diagonal",
     "wall_diagonal_mm": "Diagonal (mm)",
     "walls_do_not_close": "The walls do not close",
+    "room_shape": "Room shape",
+    "shape_rectangle": "Rectangular",
+    "shape_l": "L-shaped",
+    "overall_length": "Overall length",
+    "overall_width": "Overall width",
+    "overall_length_mm": "Overall length (mm)",
+    "overall_width_mm": "Overall width (mm)",
+    "notch_length": "Notch length",
+    "notch_width": "Notch width",
+    "notch_length_mm": "Notch length (mm)",
+    "notch_width_mm": "Notch width (mm)",
+    "notch_does_not_fit": "The notch leaves no room",
+    "row_steps_at_notch": "Row {number} crosses the cut-away corner: the planks at its end are notched round it, see the drawing for the shape",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Tap the corner that is cut away",
+    "diagonal_not_for_l_shape": "Diagonal laying is not supported in an L-shaped room yet",
+    "corner_top_left": "Top left",
+    "corner_top_right": "Top right",
+    "corner_bottom_right": "Bottom right",
+    "corner_bottom_left": "Bottom left",
     "pieces_per_package": "Pieces per package",
     "laying": "Laying",
     "laying_direction": "Laying direction",

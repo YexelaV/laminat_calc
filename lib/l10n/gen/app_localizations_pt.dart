@@ -89,6 +89,66 @@ class AppLocalizationsPt extends AppLocalizations {
   String get walls_do_not_close => 'As paredes não fecham';
 
   @override
+  String get room_shape => 'Formato da divisão';
+
+  @override
+  String get shape_rectangle => 'Retangular';
+
+  @override
+  String get shape_l => 'Em forma de L';
+
+  @override
+  String get overall_length => 'Comprimento total';
+
+  @override
+  String get overall_width => 'Largura total';
+
+  @override
+  String get overall_length_mm => 'Comprimento total (mm)';
+
+  @override
+  String get overall_width_mm => 'Largura total (mm)';
+
+  @override
+  String get notch_length => 'Comprimento do recorte';
+
+  @override
+  String get notch_width => 'Largura do recorte';
+
+  @override
+  String get notch_length_mm => 'Comprimento do recorte (mm)';
+
+  @override
+  String get notch_width_mm => 'Largura do recorte (mm)';
+
+  @override
+  String get notch_does_not_fit => 'O recorte não deixa divisão';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return 'A fileira $number atravessa o canto recortado: as réguas na ponta são recortadas em volta, veja o desenho';
+  }
+
+  @override
+  String get tap_corner_to_cut => 'Toque no canto recortado';
+
+  @override
+  String get diagonal_not_for_l_shape =>
+      'A colocação na diagonal ainda não é suportada numa divisão em forma de L';
+
+  @override
+  String get corner_top_left => 'Superior esquerdo';
+
+  @override
+  String get corner_top_right => 'Superior direito';
+
+  @override
+  String get corner_bottom_right => 'Inferior direito';
+
+  @override
+  String get corner_bottom_left => 'Inferior esquerdo';
+
+  @override
   String get pieces_per_package => 'Peças por pacote';
 
   @override

@@ -89,6 +89,66 @@ class AppLocalizationsPl extends AppLocalizations {
   String get walls_do_not_close => 'Ściany się nie domykają';
 
   @override
+  String get room_shape => 'Kształt pomieszczenia';
+
+  @override
+  String get shape_rectangle => 'Prostokątne';
+
+  @override
+  String get shape_l => 'W kształcie litery L';
+
+  @override
+  String get overall_length => 'Długość całkowita';
+
+  @override
+  String get overall_width => 'Szerokość całkowita';
+
+  @override
+  String get overall_length_mm => 'Długość całkowita (mm)';
+
+  @override
+  String get overall_width_mm => 'Szerokość całkowita (mm)';
+
+  @override
+  String get notch_length => 'Długość wcięcia';
+
+  @override
+  String get notch_width => 'Szerokość wcięcia';
+
+  @override
+  String get notch_length_mm => 'Długość wcięcia (mm)';
+
+  @override
+  String get notch_width_mm => 'Szerokość wcięcia (mm)';
+
+  @override
+  String get notch_does_not_fit => 'Wcięcie nie zostawia pomieszczenia';
+
+  @override
+  String row_steps_at_notch(int number) {
+    return 'Rząd $number przechodzi przez wycięty narożnik: panele na jego końcu wycina się wokół niego, kształt na rysunku';
+  }
+
+  @override
+  String get tap_corner_to_cut => 'Dotknij wyciętego narożnika';
+
+  @override
+  String get diagonal_not_for_l_shape =>
+      'Układanie po skosie nie jest jeszcze obsługiwane w pomieszczeniu w kształcie litery L';
+
+  @override
+  String get corner_top_left => 'Lewy górny';
+
+  @override
+  String get corner_top_right => 'Prawy górny';
+
+  @override
+  String get corner_bottom_right => 'Prawy dolny';
+
+  @override
+  String get corner_bottom_left => 'Lewy dolny';
+
+  @override
   String get pieces_per_package => 'Sztuk w paczce';
 
   @override
