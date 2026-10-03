@@ -18,9 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
 import 'package:floor_calculator/cubit/calculate_state.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 
@@ -60,11 +58,7 @@ Future<void> _loadFonts() async {
 void main() {
   setUpAll(_loadFonts);
 
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
-    getIt.registerSingleton<CalculateCubit>(CalculateCubit());
-  });
-  tearDown(getIt.reset);
+  setUp(() => SharedPreferences.setMockInitialValues({}));
 
   for (final locale in _locales) {
     testWidgets('screenshots for $locale', (tester) async {

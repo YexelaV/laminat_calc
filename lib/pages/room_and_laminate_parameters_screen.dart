@@ -2,7 +2,6 @@ import 'package:auto_route/auto_route.dart';
 import 'package:floor_calculator/constants.dart';
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
 import 'package:floor_calculator/cubit/calculate_state.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/router/app_router.dart';
 import 'package:floor_calculator/room_shape.dart';
@@ -228,7 +227,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
             RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (_) => SettingsSheet(
           onSystemChanged: (system) {
-            final cubit = getIt.get<CalculateCubit>();
+            final cubit = context.read<CalculateCubit>();
             if (system == cubit.state.system) return;
             rewriteFieldsFor(system, cubit.state);
             cubit.setMeasurementSystem(system);
@@ -665,10 +664,8 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
   Widget build(BuildContext context) {
     final appStrings = AppStrings.of(context);
 
-    return BlocProvider<CalculateCubit>(
-      create: (context) => getIt.get<CalculateCubit>(),
-      child: BlocBuilder<CalculateCubit, CalculateState>(
-        builder: (context, state) {
+    return BlocBuilder<CalculateCubit, CalculateState>(
+      builder: (context, state) {
           return AppBackground(
               child: Scaffold(
             backgroundColor: Colors.transparent,
@@ -1019,8 +1016,7 @@ class RoomAndLaminateParametersScreenState extends State<RoomAndLaminateParamete
               ),
             ),
           ));
-        },
-      ),
+      },
     );
   }
 }

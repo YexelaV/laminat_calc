@@ -1,10 +1,10 @@
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/utils/languages.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,7 +44,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
       );
 
   Widget systemOption(MeasurementSystem system, String label) {
-    final selected = system == getIt.get<CalculateCubit>().state.system;
+    final selected = system == context.read<CalculateCubit>().state.system;
     return GestureDetector(
       onTap: () => _pickSystem(system),
       child: Container(

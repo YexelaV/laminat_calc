@@ -7,35 +7,38 @@
 // than at an empty result screen, and that the one direction this room cannot
 // be laid in is out of reach rather than merely wrong.
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
 import 'package:floor_calculator/cubit/calculate_state.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/widgets/room_sketch.dart';
 
-CalculateCubit get cubit => getIt.get<CalculateCubit>();
+late CalculateCubit cubit;
+
+
+/// The one cubit the app runs on, fetched out of the tree the provider in
+/// `main.dart` put it in. The test used to reach for a global; now it asks
+/// the widget that owns it, which is also what every screen does.
+CalculateCubit cubitIn(WidgetTester tester) =>
+    BlocProvider.of<CalculateCubit>(tester.element(find.byType(MaterialApp)));
 
 void main() {
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
-    getIt.registerSingleton<CalculateCubit>(CalculateCubit());
-  });
-  tearDown(getIt.reset);
+  setUp(() => SharedPreferences.setMockInitialValues({}));
 
   Future<void> pumpForm(WidgetTester tester,
       {MeasurementSystem system = MeasurementSystem.metric}) async {
     tester.view.physicalSize = const Size(560, 2200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    cubit.setMeasurementSystem(system);
     await tester.pumpWidget(MyApp(savedLocaleCode: 'en', savedSystem: system.name));
     await tester.pumpAndSettle();
+    cubit = cubitIn(tester);
   }
 
   Future<void> fill(WidgetTester tester, List<String> values, {int from = 0}) async {

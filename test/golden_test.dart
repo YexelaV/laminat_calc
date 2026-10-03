@@ -14,11 +14,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/room_shape.dart';
@@ -112,11 +112,21 @@ Result variantWithPlanks(int totalPlanks) => Result(
       indentFromWall: 10,
     );
 
-Widget wrap(Widget child, {Locale locale = const Locale('ru')}) => MaterialApp(
-      locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: child,
+/// The screen under its own cubit. A fresh one per image, so a golden cannot
+/// be changed by whatever the image before it typed.
+Widget wrap(
+  Widget child, {
+  Locale locale = const Locale('ru'),
+  MeasurementSystem system = MeasurementSystem.metric,
+}) =>
+    BlocProvider<CalculateCubit>(
+      create: (_) => CalculateCubit(system: system),
+      child: MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: child,
+      ),
     );
 
 Future<void> pumpAt(WidgetTester tester, Widget widget, Size size) async {
@@ -128,9 +138,6 @@ Future<void> pumpAt(WidgetTester tester, Widget widget, Size size) async {
 }
 
 void main() {
-  setUp(() => getIt.registerSingleton<CalculateCubit>(CalculateCubit()));
-  tearDown(getIt.reset);
-
   group('laying scheme', () {
     testWidgets('rows along the room length, millimetres', (tester) async {
       await pumpAt(tester, wrap(SchemeScreen(schemeResult(), 1)), const Size(600, 400));
@@ -216,8 +223,11 @@ void main() {
     });
 
     testWidgets('plank sizes are labelled in feet and inches', (tester) async {
-      getIt.get<CalculateCubit>().setMeasurementSystem(MeasurementSystem.imperial);
-      await pumpAt(tester, wrap(SchemeScreen(schemeResult(), 1)), const Size(600, 400));
+      await pumpAt(
+        tester,
+        wrap(SchemeScreen(schemeResult(), 1), system: MeasurementSystem.imperial),
+        const Size(600, 400),
+      );
       await expectLater(
         find.byType(SchemeScreen),
         matchesGoldenFile('goldens/scheme_imperial.png'),
@@ -229,8 +239,11 @@ void main() {
     // wall 400 mm long, and without the fit-to-the-wall rule it is written
     // across its neighbours.
     testWidgets('a cut-away corner labelled in feet and inches', (tester) async {
-      getIt.get<CalculateCubit>().setMeasurementSystem(MeasurementSystem.imperial);
-      await pumpAt(tester, wrap(SchemeScreen(cutCornerResult(), 1)), const Size(600, 400));
+      await pumpAt(
+        tester,
+        wrap(SchemeScreen(cutCornerResult(), 1), system: MeasurementSystem.imperial),
+        const Size(600, 400),
+      );
       await expectLater(
         find.byType(SchemeScreen),
         matchesGoldenFile('goldens/scheme_cut_corner_imperial.png'),

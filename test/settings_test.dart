@@ -2,20 +2,23 @@
 // onboarding, and the only place where the unit system changes while the form
 // already holds typed values.
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/utils/units.dart';
 
+
+/// The one cubit the app runs on, fetched out of the tree the provider in
+/// `main.dart` put it in. The test used to reach for a global; now it asks
+/// the widget that owns it, which is also what every screen does.
+CalculateCubit cubitIn(WidgetTester tester) =>
+    BlocProvider.of<CalculateCubit>(tester.element(find.byType(MaterialApp)));
+
 void main() {
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
-    getIt.registerSingleton<CalculateCubit>(CalculateCubit());
-  });
-  tearDown(getIt.reset);
+  setUp(() => SharedPreferences.setMockInitialValues({}));
 
   // Both answers already given, so the app opens straight on the form.
   Future<void> pumpForm(WidgetTester tester) async {
@@ -35,7 +38,7 @@ void main() {
     await pumpForm(tester);
     await tester.enterText(find.byType(TextField).first, '3772');
     await tester.pumpAndSettle();
-    expect(getIt.get<CalculateCubit>().state.roomLength, 3772);
+    expect(cubitIn(tester).state.roomLength, 3772);
 
     await openSettings(tester);
     await tester.tap(find.text('Imperial (feet and inches)'));
@@ -48,7 +51,7 @@ void main() {
     expect(find.widgetWithText(TextField, '12'), findsOneWidget);
     expect(find.widgetWithText(TextField, '4'), findsOneWidget);
     expect(find.text('1/2'), findsWidgets, reason: 'the fraction comes across too');
-    expect(getIt.get<CalculateCubit>().state.roomLength, 3772, reason: 'the state is millimetres');
+    expect(cubitIn(tester).state.roomLength, 3772, reason: 'the state is millimetres');
 
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString(SYSTEM_PREF_KEY), MeasurementSystem.imperial.name);

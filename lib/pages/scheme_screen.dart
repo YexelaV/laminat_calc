@@ -2,12 +2,12 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../cubit/calculate_cubit.dart';
-import '../di/get_it.dart';
 import '../l10n/app_localizations.dart';
 import '../models.dart';
 import '../scheme_geometry.dart';
@@ -30,7 +30,7 @@ class _SchemeScreenState extends State<SchemeScreen> {
   Result get result => widget.result;
   int get number => widget.number;
 
-  MeasurementSystem get system => getIt.get<CalculateCubit>().state.system;
+  MeasurementSystem get system => context.read<CalculateCubit>().state.system;
 
   // How far the user can zoom in past the scale the scheme opens at.
   static const double _maxZoom = 12;

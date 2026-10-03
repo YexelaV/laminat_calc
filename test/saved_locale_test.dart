@@ -9,19 +9,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/pages/room_and_laminate_parameters_screen.dart';
 import 'package:floor_calculator/pages/start_screen.dart';
 
 void main() {
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
-    getIt.registerSingleton<CalculateCubit>(CalculateCubit());
-  });
-  tearDown(getIt.reset);
+  setUp(() => SharedPreferences.setMockInitialValues({}));
 
   Future<void> pump(WidgetTester tester, String? saved) async {
     tester.view.physicalSize = const Size(560, 1600);

@@ -1,13 +1,22 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:injectable/injectable.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'calculate_state.dart';
 
-@lazySingleton
+/// Everything the two forms collect, from the first screen to the last.
+///
+/// One instance per run of the app, owned by the [BlocProvider] above the
+/// router in `main.dart`. It has to outlive each screen because the form is
+/// spread over three of them and none passes anything to the next: what the
+/// user typed in the room screen is read again on the laying screen, and the
+/// unit system is read again by the scheme and by the settings sheet.
 class CalculateCubit extends Cubit<CalculateState> {
-  CalculateCubit() : super(CalculateState());
+  /// [system] is the one answer that exists before the first frame — it comes
+  /// off disk in `main` — so the state starts with it rather than being
+  /// corrected by an emit nobody is listening to yet.
+  CalculateCubit({MeasurementSystem system = MeasurementSystem.metric})
+      : super(CalculateState(system: system));
 
   void setRoomLength(int roomLength) {
     emit(state.copyWith(roomLength: roomLength));

@@ -3,7 +3,6 @@ import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/constants.dart';
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
 import 'package:floor_calculator/cubit/calculate_state.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/router/app_router.dart';
@@ -295,10 +294,8 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
   Widget build(BuildContext context) {
     final appStrings = AppStrings.of(context);
 
-    return BlocProvider<CalculateCubit>.value(
-      value: getIt.get<CalculateCubit>(),
-      child: BlocBuilder<CalculateCubit, CalculateState>(
-        builder: (context, state) {
+    return BlocBuilder<CalculateCubit, CalculateState>(
+      builder: (context, state) {
           return AppBackground(
               child: Scaffold(
             backgroundColor: Colors.transparent,
@@ -545,8 +542,7 @@ class LayingParametersScreenState extends State<LayingParametersScreen> {
               ),
             ),
           ));
-        },
-      ),
+      },
     );
   }
 }

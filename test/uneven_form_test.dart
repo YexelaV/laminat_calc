@@ -6,25 +6,28 @@
 // which close into no room stop at the Next button rather than at an empty
 // result screen.
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
 import 'package:floor_calculator/cubit/calculate_state.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/widgets/room_sketch.dart';
 
-CalculateCubit get cubit => getIt.get<CalculateCubit>();
+late CalculateCubit cubit;
+
+
+/// The one cubit the app runs on, fetched out of the tree the provider in
+/// `main.dart` put it in. The test used to reach for a global; now it asks
+/// the widget that owns it, which is also what every screen does.
+CalculateCubit cubitIn(WidgetTester tester) =>
+    BlocProvider.of<CalculateCubit>(tester.element(find.byType(MaterialApp)));
 
 void main() {
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
-    getIt.registerSingleton<CalculateCubit>(CalculateCubit());
-  });
-  tearDown(getIt.reset);
+  setUp(() => SharedPreferences.setMockInitialValues({}));
 
   Future<void> pumpForm(WidgetTester tester,
       {MeasurementSystem system = MeasurementSystem.metric}) async {
@@ -33,9 +36,9 @@ void main() {
     addTearDown(tester.view.reset);
     // The system is answered on its own screen before the form opens and lives
     // in the cubit; MyApp's savedSystem only says which screen comes first.
-    cubit.setMeasurementSystem(system);
     await tester.pumpWidget(MyApp(savedLocaleCode: 'en', savedSystem: system.name));
     await tester.pumpAndSettle();
+    cubit = cubitIn(tester);
   }
 
   // Fields are filled by position: metric rooms are one box each, in the order

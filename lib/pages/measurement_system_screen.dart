@@ -1,12 +1,12 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
-import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/router/app_router.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/widgets/app_background.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Asked once, right after the language, and remembered: a US installer never
@@ -86,7 +86,7 @@ class _MeasurementSystemScreenState extends State<MeasurementSystemScreen> {
               TextButton(
                 onPressed: () async {
                   final router = context.router;
-                  getIt.get<CalculateCubit>().setMeasurementSystem(_selected);
+                  context.read<CalculateCubit>().setMeasurementSystem(_selected);
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setString(SYSTEM_PREF_KEY, _selected.name);
                   if (!mounted) return;

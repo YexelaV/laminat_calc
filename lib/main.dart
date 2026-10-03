@@ -2,31 +2,20 @@ import 'package:floor_calculator/cubit/calculate_cubit.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:floor_calculator/router/app_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'di/get_it.dart';
 
 const LOCALE_PREF_KEY = 'locale';
 const SYSTEM_PREF_KEY = 'system';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  configureDependencies();
   final prefs = await SharedPreferences.getInstance();
-  final savedSystem = prefs.getString(SYSTEM_PREF_KEY);
-  if (savedSystem != null) {
-    getIt.get<CalculateCubit>().setMeasurementSystem(
-          MeasurementSystem.values.firstWhere(
-            (system) => system.name == savedSystem,
-            orElse: () => MeasurementSystem.metric,
-          ),
-        );
-  }
   runApp(MyApp(
     savedLocaleCode: prefs.getString(LOCALE_PREF_KEY),
-    savedSystem: savedSystem,
+    savedSystem: prefs.getString(SYSTEM_PREF_KEY),
   ));
 }
 
@@ -60,6 +49,18 @@ class MyApp extends StatefulWidget {
     }
     return null;
   }
+
+  /// The saved measurement system, or metric when nothing was answered.
+  ///
+  /// Unlike a language, a system cannot disappear between releases — there are
+  /// two of them and neither is going anywhere — so an unreadable value falls
+  /// back rather than counting as unanswered. Which screen the app opens on is
+  /// still decided by whether anything was written at all.
+  static MeasurementSystem savedMeasurementSystem(String? name) =>
+      MeasurementSystem.values.firstWhere(
+        (system) => system.name == name,
+        orElse: () => MeasurementSystem.metric,
+      );
 }
 
 class MyAppState extends State<MyApp> {
@@ -80,6 +81,20 @@ class MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Above the router, so every screen it shows is inside it — and so are the
+    // sheets, which open into that router's own overlay. The form is collected
+    // across three routes that pass nothing to each other, so one instance has
+    // to outlive all of them; this is the widget whose lifetime matches the
+    // app's.
+    return BlocProvider<CalculateCubit>(
+      create: (_) => CalculateCubit(
+        system: MyApp.savedMeasurementSystem(widget.savedSystem),
+      ),
+      child: _router(),
+    );
+  }
+
+  Widget _router() {
     return MaterialApp.router(
       // Language first, then the measurement system, each asked once and
       // remembered; a launch that has both answers goes straight to the form.
