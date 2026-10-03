@@ -1,0 +1,111 @@
+{
+    "title": "Калкулатор за ламинат",
+    "mm": "мм",
+    "pcs": "бр.",
+    "ft": "фут",
+    "inch": "инч",
+    "choose_units": "Изберете мерни единици",
+    "metric_system": "Метрична (мм)",
+    "imperial_system": "Имперска (футове и инчове)",
+    "settings": "Настройки",
+    "language": "Език",
+    "room": "Помещение",
+    "length": "Дължина",
+    "width": "Широчина",
+    "laminate": "Ламинат",
+    "length_mm": "Дължина (мм)",
+    "width_mm": "Широчина (мм)",
+    "uneven_walls": "Стени с различна дължина",
+    "wall_length": "Дължина {number}",
+    "@wall_length": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width": "Широчина {number}",
+    "@wall_width": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_length_mm": "Дължина {number} (мм)",
+    "@wall_length_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width_mm": "Широчина {number} (мм)",
+    "@wall_width_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_diagonal": "Диагонал",
+    "wall_diagonal_mm": "Диагонал (мм)",
+    "walls_do_not_close": "Стените не се затварят",
+    "room_shape": "Форма на помещението",
+    "shape_rectangle": "Правоъгълно",
+    "shape_l": "Г-образно",
+    "overall_length": "Обща дължина",
+    "overall_width": "Обща широчина",
+    "overall_length_mm": "Обща дължина (мм)",
+    "overall_width_mm": "Обща широчина (мм)",
+    "notch_length": "Дължина на изреза",
+    "notch_width": "Широчина на изреза",
+    "notch_length_mm": "Дължина на изреза (мм)",
+    "notch_width_mm": "Широчина на изреза (мм)",
+    "notch_does_not_fit": "Изрезът не оставя помещение",
+    "row_steps_at_notch": "Ред {number} минава през ъгъла на изреза: крайните ламели се изрязват на стъпало, размерът е по схемата",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Докоснете ъгъла, който е изрязан",
+    "diagonal_not_for_l_shape": "Диагонално полагане в Г-образно помещение още не се поддържа",
+    "corner_top_left": "Горен ляв",
+    "corner_top_right": "Горен десен",
+    "corner_bottom_right": "Долен десен",
+    "corner_bottom_left": "Долен ляв",
+    "pieces_per_package": "В опаковка (броя)",
+    "laying": "Полагане",
+    "laying_direction": "Посока на полагане",
+    "along_length": "По дължина",
+    "along_width": "По широчина",
+    "diagonally": "Диагонално",
+    "expansion_gap_mm": "Дилатационна фуга (мм)",
+    "joint_offset": "Разместване на фугите",
+    "exact_offset": "точно",
+    "joint_offset_mm": "Изместване на редовете (мм)",
+    "minimal_piece_length": "Мин. дължина на ламела (мм)",
+    "expansion_gap_in": "Дилатационна фуга (инч)",
+    "joint_offset_in": "Изместване на редовете (инч)",
+    "minimal_piece_length_in": "Мин. дължина на ламела (инч)",
+    "required_field": "Задължително поле",
+    "incorrect_value": "Некоректна стойност",
+    "minimum": "Не по-малко от",
+    "maximum": "Не повече от",
+    "calculate": "Изчисли",
+    "result": "Резултат от изчислението",
+    "packages_required": "Необходими опаковки",
+    "laying_variants": "Варианти на полагане",
+    "panels": "{count, plural, one{ламела} other{ламели}}",
+    "laying_scheme": "Схема на полагане",
+    "next": "Напред",
+    "no_laying_variants": "Полагане със зададените параметри е невъзможно. Опитайте да промените изместването на редовете или минималната дължина на ламелата",
+    "variant": "№{number}",
+    "cut_list": "Списък за разкрой",
+    "row": "Ред {number}",
+    "leftovers": "Остатъци",
+    "waste": "Отпадъци"
+}

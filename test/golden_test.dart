@@ -359,7 +359,7 @@ void main() {
       // supportedLocales, and _languages in start_screen.dart. Adding a
       // language to the first and forgetting the second is the easy mistake.
       expect(find.byType(SvgPicture), findsNWidgets(AppLocalizations.supportedLocales.length));
-      for (final name in ['Polski', 'Italiano', 'Türkçe']) {
+      for (final name in ['Polski', 'Italiano', 'Türkçe', 'Čeština', 'Svenska', 'Български']) {
         expect(find.text(name), findsOneWidget);
       }
     });

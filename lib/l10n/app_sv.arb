@@ -1,0 +1,111 @@
+{
+    "title": "Laminatkalkylator",
+    "mm": "mm",
+    "pcs": "st",
+    "ft": "fot",
+    "inch": "tum",
+    "choose_units": "Välj måttsystem",
+    "metric_system": "Metriskt (mm)",
+    "imperial_system": "Imperiellt (fot och tum)",
+    "settings": "Inställningar",
+    "language": "Språk",
+    "room": "Rum",
+    "length": "Längd",
+    "width": "Bredd",
+    "laminate": "Laminat",
+    "length_mm": "Längd (mm)",
+    "width_mm": "Bredd (mm)",
+    "uneven_walls": "Väggar av olika längd",
+    "wall_length": "Längd {number}",
+    "@wall_length": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width": "Bredd {number}",
+    "@wall_width": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_length_mm": "Längd {number} (mm)",
+    "@wall_length_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width_mm": "Bredd {number} (mm)",
+    "@wall_width_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_diagonal": "Diagonal",
+    "wall_diagonal_mm": "Diagonal (mm)",
+    "walls_do_not_close": "Väggarna går inte ihop",
+    "room_shape": "Rummets form",
+    "shape_rectangle": "Rektangulärt",
+    "shape_l": "L-format",
+    "overall_length": "Total längd",
+    "overall_width": "Total bredd",
+    "overall_length_mm": "Total längd (mm)",
+    "overall_width_mm": "Total bredd (mm)",
+    "notch_length": "Urtagets längd",
+    "notch_width": "Urtagets bredd",
+    "notch_length_mm": "Urtagets längd (mm)",
+    "notch_width_mm": "Urtagets bredd (mm)",
+    "notch_does_not_fit": "Urtaget lämnar inget rum",
+    "row_steps_at_notch": "Rad {number} går förbi urtagets hörn: plankorna i dess ände sågas runt hörnet, mått enligt ritningen",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Tryck på hörnet som är urtaget",
+    "diagonal_not_for_l_shape": "Diagonal läggning stöds ännu inte i ett L-format rum",
+    "corner_top_left": "Övre vänstra",
+    "corner_top_right": "Övre högra",
+    "corner_bottom_right": "Nedre högra",
+    "corner_bottom_left": "Nedre vänstra",
+    "pieces_per_package": "Per paket (st)",
+    "laying": "Läggning",
+    "laying_direction": "Läggningsriktning",
+    "along_length": "Längs längden",
+    "along_width": "Längs bredden",
+    "diagonally": "Diagonalt",
+    "expansion_gap_mm": "Expansionsfog (mm)",
+    "joint_offset": "Skarvförskjutning",
+    "exact_offset": "exakt",
+    "joint_offset_mm": "Radförskjutning (mm)",
+    "minimal_piece_length": "Minsta plankelängd (mm)",
+    "expansion_gap_in": "Expansionsfog (tum)",
+    "joint_offset_in": "Radförskjutning (tum)",
+    "minimal_piece_length_in": "Minsta plankelängd (tum)",
+    "required_field": "Obligatoriskt fält",
+    "incorrect_value": "Ogiltigt värde",
+    "minimum": "Minst",
+    "maximum": "Högst",
+    "calculate": "Beräkna",
+    "result": "Beräkningsresultat",
+    "packages_required": "Paket som behövs",
+    "laying_variants": "Läggningsalternativ",
+    "panels": "{count, plural, one{planka} other{plankor}}",
+    "laying_scheme": "Läggningsschema",
+    "next": "Nästa",
+    "no_laying_variants": "Läggning med dessa värden är inte möjlig. Prova att ändra radförskjutningen eller minsta plankelängd",
+    "variant": "#{number}",
+    "cut_list": "Kaplista",
+    "row": "Rad {number}",
+    "leftovers": "Rester",
+    "waste": "Spill"
+}

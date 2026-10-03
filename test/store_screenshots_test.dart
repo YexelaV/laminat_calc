@@ -19,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/calculate_state.dart';
 import 'package:floor_calculator/di/get_it.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
@@ -29,14 +30,15 @@ const _pixelRatio = 3.0;
 
 // The locales to shoot. Play keeps a separate set of screenshots per store
 // listing language, so this is the list of listings being refreshed.
-const _locales = ['ru', 'en', 'de', 'es', 'fr', 'it', 'pl', 'pt', 'tr', 'zh'];
+const _locales = ['ru', 'en', 'de', 'es', 'fr', 'it', 'pl', 'pt', 'tr', 'cs', 'sv', 'bg'];
 
 // Registered as 'Roboto', which is the family every unstyled Text in the app
-// resolves to. The real Roboto would be the faithful choice, but it has no CJK
-// and the '中文' tile on the language screen then renders as two empty boxes:
-// the tester's font manager does not fall back to another font for a missing
-// glyph, not even to one registered in the same family. One font that covers
-// all ten languages beats a font that matches Android and drops glyphs.
+// resolves to. One face has to cover every alphabet shipped at once: the
+// tester's font manager does not fall back to another font for a missing
+// glyph, not even to one registered in the same family, so a tile it cannot
+// set comes out as empty boxes. Arial Unicode covers them all and goes on
+// doing so when a new alphabet arrives, which is worth more here than matching
+// Android's own face exactly.
 const _uiFont = '/System/Library/Fonts/Supplemental/Arial Unicode.ttf';
 
 Future<void> _loadFonts() async {
@@ -114,8 +116,27 @@ void main() {
       // app rather than listed here, so a new locale costs nothing.
       Finder next() => find.text(AppStrings.of(tester.element(find.byType(Scaffold))).next);
 
-      // Room length, room width, plank length, plank width, planks per pack.
-      await fill(['3000', '6000', '1200', '190', '8']);
+      // The room is Г-shaped, which is what the listing leads on and what no
+      // shot used to show. It costs nothing to show it here: Play takes eight
+      // phone screenshots and there are eight, so a ninth is not an option and
+      // the room shot is the one that can carry it. The form still reads as
+      // "type your room" — there are two more boxes and a sketch — and the
+      // scheme in shot 07 comes out more worth looking at for it.
+      Finder shapeField() => find.byType(DropdownButtonFormField<RoomKind>);
+      final strings = AppStrings.of(tester.element(find.byType(Scaffold)));
+
+      // Overall length and width first: the cut's own bounds are worked out
+      // from them, so they have to be there before the shape changes.
+      await fill(['3000', '6000']);
+      await tester.tap(shapeField());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(strings.shape_l).last);
+      await tester.pumpAndSettle();
+
+      // Length and width of the cut, then the plank and the pack. The corner
+      // is the one the form starts on, which is the far one — the cut lands at
+      // the bottom of the sketch and of the scheme, clear of both captions.
+      await fill(['3000', '6000', '1200', '2000', '1200', '190', '8']);
       await tester.pumpAndSettle();
       await capture('room');
 

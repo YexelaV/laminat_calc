@@ -152,19 +152,34 @@ void main() {
           reason: 'the report has more rows than fit beside the scheme');
     });
 
-    // Roboto covers every alphabet the app is translated into but Chinese. A
-    // page of empty boxes is worse than no page: the report is still shared as
-    // text from the cut list sheet.
-    test('a language the font cannot set is left off the page', () async {
+    // Roboto covers Latin and Cyrillic, which between them is every alphabet
+    // the app currently ships in — so nothing in lib/l10n can exercise this
+    // and the text is written out here instead. The guard is what stands
+    // between a twelfth language in a third alphabet and a page of empty
+    // boxes, and it has to keep working while no locale needs it.
+    test('a line the font cannot set leaves the report off the page', () async {
+      const unsettable = 'पंक्ति 1: 980 मिमी';
+      expect(fonts.canPrint(unsettable), isFalse);
       final result = laid(Direction.length);
-      final chinese = schemePdf(result, MeasurementSystem.metric, fonts,
-          cutList: await report(result, MeasurementSystem.metric, 'zh'));
-      expect(chinese.document.pdfPageList.pages, hasLength(1));
+      final pdf = schemePdf(result, MeasurementSystem.metric, fonts,
+          cutList: ['Cut list', unsettable]);
+      expect(pdf.document.pdfPageList.pages, hasLength(1));
+    });
+
+    test('every alphabet that does ship can be set', () async {
+      for (final locale in AppLocalizations.supportedLocales) {
+        final lines = await report(laid(Direction.length), MeasurementSystem.metric,
+            locale.languageCode);
+        for (final line in lines) {
+          expect(fonts.canPrint(line), isTrue,
+              reason: '${locale.languageCode}: the font cannot set "$line"');
+        }
+      }
     });
 
     // The alphabets that do have to print. Nothing past U+00FF reached the page
     // before the font was shipped, so this is the check that it did.
-    for (final locale in ['ru', 'pl', 'tr', 'de', 'fr', 'pt', 'es', 'it', 'en']) {
+    for (final locale in ['ru', 'bg', 'pl', 'tr', 'de', 'fr', 'pt', 'es', 'it', 'sv', 'en']) {
       test('$locale prints', () async {
         final result = laid(Direction.length);
         final pdf = schemePdf(result, MeasurementSystem.metric, fonts,

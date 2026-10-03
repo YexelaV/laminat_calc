@@ -1,0 +1,111 @@
+{
+    "title": "Kalkulačka laminátu",
+    "mm": "mm",
+    "pcs": "ks",
+    "ft": "stopa",
+    "inch": "palec",
+    "choose_units": "Vyberte soustavu měr",
+    "metric_system": "Metrická (mm)",
+    "imperial_system": "Imperiální (stopy a palce)",
+    "settings": "Nastavení",
+    "language": "Jazyk",
+    "room": "Místnost",
+    "length": "Délka",
+    "width": "Šířka",
+    "laminate": "Laminát",
+    "length_mm": "Délka (mm)",
+    "width_mm": "Šířka (mm)",
+    "uneven_walls": "Stěny různé délky",
+    "wall_length": "Délka {number}",
+    "@wall_length": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width": "Šířka {number}",
+    "@wall_width": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_length_mm": "Délka {number} (mm)",
+    "@wall_length_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_width_mm": "Šířka {number} (mm)",
+    "@wall_width_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "wall_diagonal": "Úhlopříčka",
+    "wall_diagonal_mm": "Úhlopříčka (mm)",
+    "walls_do_not_close": "Stěny se neuzavírají",
+    "room_shape": "Tvar místnosti",
+    "shape_rectangle": "Obdélníková",
+    "shape_l": "Tvar L",
+    "overall_length": "Celková délka",
+    "overall_width": "Celková šířka",
+    "overall_length_mm": "Celková délka (mm)",
+    "overall_width_mm": "Celková šířka (mm)",
+    "notch_length": "Délka výřezu",
+    "notch_width": "Šířka výřezu",
+    "notch_length_mm": "Délka výřezu (mm)",
+    "notch_width_mm": "Šířka výřezu (mm)",
+    "notch_does_not_fit": "Výřez nenechává žádnou plochu",
+    "row_steps_at_notch": "Řada {number} prochází rohem výřezu: krajní lamely se řežou do schodu, rozměr podle schématu",
+    "@row_steps_at_notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "tap_corner_to_cut": "Klepněte na roh, který je vyříznutý",
+    "diagonal_not_for_l_shape": "Diagonální pokládka v místnosti tvaru L zatím není podporována",
+    "corner_top_left": "Vlevo nahoře",
+    "corner_top_right": "Vpravo nahoře",
+    "corner_bottom_right": "Vpravo dole",
+    "corner_bottom_left": "Vlevo dole",
+    "pieces_per_package": "V balení (ks)",
+    "laying": "Pokládka",
+    "laying_direction": "Směr pokládky",
+    "along_length": "Po délce",
+    "along_width": "Po šířce",
+    "diagonally": "Diagonálně",
+    "expansion_gap_mm": "Dilatační spára (mm)",
+    "joint_offset": "Převazba spár",
+    "exact_offset": "přesně",
+    "joint_offset_mm": "Posun řad (mm)",
+    "minimal_piece_length": "Min. délka lamely (mm)",
+    "expansion_gap_in": "Dilatační spára (palce)",
+    "joint_offset_in": "Posun řad (palce)",
+    "minimal_piece_length_in": "Min. délka lamely (palce)",
+    "required_field": "Povinné pole",
+    "incorrect_value": "Neplatná hodnota",
+    "minimum": "Nejméně",
+    "maximum": "Nejvýše",
+    "calculate": "Spočítat",
+    "result": "Výsledek výpočtu",
+    "packages_required": "Potřebná balení",
+    "laying_variants": "Varianty pokládky",
+    "panels": "{count, plural, one{lamela} few{lamely} many{lamely} other{lamel}}",
+    "laying_scheme": "Schéma pokládky",
+    "next": "Dále",
+    "no_laying_variants": "Pokládka se zadanými parametry není možná. Zkuste změnit posun řad nebo minimální délku lamely",
+    "variant": "č.{number}",
+    "cut_list": "Seznam řezů",
+    "row": "Řada {number}",
+    "leftovers": "Zbytky",
+    "waste": "Odpad"
+}

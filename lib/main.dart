@@ -40,6 +40,26 @@ class MyApp extends StatefulWidget {
   MyAppState createState() => MyAppState();
 
   static MyAppState? of(BuildContext context) => context.findAncestorStateOfType<MyAppState>();
+
+  /// The saved language, or null when the app no longer offers it.
+  ///
+  /// A language can leave the app between releases and the preference outlives
+  /// it — Chinese went in 1.10.0 and every phone that had chosen it still has
+  /// `locale: zh` on disk. Handing that to [MaterialApp] gives a locale no
+  /// delegate loads, `AppLocalizations.of` then returns null, and the first
+  /// `AppStrings.of(context)` is a null check on nothing: the app does not get
+  /// past its first screen.
+  ///
+  /// So a language that is gone counts as never answered. The user meets the
+  /// picker again on the next launch and chooses from what there is, which is
+  /// one tap and the truth, rather than being moved silently to English.
+  static Locale? savedLocale(String? code) {
+    if (code == null) return null;
+    for (final locale in AppLocalizations.supportedLocales) {
+      if (locale.languageCode == code) return locale;
+    }
+    return null;
+  }
 }
 
 class MyAppState extends State<MyApp> {
@@ -49,9 +69,7 @@ class MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    if (widget.savedLocaleCode != null) {
-      _locale = Locale(widget.savedLocaleCode!);
-    }
+    _locale = MyApp.savedLocale(widget.savedLocaleCode);
   }
 
   void setLocale(Locale locale) {
@@ -66,7 +84,7 @@ class MyAppState extends State<MyApp> {
       // Language first, then the measurement system, each asked once and
       // remembered; a launch that has both answers goes straight to the form.
       routerDelegate: _appRouter.delegate(
-        initialRoutes: widget.savedLocaleCode == null
+        initialRoutes: MyApp.savedLocale(widget.savedLocaleCode) == null
             ? null
             : [
                 if (widget.savedSystem == null)

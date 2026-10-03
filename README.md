@@ -18,7 +18,7 @@ A Flutter app that calculates how much laminate flooring you need for a room and
 - Text cut list: every row plank by plank, reusable leftovers, waste and its share of the material bought
 - Export to PDF: the scheme on a sheet turned to match it, then the cut list; the cut list also shares as plain text
 - Language and measurement system are asked once at first launch, persisted, and changed later from the gear on the form; switching the system rewrites the values already typed
-- Ten languages: English, Russian, German, Spanish, French, Italian, Polish, Portuguese, Turkish, Chinese
+- Twelve languages: English, Russian, German, Spanish, French, Italian, Polish, Portuguese, Turkish, Czech, Swedish, Bulgarian
 - Runs entirely on the device: the manifest declares no permissions, and there is no network, ad or analytics dependency
 
 ## How the calculation works
@@ -50,7 +50,7 @@ lib/
   pages/              # Screens: language selection, unit system, parameters input, result, laying scheme
   router/             # auto_route navigation
   di/                 # get_it / injectable dependency injection
-  l10n/               # Localization (ru template, plus en, de, es, fr, it, pl, pt, tr, zh)
+  l10n/               # Localization (ru template, plus en, de, es, fr, it, pl, pt, tr, cs, sv, bg)
   utils/, widgets/    # Unit conversion, form validators, shared widgets
 test/
   stress_test.dart       # Randomized stress test of algorithm invariants
@@ -82,9 +82,11 @@ assets/
 store/                # Play listing per locale: feature graphic, screenshots, listing.txt, whatsnew.txt
 ```
 
-The PDF is set in Roboto (Apache 2.0, `assets/fonts/LICENSE.txt`), which covers every language the
-app is translated into except Chinese. The cut list is left off the page when the font cannot set it,
-rather than printed as empty boxes; it still shares as text.
+The PDF is set in Roboto (Apache 2.0, `assets/fonts/LICENSE.txt`), which covers Latin and Cyrillic —
+between them every alphabet the app ships in. `PdfFonts.canPrint` is the guard for the day one
+arrives that it does not: the cut list is left off the page rather than printed as empty boxes, and
+is still read on screen and shared as text. A language in a third alphabet means shipping a face for
+it (Noto, OFL, about 200 KB a weight) and picking a face per string.
 
 ## Tech stack
 

@@ -14,6 +14,9 @@ const templateLocale = 'ru';
 const pluralCategories = {
   'ru': {'one', 'few', 'many', 'other'},
   'pl': {'one', 'few', 'many', 'other'},
+  // Czech counts like its neighbours: 1, then 2-4, then everything else,
+  // with a category of its own for the decimals the app never shows.
+  'cs': {'one', 'few', 'many', 'other'},
   'en': {'one', 'other'},
   'de': {'one', 'other'},
   'es': {'one', 'other'},
@@ -21,8 +24,15 @@ const pluralCategories = {
   'it': {'one', 'other'},
   'pt': {'one', 'other'},
   'tr': {'one', 'other'},
-  'zh': {'other'},
+  'bg': {'one', 'other'},
+  'sv': {'one', 'other'},
 };
+
+// The locales written in the same alphabet as the template. Bulgarian is the
+// reason this list exists rather than a `!= 'ru'`: the checks below used to
+// treat any Cyrillic in a translation as a sign that the Russian had been left
+// behind, and for Bulgarian that is simply what the language looks like.
+const cyrillicLocales = {'ru', 'bg'};
 
 final cyrillic = RegExp(r'[Ѐ-ӿ]');
 final pluralCategory = RegExp(r'(?:^|[\s,])(zero|one|two|few|many|other)\s*\{');
@@ -59,8 +69,20 @@ void main() {
     final template = messagesOf(templateLocale);
     for (final locale in locales.where((l) => l != templateLocale)) {
       final messages = messagesOf(locale);
-      // 'mm' is genuinely 'mm' in the Latin-script locales, so only flag a
-      // match that still carries Russian letters.
+      if (cyrillicLocales.contains(locale)) {
+        // A language written in the template's own alphabet cannot be told
+        // apart from it one message at a time: Bulgarian really does say
+        // «Настройки», «Ламинат» and «мм». What a file nobody translated
+        // looks like is every message matching, so that is what this measures.
+        // Seven of Bulgarian's seventy-four coincide; a fifth leaves room for
+        // a few more without letting a copy through.
+        final same = messages.entries.where((e) => e.value == template[e.key]).length;
+        expect(same * 5, lessThan(messages.length),
+            reason: 'app_$locale.arb reads like a copy of the template');
+        continue;
+      }
+      // Everywhere else 'mm' is genuinely 'mm', so only a match that still
+      // carries Russian letters is a message somebody forgot.
       final copied = messages.entries
           .where((e) => e.value == template[e.key] && cyrillic.hasMatch(e.value))
           .map((e) => e.key);
@@ -68,11 +90,11 @@ void main() {
     }
   });
 
-  test('latin-script locales contain no Cyrillic', () {
-    for (final locale in locales.where((l) => l != 'ru' && l != 'zh')) {
+  test('locales not written in Cyrillic contain none', () {
+    for (final locale in locales.where((l) => !cyrillicLocales.contains(l))) {
       for (final entry in messagesOf(locale).entries) {
         expect(cyrillic.hasMatch(entry.value), isFalse,
-            reason: 'app_$locale.arb: "${entry.key}" mixes Cyrillic into Latin script');
+            reason: 'app_$locale.arb: "${entry.key}" mixes Cyrillic into another script');
       }
     }
   });

@@ -26,6 +26,11 @@ import '../utils/units.dart';
 const double _fill = 0.66;
 const double _labelSize = 11;
 
+/// Clearance kept around every measurement, in pixels. Two numbers that merely
+/// do not overlap still read as one number — '1800' beside '1200' is '18001200'
+/// — and the walls of a cut-away corner put two of them side by side.
+const double _labelGap = 6;
+
 /// Material's smallest comfortable target. The outline is 99 px tall, so four
 /// of these at its corners clear each other with room to spare.
 const double _cornerTarget = 44;
@@ -258,22 +263,45 @@ class _RoomSketchPainter extends CustomPainter {
     // room: in a badly out-of-square room the middle is not reliably on the
     // other side of the wall, and the label lands back on the drawing.
     final normals = inwardNormals([for (final p in corners) Point(p.dx, p.dy)]);
-    final taken = <Rect>[];
+    final drawn = [for (final corner in corners) px(corner)];
+    // The corner handles are drawn last but claimed first: a measurement that
+    // lands on one reads as a number with a dot through it, and the handle is
+    // the control the caption underneath tells the user to press.
+    final taken = <Rect>[
+      if (cutCorner != null)
+        for (final corner in RoomCorner.values)
+          Rect.fromCircle(center: place(_cornerOf(corner, place.bounds)), radius: 8)
+              .inflate(_labelGap),
+    ];
     for (var i = 0; i < corners.length && i < labels.length; i++) {
       final middle = (px(corners[i]) + px(corners[(i + 1) % corners.length])) / 2;
       final outward = -Offset(normals[i].x, normals[i].y);
       var at = middle + outward * 15;
       // The two walls of a cut-away corner are short and meet each other, so
-      // their middles are a few pixels apart and their measurements land on
-      // top of one another. Each steps further out along its own wall until
-      // it is clear of the ones already written — out, so that it still reads
-      // as belonging to its wall rather than to a neighbour.
-      for (var step = 0; step < 4; step++) {
-        final box = _box(labels[i], at).inflate(2);
-        if (!taken.any(box.overlaps)) break;
-        at += outward * 10;
+      // their middles are a few pixels apart: left where they land, their
+      // measurements sit on one another and on the wall running past. Each
+      // steps further out along its own wall until it is clear of both — out,
+      // so that it still reads as belonging to the wall it came from rather
+      // than to a neighbour.
+      //
+      // Pushed out, but never off the drawing. The sketch has a fixed height
+      // and the form goes on underneath it, so a measurement nudged past the
+      // edge lands on whatever is written there — worse than one resting
+      // against its own wall. Where there is nowhere clear to go the last
+      // position still on the drawing is the one kept.
+      var best = at;
+      for (var step = 0; step < 6; step++) {
+        final box = _box(labels[i], at).inflate(_labelGap);
+        if (!(Offset.zero & size).contains(box.topLeft) ||
+            !(Offset.zero & size).contains(box.bottomRight)) {
+          break;
+        }
+        best = at;
+        if (!taken.any(box.overlaps) && !_crossesOutline(box, drawn)) break;
+        at += outward * 8;
       }
-      taken.add(_box(labels[i], at));
+      at = best;
+      taken.add(_box(labels[i], at).inflate(_labelGap));
       _text(canvas, labels[i], at, colour);
     }
 
@@ -335,6 +363,59 @@ class _RoomSketchPainter extends CustomPainter {
     for (var at = 0.0; at < total; at += dash + gap) {
       canvas.drawLine(from + step * at, from + step * math.min(at + dash, total), paint);
     }
+  }
+
+  /// Whether any wall runs through [box].
+  ///
+  /// A measurement written across a wall is the one thing on this drawing that
+  /// cannot be read at all, and the walls of a cut-away corner are short
+  /// enough that one wall's label reaches the next.
+  bool _crossesOutline(Rect box, List<Offset> drawn) {
+    for (var i = 0; i < drawn.length; i++) {
+      if (_wallCrosses(drawn[i], drawn[(i + 1) % drawn.length], box)) return true;
+    }
+    return false;
+  }
+
+  /// Whether the segment from [a] to [b] meets [box], by clipping the segment
+  /// to each of the box's four sides in turn and seeing whether anything of it
+  /// is left (Liang–Barsky).
+  bool _wallCrosses(Offset a, Offset b, Rect box) {
+    var from = 0.0;
+    var to = 1.0;
+    final dx = b.dx - a.dx;
+    final dy = b.dy - a.dy;
+    for (var side = 0; side < 4; side++) {
+      final double towards;
+      final double room;
+      if (side == 0) {
+        towards = -dx;
+        room = a.dx - box.left;
+      } else if (side == 1) {
+        towards = dx;
+        room = box.right - a.dx;
+      } else if (side == 2) {
+        towards = -dy;
+        room = a.dy - box.top;
+      } else {
+        towards = dy;
+        room = box.bottom - a.dy;
+      }
+      if (towards == 0) {
+        // Parallel to this side: either wholly inside it or wholly past it.
+        if (room < 0) return false;
+        continue;
+      }
+      final at = room / towards;
+      if (towards < 0) {
+        if (at > to) return false;
+        if (at > from) from = at;
+      } else {
+        if (at < from) return false;
+        if (at < to) to = at;
+      }
+    }
+    return true;
   }
 
   TextPainter _layout(String text, Color colour) => TextPainter(

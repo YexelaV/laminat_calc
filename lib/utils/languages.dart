@@ -18,5 +18,7 @@ const appLanguages = [
   AppLanguage('pl', 'assets/pl.svg', 'Polski'),
   AppLanguage('it', 'assets/it.svg', 'Italiano'),
   AppLanguage('tr', 'assets/tr.svg', 'Türkçe'),
-  AppLanguage('zh', 'assets/cn.svg', '中文'),
+  AppLanguage('sv', 'assets/se.svg', 'Svenska'),
+  AppLanguage('cs', 'assets/cz.svg', 'Čeština'),
+  AppLanguage('bg', 'assets/bg.svg', 'Български'),
 ];

@@ -21,9 +21,15 @@ const double _minTextPt = 3.5;
 ///
 /// The pdf package cannot reach the app's fonts, and its built-in Type 1 ones
 /// carry no glyph past U+00FF and throw rather than substitute — which is why
-/// Roboto is shipped as an asset. It covers every alphabet the app is
-/// translated into except Chinese; [PdfFonts.canPrint] is how the cut list finds
-/// that out before it is written rather than after.
+/// Roboto is shipped as an asset. It covers Latin and Cyrillic, which between
+/// them is every alphabet the app ships in.
+///
+/// [PdfFonts.canPrint] is the guard for the day one arrives that it does not.
+/// Rather than set a page of empty boxes, the cut list is left off and the
+/// user still reads it on screen and shares it as text, where the device's own
+/// fonts set it. A language in a third alphabet means shipping a face for it —
+/// Noto under the Open Font Licence, about 200 KB a weight — and teaching this
+/// class to pick a face per string.
 class PdfFonts {
   final pw.Font plain;
   final pw.Font bold;
