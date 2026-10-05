@@ -98,6 +98,51 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shape_l => 'L-förmig';
 
   @override
+  String get shape_chamfer => 'Ecke abgeschrägt';
+
+  @override
+  String get shape_chamfer_pair => 'Zwei Abschrägungen';
+
+  @override
+  String get shape_t => 'T-förmig';
+
+  @override
+  String shoulder(int number) {
+    return 'Schnitt $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Schnitt $number (mm)';
+  }
+
+  @override
+  String get chamfer_leg => 'Abschrägung (45°)';
+
+  @override
+  String get chamfer_leg_mm => '45°-Abschrägung (mm)';
+
+  @override
+  String notch(int number) {
+    return 'Aussparung $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Aussparung $number (mm)';
+  }
+
+  @override
+  String get cut_depth => 'Tiefe der Aussparungen';
+
+  @override
+  String get cut_depth_mm => 'Tiefe der Aussparungen (mm)';
+
+  @override
+  String get tap_wall_to_cut =>
+      'Auf eine Wand tippen, um die Aussparungen zu versetzen';
+
+  @override
   String get overall_length => 'Gesamtlänge';
 
   @override
@@ -147,6 +192,18 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'Unten links';
+
+  @override
+  String get wall_top => 'Obere Wand';
+
+  @override
+  String get wall_right => 'Rechte Wand';
+
+  @override
+  String get wall_bottom => 'Untere Wand';
+
+  @override
+  String get wall_left => 'Linke Wand';
 
   @override
   String get pieces_per_package => 'Stück pro Paket';

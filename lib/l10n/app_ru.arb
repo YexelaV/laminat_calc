@@ -54,6 +54,46 @@
     "room_shape": "Форма помещения",
     "shape_rectangle": "Прямоугольное",
     "shape_l": "Г-образное",
+    "shape_chamfer": "Срезанный угол",
+    "shape_chamfer_pair": "Два среза",
+    "shape_t": "Т-образное",
+    "shoulder": "Срез {number}",
+    "@shoulder": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "shoulder_mm": "Срез {number} (мм)",
+    "@shoulder_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "chamfer_leg": "Срез (45°)",
+    "chamfer_leg_mm": "Срез под 45° (мм)",
+    "notch": "Вырез {number}",
+    "@notch": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_mm": "Вырез {number} (мм)",
+    "@notch_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "cut_depth": "Глубина вырезов",
+    "cut_depth_mm": "Глубина вырезов (мм)",
+    "tap_wall_to_cut": "Коснитесь стены, чтобы перенести вырезы",
     "overall_length": "Общая длина",
     "overall_width": "Общая ширина",
     "overall_length_mm": "Общая длина (мм)",
@@ -77,6 +117,10 @@
     "corner_top_right": "Верхний правый",
     "corner_bottom_right": "Нижний правый",
     "corner_bottom_left": "Нижний левый",
+    "wall_top": "Верхняя стена",
+    "wall_right": "Правая стена",
+    "wall_bottom": "Нижняя стена",
+    "wall_left": "Левая стена",
     "pieces_per_package": "В упаковке (штук)",
     "laying": "Укладка",
     "laying_direction": "Направление укладки",

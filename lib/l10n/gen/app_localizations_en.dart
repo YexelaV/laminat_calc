@@ -98,6 +98,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shape_l => 'L-shaped';
 
   @override
+  String get shape_chamfer => 'Cut corner';
+
+  @override
+  String get shape_chamfer_pair => 'Two cut corners';
+
+  @override
+  String get shape_t => 'T-shaped';
+
+  @override
+  String shoulder(int number) {
+    return 'Cut $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Cut $number (mm)';
+  }
+
+  @override
+  String get chamfer_leg => 'Cut (45°)';
+
+  @override
+  String get chamfer_leg_mm => '45° cut (mm)';
+
+  @override
+  String notch(int number) {
+    return 'Notch $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Notch $number (mm)';
+  }
+
+  @override
+  String get cut_depth => 'Notch depth';
+
+  @override
+  String get cut_depth_mm => 'Notch depth (mm)';
+
+  @override
+  String get tap_wall_to_cut => 'Tap a wall to move the cuts';
+
+  @override
   String get overall_length => 'Overall length';
 
   @override
@@ -147,6 +191,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'Bottom left';
+
+  @override
+  String get wall_top => 'Top wall';
+
+  @override
+  String get wall_right => 'Right wall';
+
+  @override
+  String get wall_bottom => 'Bottom wall';
+
+  @override
+  String get wall_left => 'Left wall';
 
   @override
   String get pieces_per_package => 'Pieces per package';

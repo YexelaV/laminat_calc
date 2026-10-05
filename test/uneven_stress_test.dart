@@ -11,6 +11,8 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'polygon.dart';
+
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/room_shape.dart';
@@ -19,16 +21,6 @@ import 'package:floor_calculator/scheme_geometry.dart';
 import 'package:floor_calculator/utils/units.dart';
 
 final violations = <String>[];
-
-double _area(List<Offset> polygon) {
-  var sum = 0.0;
-  for (var i = 0; i < polygon.length; i++) {
-    final from = polygon[i];
-    final to = polygon[(i + 1) % polygon.length];
-    sum += from.dx * to.dy - to.dx * from.dy;
-  }
-  return sum.abs() / 2;
-}
 
 /// How far inside [polygon] a point is; negative when it is out.
 double _depthInside(Offset point, List<Offset> polygon) =>
@@ -161,7 +153,7 @@ void checkResult(String cfg, Calculation c, Result r, RowPlan plan) {
 
   // And the rows between them still have to reach most of the floor, or the
   // walk has lost a strip somewhere.
-  final floor = _area(floorPolygon);
+  final floor = polygonArea(floorPolygon);
   final covered = r.lines.fold<double>(
       0, (s, l) => s + plan.lengths[l.number] * plan.widths[l.number].toDouble());
   if (covered < floor * 0.9) {

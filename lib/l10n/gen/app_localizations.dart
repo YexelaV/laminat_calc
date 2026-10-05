@@ -280,6 +280,78 @@ abstract class AppLocalizations {
   /// **'Г-образное'**
   String get shape_l;
 
+  /// No description provided for @shape_chamfer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срезанный угол'**
+  String get shape_chamfer;
+
+  /// No description provided for @shape_chamfer_pair.
+  ///
+  /// In ru, this message translates to:
+  /// **'Два среза'**
+  String get shape_chamfer_pair;
+
+  /// No description provided for @shape_t.
+  ///
+  /// In ru, this message translates to:
+  /// **'Т-образное'**
+  String get shape_t;
+
+  /// No description provided for @shoulder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез {number}'**
+  String shoulder(int number);
+
+  /// No description provided for @shoulder_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез {number} (мм)'**
+  String shoulder_mm(int number);
+
+  /// No description provided for @chamfer_leg.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез (45°)'**
+  String get chamfer_leg;
+
+  /// No description provided for @chamfer_leg_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез под 45° (мм)'**
+  String get chamfer_leg_mm;
+
+  /// No description provided for @notch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вырез {number}'**
+  String notch(int number);
+
+  /// No description provided for @notch_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вырез {number} (мм)'**
+  String notch_mm(int number);
+
+  /// No description provided for @cut_depth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Глубина вырезов'**
+  String get cut_depth;
+
+  /// No description provided for @cut_depth_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Глубина вырезов (мм)'**
+  String get cut_depth_mm;
+
+  /// No description provided for @tap_wall_to_cut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Коснитесь стены, чтобы перенести вырезы'**
+  String get tap_wall_to_cut;
+
   /// No description provided for @overall_length.
   ///
   /// In ru, this message translates to:
@@ -375,6 +447,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Нижний левый'**
   String get corner_bottom_left;
+
+  /// No description provided for @wall_top.
+  ///
+  /// In ru, this message translates to:
+  /// **'Верхняя стена'**
+  String get wall_top;
+
+  /// No description provided for @wall_right.
+  ///
+  /// In ru, this message translates to:
+  /// **'Правая стена'**
+  String get wall_right;
+
+  /// No description provided for @wall_bottom.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нижняя стена'**
+  String get wall_bottom;
+
+  /// No description provided for @wall_left.
+  ///
+  /// In ru, this message translates to:
+  /// **'Левая стена'**
+  String get wall_left;
 
   /// No description provided for @pieces_per_package.
   ///

@@ -5,6 +5,7 @@
 // find.text. Now it is arithmetic, and arithmetic is worth checking directly —
 // a golden can only say the picture changed, not which plank moved.
 import 'dart:math' as math;
+import 'dart:ui' show Rect;
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -549,4 +550,228 @@ void main() {
       expect(results, isEmpty);
     });
   });
+
+  // What a room with more than one corner cut away asks of the drawing,
+  // before anything is built on it.
+  //
+  // [clipToFloor] takes the inside corners out of the half-plane pass and puts
+  // each back as a quarter-plane, and says of that step that what it is taken
+  // from is convex. With one cut that holds. With two it cannot: the first cut
+  // leaves an L, and the second is handed that L. Whether the apex rule
+  // survives it is the question a T-shaped room rests on, so it is asked here
+  // rather than discovered from a drawing later.
+  //
+  // Asked of the whole family and not of the T alone. A cut corner eats into
+  // one *end* of every row that reaches it and never into the middle, so any
+  // set of cut corners leaves each row one unbroken run — the T, the Z of two
+  // opposite cuts, the U lying on its side, all four at once. They cost one
+  // list each here and they are what the shape class will be able to make.
+  group('a room with several corners cut away', () {
+    const length = 4000.0;
+    const width = 3000.0;
+
+    // The cut at each corner, as the two legs a tape measure gives. All
+    // different, so that no cut can stand in for another.
+    const legs = {
+      RoomCorner.nearLeft: Offset(1200, 1000),
+      RoomCorner.nearRight: Offset(1300, 900),
+      RoomCorner.farRight: Offset(1100, 800),
+      RoomCorner.farLeft: Offset(900, 700),
+    };
+
+    /// The outline of the bounding rectangle with [cut] corners taken off,
+    /// walked from the near left corner round. An untouched corner is one
+    /// point; a cut one is the three the cut leaves in its place.
+    List<Offset> outlineOf(Set<RoomCorner> cut) {
+      final points = <Offset>[];
+      for (final corner in RoomCorner.values) {
+        final leg = legs[corner]!;
+        final a = leg.dx;
+        final b = leg.dy;
+        if (!cut.contains(corner)) {
+          points.add(cornerAt(corner, length, width));
+          continue;
+        }
+        switch (corner) {
+          case RoomCorner.nearLeft:
+            points.addAll([Offset(0, b), Offset(a, b), Offset(a, 0)]);
+            break;
+          case RoomCorner.nearRight:
+            points.addAll(
+                [Offset(length - a, 0), Offset(length - a, b), Offset(length, b)]);
+            break;
+          case RoomCorner.farRight:
+            points.addAll([
+              Offset(length, width - b),
+              Offset(length - a, width - b),
+              Offset(length - a, width)
+            ]);
+            break;
+          case RoomCorner.farLeft:
+            points.addAll(
+                [Offset(a, width), Offset(a, width - b), Offset(0, width - b)]);
+            break;
+        }
+      }
+      return points;
+    }
+
+    /// The rectangle each cut takes out of the bounding box.
+    Rect holeOf(RoomCorner corner) {
+      final leg = legs[corner]!;
+      final a = leg.dx;
+      final b = leg.dy;
+      switch (corner) {
+        case RoomCorner.nearLeft:
+          return Rect.fromLTRB(0, 0, a, b);
+        case RoomCorner.nearRight:
+          return Rect.fromLTRB(length - a, 0, length, b);
+        case RoomCorner.farRight:
+          return Rect.fromLTRB(length - a, width - b, length, width);
+        case RoomCorner.farLeft:
+          return Rect.fromLTRB(0, width - b, a, width);
+      }
+    }
+
+    double overlap(Rect a, Rect b) {
+      final w = math.min(a.right, b.right) - math.max(a.left, b.left);
+      final h = math.min(a.bottom, b.bottom) - math.max(a.top, b.top);
+      return w <= 0 || h <= 0 ? 0.0 : w * h;
+    }
+
+    /// How much of [plank] the room leaves, worked out without going anywhere
+    /// near the code under test: the bounding box less each cut. The cuts sit
+    /// in different corners and never overlap, so they simply subtract.
+    double shared(Rect plank, Set<RoomCorner> cut) {
+      var area = overlap(plank, const Rect.fromLTRB(0, 0, length, width));
+      for (final corner in cut) {
+        area -= overlap(plank, holeOf(corner));
+      }
+      return area;
+    }
+
+    // Every arrangement the shape class will be able to make, named the way a
+    // fitter would recognise it.
+    const families = {
+      'an L': {RoomCorner.farRight},
+      'a T': {RoomCorner.nearLeft, RoomCorner.nearRight},
+      'a U on its side': {RoomCorner.nearLeft, RoomCorner.farLeft},
+      'a Z': {RoomCorner.nearLeft, RoomCorner.farRight},
+      'three cut': {RoomCorner.nearLeft, RoomCorner.nearRight, RoomCorner.farLeft},
+      'all four cut': {
+        RoomCorner.nearLeft,
+        RoomCorner.nearRight,
+        RoomCorner.farRight,
+        RoomCorner.farLeft
+      },
+    };
+
+    test('a plank across both steps is cut to both corners at once', () {
+      // The T, pinned exactly. The two cuts are 1000 and 900 deep, so a row
+      // 190 wide laid from 850 reaches over both of them at once — the case
+      // the convexity argument in [clipToFloor] does not cover. It comes back
+      // as one ring of eight points, a staircase, with both apexes put back.
+      final floor = LaidFloor(outlineOf(const {
+        RoomCorner.nearLeft,
+        RoomCorner.nearRight,
+      }));
+      expect(floor.reflex.length, 2);
+      expect(
+          clipToFloor(const [
+            Offset(500, 850),
+            Offset(3500, 850),
+            Offset(3500, 1040),
+            Offset(500, 1040),
+          ], floor),
+          [
+            const Offset(500, 1000),
+            const Offset(1200, 1000),
+            const Offset(1200, 850),
+            const Offset(2700, 850),
+            const Offset(2700, 900),
+            const Offset(3500, 900),
+            const Offset(3500, 1040),
+            const Offset(500, 1040),
+          ]);
+    });
+
+    families.forEach((name, cut) {
+      test('$name: every plank is cut to the area the cuts leave it', () {
+        final floor = LaidFloor(outlineOf(cut));
+        expect(floor.reflex.length, cut.length,
+            reason: 'one inside corner per cut');
+        // Rows at every height a row can sit at and plank ends at every x a
+        // cut can land on: inside a cut, level with its wall, and past it.
+        const tops = [-100, 0, 100, 710, 800, 900, 1000, 1090, 2190, 2300, 2950];
+        const lefts = [-200, 0, 500, 900, 1200, 1250, 2650, 2700, 2900, 3900];
+        const widths = [190, 600, 1200, 3000, 4400];
+        for (final top in tops) {
+          for (final left in lefts) {
+            for (final w in widths) {
+              final plank = Rect.fromLTRB(
+                  left.toDouble(), top.toDouble(), (left + w).toDouble(), top + 190.0);
+              final piece = clipToFloor([
+                plank.topLeft,
+                plank.topRight,
+                plank.bottomRight,
+                plank.bottomLeft,
+              ], floor);
+              expect(twiceArea(piece).abs() / 2, closeTo(shared(plank, cut), 1e-6),
+                  reason: '$name, plank $plank');
+            }
+          }
+        }
+      });
+
+      test('$name: no cut plank strays outside the floor, and none doubles back',
+          () {
+        final floor = LaidFloor(outlineOf(cut));
+        for (final top in [710, 800, 900, 1000, 2190, 2300]) {
+          for (final left in [-200, 500, 900, 1250, 2650, 3900]) {
+            for (final w in [190, 1200, 4400]) {
+              final plank = Rect.fromLTRB(
+                  left.toDouble(), top.toDouble(), (left + w).toDouble(), top + 190.0);
+              final piece = clipToFloor([
+                plank.topLeft,
+                plank.topRight,
+                plank.bottomRight,
+                plank.bottomLeft,
+              ], floor);
+              if (piece.isEmpty) continue;
+              expect(piece.length, greaterThanOrEqualTo(3),
+                  reason: '$name, plank $plank');
+              for (final point in piece) {
+                expect(floor.insideDepth(point), greaterThanOrEqualTo(-1e-6),
+                    reason: '$name, plank $plank at $point');
+              }
+              // A ring that crossed itself would hand back a shoelace smaller
+              // than the piece it stands for, and the area check above only
+              // knows the total. Two points on top of each other are the way
+              // it happens here, so they are what is looked for.
+              for (var i = 0; i < piece.length; i++) {
+                final next = piece[(i + 1) % piece.length];
+                expect((piece[i] - next).distance, greaterThan(1e-6),
+                    reason: '$name, plank $plank repeats ${piece[i]}');
+              }
+            }
+          }
+        }
+      });
+    });
+  });
+}
+
+/// The corner of a [length] by [width] rectangle that [corner] names, with the
+/// near left one at the origin — the same way round [RoomOutline] lists them.
+Offset cornerAt(RoomCorner corner, double length, double width) {
+  switch (corner) {
+    case RoomCorner.nearLeft:
+      return Offset.zero;
+    case RoomCorner.nearRight:
+      return Offset(length, 0);
+    case RoomCorner.farRight:
+      return Offset(length, width);
+    case RoomCorner.farLeft:
+      return Offset(0, width);
+  }
 }

@@ -128,8 +128,13 @@ class _InchFieldState extends State<InchField> {
           child: InputDecorator(
             decoration: appInputDecoration().copyWith(
               // '15/16' plus the arrow leave nothing to spare in a box this
-              // narrow, so the picker keeps only the padding it needs.
-              contentPadding: EdgeInsets.fromLTRB(4, 12, 0, 12),
+              // narrow, so the picker keeps only the padding it needs across.
+              // Down, it keeps exactly what the box beside it keeps: the two
+              // are one value on one line, and 8 px more under the fraction
+              // than under the inches stood the picker 8 px taller than every
+              // other box on the form and dropped its fraction below the
+              // number it belongs to.
+              contentPadding: EdgeInsets.fromLTRB(4, 8, 0, 8),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(

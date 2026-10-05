@@ -1,21 +1,22 @@
 // The imperial form is the only path where what the user enters is not what the
-// calculation stores. This drives the room screen the way a US installer would
-// and checks the millimetres that come out the other end.
+// calculation stores. This drives the room and laminate screens the way a US
+// installer would and checks the millimetres that come out the other end.
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
-import 'package:floor_calculator/pages/room_and_laminate_parameters_screen.dart';
+import 'package:floor_calculator/pages/laminate_parameters_screen.dart';
+import 'package:floor_calculator/pages/room_parameters_screen.dart';
 import 'package:floor_calculator/utils/units.dart';
 
 void main() {
   late CalculateCubit cubit;
 
-  // Field order down the imperial form: room length feet and inches, room
-  // width feet and inches, plank length, plank width, planks per pack. Each
-  // inch field has a fraction picker, in the same order.
+  // Field order down the room screen: length feet and inches, width feet and
+  // inches. Down the laminate screen: plank length, plank width, planks per
+  // pack. Each inch field has a fraction picker, in the same order.
   Finder inches(int index) => find.byType(TextField).at(index);
   Finder fraction(int index) => find.byType(DropdownButton<int>).at(index);
 
@@ -33,7 +34,28 @@ void main() {
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const RoomAndLaminateParametersScreen(),
+        home: const RoomParametersScreen(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+  }
+
+  // The laminate moved to a screen of its own, so its boxes are reached on
+  // their own too — with the same cubit, which is what carries the answers
+  // from one screen to the next in the running app.
+  Future<void> pumpLaminate(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(560, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    cubit = CalculateCubit(system: MeasurementSystem.imperial);
+    addTearDown(cubit.close);
+    await tester.pumpWidget(BlocProvider<CalculateCubit>.value(
+      value: cubit,
+      child: MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const LaminateParametersScreen(),
       ),
     ));
     await tester.pumpAndSettle();
@@ -53,9 +75,12 @@ void main() {
     await pick(tester, 0, '1/2');
     // 12'-4 1/2'' is 148.5 inches.
     expect(cubit.state.roomLength, inchToMm(148.5));
+  });
 
-    await tester.enterText(inches(4), '47');
-    await pick(tester, 2, '7/8');
+  testWidgets('a plank is typed in inches and stored in millimetres', (tester) async {
+    await pumpLaminate(tester);
+    await tester.enterText(inches(0), '47');
+    await pick(tester, 0, '7/8');
     expect(cubit.state.laminateLength, inchToMm(47.875));
   });
 
@@ -69,16 +94,16 @@ void main() {
   });
 
   testWidgets('a fraction inside the bounds is accepted, one outside is not', (tester) async {
-    await pump(tester);
+    await pumpLaminate(tester);
     // The shortest plank is 300mm, which is 11 13/16'' once rounded up.
-    await tester.enterText(inches(4), '11');
-    await pick(tester, 2, '13/16');
+    await tester.enterText(inches(0), '11');
+    await pick(tester, 0, '13/16');
     expect(cubit.state.laminateLength, 300);
     // The bound, not the echo above the field, which shows the same number
     // whenever the value is accepted.
     expect(find.textContaining('Minimum 11 13/16'), findsNothing, reason: 'no bound message');
 
-    await pick(tester, 2, '3/4');
+    await pick(tester, 0, '3/4');
     expect(find.textContaining('Minimum 11 13/16'), findsOneWidget, reason: 'below the minimum');
     expect(cubit.state.laminateLength, 300, reason: 'a rejected value is not stored');
   });

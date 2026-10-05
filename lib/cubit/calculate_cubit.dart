@@ -50,16 +50,29 @@ class CalculateCubit extends Cubit<CalculateState> {
     emit(state.copyWith(notchCorner: notchCorner));
   }
 
-  /// A 45° layout in a room with a corner cut away is not supported, so
-  /// choosing that room un-chooses it.
+  void setNotchLength2(int notchLength2) {
+    emit(state.copyWith(notchLength2: notchLength2));
+  }
+
+  void setCutWall(RoomWall cutWall) {
+    emit(state.copyWith(cutWall: cutWall));
+  }
+
+  /// A 45° layout in a room with a corner notched out of it is not supported,
+  /// so choosing such a room un-chooses it.
   ///
   /// Here rather than on the laying screen. The direction is read by the row
   /// plan, by the field validators and by the drawing, and a screen that only
   /// greyed the button out would leave all three holding the old answer.
+  ///
+  /// A chamfered room is convex and keeps the 45° layout, so switching from an
+  /// L to a chamfer leaves the direction alone — the user who had it turned off
+  /// has to turn it back on, which is the quieter of the two surprises.
   void setRoomKind(RoomKind roomKind) {
     emit(state.copyWith(
       roomKind: roomKind,
-      direction: roomKind == RoomKind.lShaped && state.direction == Direction.diagonal
+      direction: roomKind.cutKind == CornerCut.notch &&
+              state.direction == Direction.diagonal
           ? Direction.length
           : state.direction,
     ));

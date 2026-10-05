@@ -465,10 +465,19 @@ double _reservedOutside(List<SchemeLabel> labels, LaidFloor floor, int wall) {
 /// A convex floor takes exactly the path it always took, wall by wall and in
 /// order, so every drawing made before this keeps every coordinate it had.
 ///
-/// One polygon out, never two. The piece taken away is a quarter-plane and
-/// what it is taken from is convex, so what is left is one unbroken ring: a
-/// plank in a room with a cut-away corner comes back as a smaller plank or as
-/// an L, and that is why [PlankShape.outline] is a single list of points.
+/// One polygon out, never two, however many corners are cut. A cut corner sits
+/// in a corner of the room's own bounding box, so the quarter-plane it takes
+/// away reaches in from the outside and bites an *end* off a plank; it cannot
+/// reach the middle and part the plank in two. Several cuts bite several ends,
+/// and what is left is still one unbroken ring — which is why
+/// [PlankShape.outline] is a single list of points.
+///
+/// The cuts are applied one after another, so every cut after the first is
+/// handed a polygon the one before it made concave. That is outside what the
+/// argument in [_withoutCorner] covers, and it is checked rather than assumed:
+/// test/scheme_geometry_test.dart walks a grid of planks over rooms with two,
+/// three and four corners cut away and holds each cut plank against the area
+/// arithmetic says it should have.
 List<Offset> clipToFloor(List<Offset> polygon, LaidFloor floor) {
   var out = polygon;
   final skip = <int>{};
@@ -517,7 +526,7 @@ List<Offset> _clipHalfPlane(List<Offset> polygon, double Function(Offset) depth)
 /// already there, so it has to be smaller than anything anyone would draw.
 const double _crumbMm = 1e-6;
 
-/// [polygon], convex, with the quarter-plane beyond a corner cut away.
+/// [polygon] with the quarter-plane beyond a corner cut away.
 ///
 /// The corner is at [apex] and its two walls run off it with inward normals
 /// [normalA] and [normalB]; what goes is everything beyond both at once.
@@ -525,8 +534,14 @@ const double _crumbMm = 1e-6;
 /// The ring is walked once, keeping what the cut leaves and adding a point
 /// wherever the walk crosses one of the two walls. The corner's own tip is put
 /// back wherever the walk leaves on one wall and comes back on the other,
-/// which is the only way it can be reached: between two crossings of the
-/// *same* wall the boundary is a straight chord and the tip is not on it.
+/// which is the only way it can be reached on a convex [polygon]: between two
+/// crossings of the *same* wall the boundary is a straight chord and the tip
+/// is not on it.
+///
+/// A polygon an earlier cut has already made concave is outside that argument,
+/// and the rule holds there anyway — see [clipToFloor] for which test says so
+/// and how. Written out because the two statements are easy to confuse: the
+/// *reasoning* here needs convexity, the *code* turns out not to.
 ///
 /// Landing exactly on a wall is the ordinary case here, not a rare one — a row
 /// boundary or a plank end sits on the wall of the cut as often as not — so

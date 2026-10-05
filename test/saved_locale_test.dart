@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
-import 'package:floor_calculator/pages/room_and_laminate_parameters_screen.dart';
+import 'package:floor_calculator/pages/room_parameters_screen.dart';
 import 'package:floor_calculator/pages/start_screen.dart';
 
 void main() {
@@ -46,7 +46,9 @@ void main() {
 
   testWidgets('a saved language that is still here goes straight to the form', (tester) async {
     await pump(tester, 'de');
-    expect(find.byType(RoomAndLaminateParametersScreen), findsOneWidget);
-    expect(find.text('Raumform'), findsOneWidget);
+    expect(find.byType(RoomParametersScreen), findsOneWidget);
+    // Any German word off the form will do; this one is its title, which is
+    // the last thing on the screen likely to be reworded.
+    expect(find.text('Raum'), findsOneWidget);
   });
 }

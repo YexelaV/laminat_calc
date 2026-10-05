@@ -30,10 +30,16 @@ class _$AppRouter extends RootStackRouter {
         child: MeasurementSystemScreen(),
       );
     },
-    RoomAndLaminateParametersRoute.name: (routeData) {
+    RoomParametersRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: RoomAndLaminateParametersScreen(),
+        child: RoomParametersScreen(),
+      );
+    },
+    LaminateParametersRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: LaminateParametersScreen(),
       );
     },
     LayingParametersRoute.name: (routeData) {
@@ -69,8 +75,12 @@ class _$AppRouter extends RootStackRouter {
           path: '/measurement-system-screen',
         ),
         RouteConfig(
-          RoomAndLaminateParametersRoute.name,
-          path: '/room-and-laminate-parameters-screen',
+          RoomParametersRoute.name,
+          path: '/room-parameters-screen',
+        ),
+        RouteConfig(
+          LaminateParametersRoute.name,
+          path: '/laminate-parameters-screen',
         ),
         RouteConfig(
           LayingParametersRoute.name,
@@ -124,15 +134,27 @@ class MeasurementSystemRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [RoomAndLaminateParametersScreen]
-class RoomAndLaminateParametersRoute extends PageRouteInfo<void> {
-  const RoomAndLaminateParametersRoute()
+/// [RoomParametersScreen]
+class RoomParametersRoute extends PageRouteInfo<void> {
+  const RoomParametersRoute()
       : super(
-          RoomAndLaminateParametersRoute.name,
-          path: '/room-and-laminate-parameters-screen',
+          RoomParametersRoute.name,
+          path: '/room-parameters-screen',
         );
 
-  static const String name = 'RoomAndLaminateParametersRoute';
+  static const String name = 'RoomParametersRoute';
+}
+
+/// generated route for
+/// [LaminateParametersScreen]
+class LaminateParametersRoute extends PageRouteInfo<void> {
+  const LaminateParametersRoute()
+      : super(
+          LaminateParametersRoute.name,
+          path: '/laminate-parameters-screen',
+        );
+
+  static const String name = 'LaminateParametersRoute';
 }
 
 /// generated route for

@@ -12,6 +12,14 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The pack count and the waste are properties of the calculation rather
+    // than of the variant the user picks, so the first variant is as good as
+    // any to read them off — but only if there is one.
+    //
+    // The laying screen already refuses to open this route with nothing to
+    // show, reporting "no laying variants" instead. This states that invariant
+    // where it is relied on rather than leaving it two files away.
+    assert(result.isNotEmpty, 'the result screen has nothing to show');
     final packs = totalPacks(result[0]);
     return AppBackground(
         child: Scaffold(

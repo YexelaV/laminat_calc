@@ -98,6 +98,50 @@ class AppLocalizationsPl extends AppLocalizations {
   String get shape_l => 'W kształcie litery L';
 
   @override
+  String get shape_chamfer => 'Ścięty narożnik';
+
+  @override
+  String get shape_chamfer_pair => 'Dwa ścięcia';
+
+  @override
+  String get shape_t => 'W kształcie litery T';
+
+  @override
+  String shoulder(int number) {
+    return 'Ścięcie $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Ścięcie $number (mm)';
+  }
+
+  @override
+  String get chamfer_leg => 'Ścięcie (45°)';
+
+  @override
+  String get chamfer_leg_mm => 'Ścięcie pod 45° (mm)';
+
+  @override
+  String notch(int number) {
+    return 'Wcięcie $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Wcięcie $number (mm)';
+  }
+
+  @override
+  String get cut_depth => 'Głębokość wcięć';
+
+  @override
+  String get cut_depth_mm => 'Głębokość wcięć (mm)';
+
+  @override
+  String get tap_wall_to_cut => 'Dotknij ściany, aby przenieść wcięcia';
+
+  @override
   String get overall_length => 'Długość całkowita';
 
   @override
@@ -147,6 +191,18 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'Lewy dolny';
+
+  @override
+  String get wall_top => 'Górna ściana';
+
+  @override
+  String get wall_right => 'Prawa ściana';
+
+  @override
+  String get wall_bottom => 'Dolna ściana';
+
+  @override
+  String get wall_left => 'Lewa ściana';
 
   @override
   String get pieces_per_package => 'Sztuk w paczce';

@@ -105,7 +105,7 @@ class MyAppState extends State<MyApp> {
                 if (widget.savedSystem == null)
                   MeasurementSystemRoute()
                 else
-                  RoomAndLaminateParametersRoute()
+                  RoomParametersRoute()
               ],
       ),
       routeInformationParser: _appRouter.defaultRouteParser(),

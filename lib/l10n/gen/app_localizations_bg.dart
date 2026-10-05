@@ -98,6 +98,51 @@ class AppLocalizationsBg extends AppLocalizations {
   String get shape_l => 'Г-образно';
 
   @override
+  String get shape_chamfer => 'Отрязан ъгъл';
+
+  @override
+  String get shape_chamfer_pair => 'Два отрязани ъгъла';
+
+  @override
+  String get shape_t => 'Т-образно';
+
+  @override
+  String shoulder(int number) {
+    return 'Отрязване $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Отрязване $number (мм)';
+  }
+
+  @override
+  String get chamfer_leg => 'Отрязване (45°)';
+
+  @override
+  String get chamfer_leg_mm => 'Отрязване под 45° (мм)';
+
+  @override
+  String notch(int number) {
+    return 'Изрез $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Изрез $number (мм)';
+  }
+
+  @override
+  String get cut_depth => 'Дълбочина на изрезите';
+
+  @override
+  String get cut_depth_mm => 'Дълбочина на изрезите (мм)';
+
+  @override
+  String get tap_wall_to_cut =>
+      'Докоснете стена, за да преместите изрязванията';
+
+  @override
   String get overall_length => 'Обща дължина';
 
   @override
@@ -147,6 +192,18 @@ class AppLocalizationsBg extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'Долен ляв';
+
+  @override
+  String get wall_top => 'Горна стена';
+
+  @override
+  String get wall_right => 'Дясна стена';
+
+  @override
+  String get wall_bottom => 'Долна стена';
+
+  @override
+  String get wall_left => 'Лява стена';
 
   @override
   String get pieces_per_package => 'В опаковка (броя)';

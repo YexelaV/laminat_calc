@@ -98,6 +98,50 @@ class AppLocalizationsCs extends AppLocalizations {
   String get shape_l => 'Tvar L';
 
   @override
+  String get shape_chamfer => 'Zkosený roh';
+
+  @override
+  String get shape_chamfer_pair => 'Dva zkosené rohy';
+
+  @override
+  String get shape_t => 'Ve tvaru T';
+
+  @override
+  String shoulder(int number) {
+    return 'Řez $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Řez $number (mm)';
+  }
+
+  @override
+  String get chamfer_leg => 'Zkosení (45°)';
+
+  @override
+  String get chamfer_leg_mm => 'Zkosení 45° (mm)';
+
+  @override
+  String notch(int number) {
+    return 'Výřez $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Výřez $number (mm)';
+  }
+
+  @override
+  String get cut_depth => 'Hloubka výřezů';
+
+  @override
+  String get cut_depth_mm => 'Hloubka výřezů (mm)';
+
+  @override
+  String get tap_wall_to_cut => 'Klepnutím na stěnu přesunete výřezy';
+
+  @override
   String get overall_length => 'Celková délka';
 
   @override
@@ -147,6 +191,18 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'Vlevo dole';
+
+  @override
+  String get wall_top => 'Horní stěna';
+
+  @override
+  String get wall_right => 'Pravá stěna';
+
+  @override
+  String get wall_bottom => 'Dolní stěna';
+
+  @override
+  String get wall_left => 'Levá stěna';
 
   @override
   String get pieces_per_package => 'V balení (ks)';

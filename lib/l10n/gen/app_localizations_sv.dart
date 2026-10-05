@@ -98,6 +98,50 @@ class AppLocalizationsSv extends AppLocalizations {
   String get shape_l => 'L-format';
 
   @override
+  String get shape_chamfer => 'Avfasat hörn';
+
+  @override
+  String get shape_chamfer_pair => 'Två avfasade hörn';
+
+  @override
+  String get shape_t => 'T-format';
+
+  @override
+  String shoulder(int number) {
+    return 'Snitt $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Snitt $number (mm)';
+  }
+
+  @override
+  String get chamfer_leg => 'Avfasning (45°)';
+
+  @override
+  String get chamfer_leg_mm => '45°-avfasning (mm)';
+
+  @override
+  String notch(int number) {
+    return 'Urtag $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Urtag $number (mm)';
+  }
+
+  @override
+  String get cut_depth => 'Urtagens djup';
+
+  @override
+  String get cut_depth_mm => 'Urtagens djup (mm)';
+
+  @override
+  String get tap_wall_to_cut => 'Tryck på en vägg för att flytta urtagen';
+
+  @override
   String get overall_length => 'Total längd';
 
   @override
@@ -147,6 +191,18 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'Nedre vänstra';
+
+  @override
+  String get wall_top => 'Övre vägg';
+
+  @override
+  String get wall_right => 'Höger vägg';
+
+  @override
+  String get wall_bottom => 'Nedre vägg';
+
+  @override
+  String get wall_left => 'Vänster vägg';
 
   @override
   String get pieces_per_package => 'Per paket (st)';

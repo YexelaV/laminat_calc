@@ -90,7 +90,7 @@ class _MeasurementSystemScreenState extends State<MeasurementSystemScreen> {
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setString(SYSTEM_PREF_KEY, _selected.name);
                   if (!mounted) return;
-                  router.replace(RoomAndLaminateParametersRoute());
+                  router.replace(RoomParametersRoute());
                 },
                 child: Container(
                   alignment: Alignment.center,

@@ -167,8 +167,12 @@ bool planFeasible({
   final key = '${shape.key}/$indentFromWall/$laminateLength/'
       '$laminateWidth/$minimumLaminateLength/$rowOffset/${direction.index}';
   if (key == _feasibleKey) return _feasibleAnswer;
-  _feasibleKey = key;
-  _feasibleAnswer = Calculation(
+  // Both written only once there is an answer to write. Claiming the key first
+  // and filling the answer in afterwards looks the same until the search
+  // throws between the two: the key would then name a question that was never
+  // answered, and the next time it was asked the previous question's answer
+  // would come back as if it had been computed.
+  final answer = Calculation(
     shape: shape,
     laminateLength: laminateLength,
     laminateWidth: laminateWidth,
@@ -178,7 +182,9 @@ bool planFeasible({
     rowOffset: rowOffset,
     direction: direction,
   ).calculate().isNotEmpty;
-  return _feasibleAnswer;
+  _feasibleKey = key;
+  _feasibleAnswer = answer;
+  return answer;
 }
 
 class Calculation {
@@ -326,14 +332,12 @@ class Calculation {
   }
 
   List<Result> calculate() {
-    // A 45° strip crosses a room with a corner cut away twice, so a row there
-    // is two rows and [RowPlan] has no way to say so. The form does not offer
-    // the direction; this is what a release build does if it is reached
-    // anyway, and it ends in the same "no laying variants" the user already
-    // knows rather than in a floor laid across a void.
-    if (direction == Direction.diagonal && shape.floorNotch(indentFromWall) != null) {
-      return [];
-    }
+    // A 45° strip crosses a room with a corner notched out of it twice, so a
+    // row there is two rows and [RowPlan] has no way to say so. The form does
+    // not offer the direction; this is what a release build does if it is
+    // reached anyway, and it ends in the same "no laying variants" the user
+    // already knows rather than in a floor laid across a void.
+    if (direction == Direction.diagonal && !shape.takesDiagonal) return [];
     final plan = planFor(
       shape: shape,
       indentFromWall: indentFromWall,
@@ -442,7 +446,7 @@ class Calculation {
   /// reach is the cost. An end already cut the right way costs nothing, and one
   /// cut the other way is unusable: the material on that side was never there,
   /// and a slant cannot be turned round.
-  int? _reachLoss(RowPlan plan, int row, Bevel have, Bevel want) {
+  int? _reachLoss(Bevel have, Bevel want) {
     if (have == want) return 0;
     // A square end leans neither way and is the one that can still go either.
     if (!have.isSquare && !have.leansSameWayAs(want)) return null;
@@ -606,7 +610,7 @@ class Calculation {
       var minDiff = laminateLength;
       for (int p = 0; p < pieces.length; p++) {
         if (pieces[p].hasRightLock) {
-          final loss = _reachLoss(plan, i, pieces[p].leftBevel, plan.startBevel[i]);
+          final loss = _reachLoss(pieces[p].leftBevel, plan.startBevel[i]);
           if (loss == null) continue;
           if (!checkPiece(
               pieces[p].length, loss, plan, i, prevJoint, optimizePieces)) {
@@ -676,7 +680,7 @@ class Calculation {
       minDiff = laminateLength;
       for (int p = 0; p < pieces.length; p++) {
         if (pieces[p].hasLeftLock) {
-          final loss = _reachLoss(plan, i, pieces[p].rightBevel, plan.endBevel[i]);
+          final loss = _reachLoss(pieces[p].rightBevel, plan.endBevel[i]);
           if (loss == null) continue;
           if (pieces[p].length - loss >= lastlaminateLength) {
             if (pieces[p].length - lastlaminateLength < minDiff) {

@@ -98,6 +98,50 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shape_l => 'En forme de L';
 
   @override
+  String get shape_chamfer => 'Angle coupé';
+
+  @override
+  String get shape_chamfer_pair => 'Deux angles coupés';
+
+  @override
+  String get shape_t => 'En forme de T';
+
+  @override
+  String shoulder(int number) {
+    return 'Coupe $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Coupe $number (mm)';
+  }
+
+  @override
+  String get chamfer_leg => 'Coupe (45°)';
+
+  @override
+  String get chamfer_leg_mm => 'Coupe à 45° (mm)';
+
+  @override
+  String notch(int number) {
+    return 'Retrait $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Retrait $number (mm)';
+  }
+
+  @override
+  String get cut_depth => 'Profondeur des retraits';
+
+  @override
+  String get cut_depth_mm => 'Profondeur des retraits (mm)';
+
+  @override
+  String get tap_wall_to_cut => 'Touchez un mur pour déplacer les retraits';
+
+  @override
   String get overall_length => 'Longueur totale';
 
   @override
@@ -147,6 +191,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'En bas à gauche';
+
+  @override
+  String get wall_top => 'Mur du haut';
+
+  @override
+  String get wall_right => 'Mur de droite';
+
+  @override
+  String get wall_bottom => 'Mur du bas';
+
+  @override
+  String get wall_left => 'Mur de gauche';
 
   @override
   String get pieces_per_package => 'Pièces par paquet';

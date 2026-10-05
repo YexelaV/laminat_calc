@@ -227,5 +227,36 @@ void main() {
         }
       }
     });
+
+    // The answer to the last question is kept, because the form asks the same
+    // one several times per keystroke. What must not be kept is an answer to a
+    // question that was never answered: the key and the answer are written
+    // together, after the search returns, so a search that throws leaves the
+    // memo holding the previous question and its own result unclaimed.
+    test('a question that could not be computed is not answered from the memo', () {
+      bool ask(int room, int indent) => planFeasible(
+            shape: RoomShape.rectangle(room, room),
+            indentFromWall: indent,
+            laminateLength: 1380,
+            laminateWidth: 190,
+            minimumLaminateLength: 300,
+            rowOffset: 300,
+            direction: Direction.length,
+          );
+
+      // A question that can be answered, so the memo holds something real.
+      expect(ask(3000, 10), isTrue);
+
+      // One that cannot: a gap wider than half the room leaves the floor with
+      // negative extent, and the row widths cannot be shared out over it.
+      // Unreachable from the form — the gap is capped at 50 mm — but it is the
+      // cheapest way to make the search throw.
+      expect(() => ask(500, 300), throwsA(anything));
+
+      // Asking it again has to reach the search again. Before the memo wrote
+      // its two halves together, this returned the answer to the 3000 mm room.
+      expect(() => ask(500, 300), throwsA(anything),
+          reason: 'the memo answered a question it never computed');
+    });
   });
 }

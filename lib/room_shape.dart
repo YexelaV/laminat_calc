@@ -69,13 +69,21 @@ abstract class RoomOutline {
   List<Point<double>> floor(int indentFromWall) =>
       insetPolygon(corners(), indentFromWall.toDouble());
 
-  /// The rectangle missing from the floor's bounding box, or null when the
-  /// floor fills it.
+  /// Whether every wall is square to the rows.
   ///
-  /// Handed out rather than worked back out of [floor]: the drawing cuts
-  /// planks against it, and a second derivation of the same rectangle is a
-  /// second definition of it.
-  List<Point<double>>? floorNotch(int indentFromWall) => null;
+  /// What a row reaches is then constant between corners rather than sliding
+  /// along with them, which is the whole of the argument that lets the rows be
+  /// worked out exactly, corner by corner, instead of sampled down the middle
+  /// of each — see [spansOver]. A room that is not this goes the sampled way.
+  bool get isRectilinear => false;
+
+  /// Whether a 45° row can be laid in this room.
+  ///
+  /// False where a 45° strip would cross the floor twice: a row there is two
+  /// rows, and nothing downstream — not [RowSpan], not the cut list — has a way
+  /// to say so. Every outline that turns back on itself is like that at some
+  /// angle, and no convex one is at any.
+  bool get takesDiagonal => true;
 
   /// How far the room reaches across. The point a quarter turn is taken about,
   /// and the only reason [turned] is a method rather than a free function: the
@@ -154,6 +162,14 @@ class RoomShape extends RoomOutline {
       lengthNear == lengthFar &&
       widthLeft == widthRight &&
       diagonal == rectangleDiagonal(lengthNear, widthLeft);
+
+  /// Only when it is a true rectangle. Four walls that merely happen to be
+  /// equal still close round a diagonal of their own choosing, and the one the
+  /// user typed leans them. Nothing reads this — [planFor] answers a rectangle
+  /// from [isRectangular] before it asks — but a predicate that lies is worse
+  /// than one that is never consulted.
+  @override
+  bool get isRectilinear => isRectangular;
 
   @override
   String get key => '$lengthNear/$lengthFar/$widthLeft/$widthRight/$diagonal';
@@ -242,176 +258,379 @@ class RoomShape extends RoomOutline {
 /// round.
 enum RoomCorner { nearLeft, nearRight, farRight, farLeft }
 
-/// A room with one corner cut out of it: the rectangle [length] by [width],
-/// less a [notchLength] by [notchWidth] rectangle at [corner].
+/// A wall of the rectangle a room is measured as, named the way [RoomCorner]
+/// names its corners: [near] is the wall the rows run along and start against
+/// the left end of, and the rest follow round.
 ///
-/// Right angles throughout, and that is a choice rather than an oversight. A
-/// room measured wall by wall ([RoomShape]) assumes nothing about its corners
-/// and pays for it with a diagonal; six walls would need three diagonals, nine
-/// numbers to type and a sketch nobody could read. A niche, a boxed-in riser or
-/// a corner chimney is square to the room it is cut from, and measuring it as
-/// two sides of a rectangle is both what a tape measure gives and what the
-/// fitter will cut to.
+/// Here because a room with a pair of cuts has them on one *wall* — a T stands
+/// on one — and naming the wall is the only way to say which pair without
+/// naming two corners and hoping they are adjacent.
+enum RoomWall { near, right, far, left }
+
+extension RoomWallCorners on RoomWall {
+  /// The wall's two corners, left to right along the near and far walls and
+  /// near to far down the left and right ones.
+  ///
+  /// Screen order rather than ring order, because these two are what the form
+  /// calls the first and second shoulder and what the sketch writes them
+  /// beside. Ring order would put the far wall's corners back to front, and the
+  /// user would be typing into the field at the other end of the room.
+  List<RoomCorner> get corners {
+    switch (this) {
+      case RoomWall.near:
+        return const [RoomCorner.nearLeft, RoomCorner.nearRight];
+      case RoomWall.right:
+        return const [RoomCorner.nearRight, RoomCorner.farRight];
+      case RoomWall.far:
+        return const [RoomCorner.farLeft, RoomCorner.farRight];
+      case RoomWall.left:
+        return const [RoomCorner.nearLeft, RoomCorner.farLeft];
+    }
+  }
+
+  /// Whether the wall runs along the room's length. The shoulders of a pair of
+  /// cuts are measured along the wall and their depth across it, and which of
+  /// [CornerSize.along] and [CornerSize.across] is which turns on this.
+  bool get runsAlongLength => this == RoomWall.near || this == RoomWall.far;
+}
+
+/// How a corner is taken off the rectangle the room is measured as.
+enum CornerCut {
+  /// A square bite out of the corner: a niche, a boxed-in riser, a corner
+  /// chimney. It leaves an inside corner, and so a room that is not convex.
+  notch,
+
+  /// A straight run across the corner. The room stays convex, which is why a
+  /// chamfered room keeps the 45° layout a notched one has to give up.
+  chamfer,
+}
+
+/// How far a cut reaches along each of the two walls meeting at the corner.
+class CornerSize {
+  /// Along the near and far walls — the ones the rows run parallel to.
+  final int along;
+
+  /// Along the left and right walls.
+  final int across;
+
+  /// What the user measured along the wall a 45° cut leaves, when that is how
+  /// the cut was given. Null for a square notch, which has no wall of its own
+  /// but two, each measured by its own leg.
+  ///
+  /// Kept rather than worked back out of [along]. A 45° cut's leg is its wall
+  /// over root two and does not come out whole, so the leg is rounded — and
+  /// squaring the rounded leg back up lands a millimetre off the typed number
+  /// about a third of the time. The drawing writes this beside the cut, and a
+  /// drawing that answers 1003 to a typed 1002 is a drawing nobody trusts
+  /// again.
+  final int? measuredWall;
+
+  const CornerSize({required this.along, required this.across, this.measuredWall});
+
+  /// The cut a 45° wall of [wall] millimetres takes off each of the two walls
+  /// it joins.
+  ///
+  /// Measured this way round because that is the way a tape can be laid on it:
+  /// once the corner is cut there is no corner left to measure the legs from,
+  /// and the cut face is the only one of the three a fitter can put a tape
+  /// along.
+  static CornerSize chamfer(int wall) {
+    final leg = (wall / math.sqrt2).round();
+    return CornerSize(along: leg, across: leg, measuredWall: wall);
+  }
+
+  /// The shortest and longest wall a 45° cut may leave, given what its legs are
+  /// allowed to be. The form shows these, so what is on screen is this
+  /// arithmetic and not a second guess at it.
+  static int wallOfLeg(int leg) => (leg * math.sqrt2).round();
+
+  @override
+  String toString() =>
+      measuredWall == null ? '${along}x$across' : '${along}x$across@$measuredWall';
+}
+
+/// A rectangle with corners taken off it: [length] by [width], less a cut at
+/// every corner named in [cuts], all of them taken off the way [cut] says.
 ///
-/// The outline is monotone in both axes — at any height the floor is one
-/// unbroken run, and likewise across — because the missing piece is pressed
-/// into a *corner* rather than sitting in the middle of a wall. Every row that
-/// runs parallel to a wall is therefore one unbroken row, which is what lets
-/// the whole of the rest of the calculator take this room without learning
-/// anything new. It stops being true at 45°, and that is why a 45° layout is
-/// not offered here.
-class LRoomShape extends RoomOutline {
+/// Right angles except where a corner is cut, and that is a choice rather than
+/// an oversight. A room measured wall by wall ([RoomShape]) assumes nothing
+/// about its corners and pays for it with a diagonal; eight walls would need
+/// five diagonals, thirteen numbers to type and a sketch nobody could read. A
+/// niche, a riser or a corner chimney is square to the room it is cut from, and
+/// measuring it as two sides of a rectangle is both what a tape measure gives
+/// and what the fitter will cut to.
+///
+/// **Why any set of corners is safe.** The outline is monotone in both axes —
+/// at any height the floor is one unbroken run, and likewise across — because
+/// every missing piece is pressed into a *corner* rather than sitting in the
+/// middle of a wall. A cut in a left corner eats into the left *end* of the
+/// rows that reach it; one in a right corner eats into the right end; none of
+/// them can reach the middle of a row and part it in two. So every row is one
+/// unbroken row however many corners are gone, which is what lets the rest of
+/// the calculator take an L, a T, a U lying on its side or a Z without learning
+/// anything new. It stops being true of a piece cut out of the middle of a
+/// wall, and it stops being true at 45° — which is why neither is offered.
+///
+/// **Why one [cut] for the whole room rather than one per corner.** A room with
+/// a notch somewhere and a chamfer somewhere else has both an inside corner and
+/// a slanted wall, and the exactness [isRectilinear] claims holds for neither
+/// arrangement. Ruling the mixture out by construction is cheaper than
+/// detecting it, and no fitter has ever asked for it.
+class CutCornersRoomShape extends RoomOutline {
   /// The bounding rectangle: the wall the rows run along, and the one they
   /// start against, as they would be with nothing cut away.
   final int length;
   final int width;
 
-  /// How far the cut reaches along each of those two.
+  final CornerCut cut;
+
+  /// Which corners are gone and how far each cut reaches. A corner missing from
+  /// here is a corner still square.
+  final Map<RoomCorner, CornerSize> cuts;
+
+  const CutCornersRoomShape({
+    required this.length,
+    required this.width,
+    required this.cut,
+    required this.cuts,
+  });
+
+  /// The narrowest strip of floor a cut may leave beside it and still leave a
+  /// room. The geometry itself only needs a millimetre; this is the number the
+  /// calculator already calls the smallest room there is.
+  static const int minArmMm = MIN_ROOM_MM;
+
+  /// Never. The closed forms a rectangle goes down measure from two numbers,
+  /// and this room is not two numbers however square its corners are — and
+  /// [Calculation.rowLength] casts on the strength of this answer, so a room
+  /// with no cuts at all still has to say no.
+  @override
+  bool get isRectangular => false;
+
+  /// A notched room is all right angles; a chamfered one is not.
+  @override
+  bool get isRectilinear => cut == CornerCut.notch;
+
+  /// A chamfer leaves the room convex, so a 45° strip crosses it once. A notch
+  /// does not, and a 45° row across one is two rows.
+  @override
+  bool get takesDiagonal => cut == CornerCut.chamfer;
+
+  @override
+  String get key {
+    final parts = <String>[];
+    for (final corner in RoomCorner.values) {
+      final size = cuts[corner];
+      if (size != null) parts.add('${corner.index}:$size');
+    }
+    // Led by a letter so that it can never read as a [RoomShape] key, which is
+    // five numbers and starts with one.
+    return 'C${cut.index}/$length/$width/${parts.join(',')}';
+  }
+
+  int _along(RoomCorner corner) => cuts[corner]?.along ?? 0;
+
+  int _across(RoomCorner corner) => cuts[corner]?.across ?? 0;
+
+  @override
+  RoomProblem? get problem {
+    for (final size in cuts.values) {
+      if (size.along < MIN_NOTCH_MM || size.across < MIN_NOTCH_MM) {
+        return RoomProblem.notchNotCut;
+      }
+    }
+    // Two cuts on one wall eat into it from both ends at once, and what they
+    // leave between them still has to be a room. With a single cut this is the
+    // bound the form has always shown, the other end of the wall contributing
+    // nothing.
+    final pairs = [
+      [_along(RoomCorner.nearLeft) + _along(RoomCorner.nearRight), length],
+      [_along(RoomCorner.farLeft) + _along(RoomCorner.farRight), length],
+      [_across(RoomCorner.nearLeft) + _across(RoomCorner.farLeft), width],
+      [_across(RoomCorner.nearRight) + _across(RoomCorner.farRight), width],
+    ];
+    for (final pair in pairs) {
+      if (pair[0] > pair[1] - minArmMm) {
+        return RoomProblem.notchLeavesNoRoom;
+      }
+    }
+    return null;
+  }
+
+  /// The corners in whole millimetres, from the one the rows start from and
+  /// round.
+  ///
+  /// Whole millimetres because [wallLengths] is taken off the same walk: a wall
+  /// written on the drawing to be cut to has to be the number the user typed or
+  /// a difference of two of them, never a length read back off a drawn corner.
+  /// One walk and not two so that the corners and the walls cannot drift apart
+  /// — the drawing pairs them off by index.
+  ///
+  /// The walk runs the same way round as the rectangle it is cut from, so
+  /// [inwardNormals] and [turned] see the room they expect.
+  List<Point<int>> _ring() {
+    final walked = <Point<int>>[];
+    for (final corner in RoomCorner.values) {
+      walked.addAll(_pointsAt(corner));
+    }
+    return [...walked.skip(_lead), ...walked.take(_lead)];
+  }
+
+  /// How far the walk is rotated so that the near wall opens the ring, the way
+  /// [corners] promises and the way a rectangle always did. A cut near left
+  /// corner is reached at the *end* of its own points, not the start, so the
+  /// ring turns onto the last of them.
+  int get _lead => _pointsAt(RoomCorner.nearLeft).length - 1;
+
+  /// Which corner's cut each wall is, for the walls that are one.
+  ///
+  /// A notch gives its corner two walls — the two legs of the piece taken out —
+  /// and a chamfer gives one, the run across. Every other wall is a wall of the
+  /// bounding rectangle and belongs to no cut.
+  ///
+  /// The drawing asks because a wall whose measurement nobody has typed is
+  /// written up as a question mark rather than as the number the outline had to
+  /// invent to be an outline at all.
+  Map<RoomCorner, List<int>> cutWalls() {
+    final owners = <RoomCorner>[];
+    for (final corner in RoomCorner.values) {
+      owners.addAll(List.filled(_pointsAt(corner).length, corner));
+    }
+    final walked = [...owners.skip(_lead), ...owners.take(_lead)];
+    final out = <RoomCorner, List<int>>{};
+    for (var i = 0; i < walked.length; i++) {
+      // A wall runs between two points, and it is part of a cut only when both
+      // of them were put there by the same cut corner.
+      final corner = walked[i];
+      if (corner != walked[(i + 1) % walked.length]) continue;
+      if (!cuts.containsKey(corner)) continue;
+      out.putIfAbsent(corner, () => []).add(i);
+    }
+    return out;
+  }
+
+  /// What stands in place of [corner]: the corner itself when it is square, the
+  /// two ends of the cut when it is chamfered, and those two with the inside
+  /// corner between them when it is notched. In the order the walk reaches
+  /// them.
+  List<Point<int>> _pointsAt(RoomCorner corner) {
+    final size = cuts[corner];
+    if (size == null) {
+      switch (corner) {
+        case RoomCorner.nearLeft:
+          return [const Point(0, 0)];
+        case RoomCorner.nearRight:
+          return [Point(length, 0)];
+        case RoomCorner.farRight:
+          return [Point(length, width)];
+        case RoomCorner.farLeft:
+          return [Point(0, width)];
+      }
+    }
+    final a = size.along;
+    final b = size.across;
+    switch (corner) {
+      case RoomCorner.nearLeft:
+        return [
+          Point(0, b),
+          if (cut == CornerCut.notch) Point(a, b),
+          Point(a, 0),
+        ];
+      case RoomCorner.nearRight:
+        return [
+          Point(length - a, 0),
+          if (cut == CornerCut.notch) Point(length - a, b),
+          Point(length, b),
+        ];
+      case RoomCorner.farRight:
+        return [
+          Point(length, width - b),
+          if (cut == CornerCut.notch) Point(length - a, width - b),
+          Point(length - a, width),
+        ];
+      case RoomCorner.farLeft:
+        return [
+          Point(a, width),
+          if (cut == CornerCut.notch) Point(a, width - b),
+          Point(0, width - b),
+        ];
+    }
+  }
+
+  @override
+  List<Point<double>> corners() =>
+      [for (final p in _ring()) Point(p.x.toDouble(), p.y.toDouble())];
+
+  @override
+  List<int> wallLengths() {
+    final ring = _ring();
+    // The wall a 45° cut leaves is the one wall here that is not a difference
+    // of two typed numbers. Where the user measured it, that measurement is
+    // what goes on the drawing — see [CornerSize.measuredWall] for why it is
+    // kept rather than squared back up out of the rounded legs.
+    final measured = <int, int>{};
+    cutWalls().forEach((corner, walls) {
+      final wall = cuts[corner]?.measuredWall;
+      if (wall != null && walls.length == 1) measured[walls.single] = wall;
+    });
+
+    final out = <int>[];
+    for (var i = 0; i < ring.length; i++) {
+      final said = measured[i];
+      if (said != null) {
+        out.add(said);
+        continue;
+      }
+      final from = ring[i];
+      final to = ring[(i + 1) % ring.length];
+      final dx = (to.x - from.x).abs();
+      final dy = (to.y - from.y).abs();
+      // A wall square to an axis is a difference of two typed numbers and comes
+      // out whole; anything else is a hypotenuse and is rounded.
+      out.add(dx == 0
+          ? dy
+          : dy == 0
+              ? dx
+              : math.sqrt(dx * dx + dy * dy).round());
+    }
+    return out;
+  }
+}
+
+/// A room with one corner cut square out of it, the shape this calculator had
+/// before it could take more than one.
+///
+/// Kept as its own name because an L is what a user says and what half the
+/// tests are written about; it adds nothing to [CutCornersRoomShape] but a way
+/// of naming a single notch.
+class LRoomShape extends CutCornersRoomShape {
+  LRoomShape({
+    required super.length,
+    required super.width,
+    required this.notchLength,
+    required this.notchWidth,
+    required this.corner,
+  }) : super(
+          cut: CornerCut.notch,
+          cuts: {corner: CornerSize(along: notchLength, across: notchWidth)},
+        );
+
+  /// How far the cut reaches along the length and along the width.
   final int notchLength;
   final int notchWidth;
 
   final RoomCorner corner;
 
-  const LRoomShape({
-    required this.length,
-    required this.width,
-    required this.notchLength,
-    required this.notchWidth,
-    required this.corner,
-  });
-
-  /// The narrowest strip of floor left beside the cut that is still a room.
-  /// The geometry itself only needs a millimetre; this is the number the
-  /// calculator already calls the smallest room there is.
-  static const int minArmMm = MIN_ROOM_MM;
+  /// Restated rather than inherited: a static is not, and every caller of this
+  /// one reaches for it by the L's name.
+  static const int minArmMm = CutCornersRoomShape.minArmMm;
 
   /// The bounds the form shows the user, so that what is on screen is this
   /// arithmetic and not a second guess at it.
   static int maxNotchLength(int length) => length - minArmMm;
 
   static int maxNotchWidth(int width) => width - minArmMm;
-
-  /// Never. The closed forms a rectangle goes down measure from two numbers,
-  /// and this room is not two numbers however square its corners are.
-  @override
-  bool get isRectangular => false;
-
-  @override
-  String get key => 'L$length/$width/$notchLength/$notchWidth/${corner.index}';
-
-  @override
-  RoomProblem? get problem {
-    if (notchLength < MIN_NOTCH_MM || notchWidth < MIN_NOTCH_MM) {
-      return RoomProblem.notchNotCut;
-    }
-    if (notchLength > maxNotchLength(length) || notchWidth > maxNotchWidth(width)) {
-      return RoomProblem.notchLeavesNoRoom;
-    }
-    return null;
-  }
-
-  /// The six corners, from the one the rows start from and round.
-  ///
-  /// Written out for each corner rather than derived, for the reason
-  /// [RoomShape.corners] writes out its rectangle: these are the numbers the
-  /// user typed, and the outline has to carry them unrounded. All four run the
-  /// same way round as the rectangle they are cut from, so [inwardNormals] and
-  /// [turned] see the room they expect.
-  @override
-  List<Point<double>> corners() {
-    final l = length.toDouble();
-    final w = width.toDouble();
-    final a = notchLength.toDouble();
-    final b = notchWidth.toDouble();
-    switch (corner) {
-      case RoomCorner.nearLeft:
-        return [
-          Point(a, 0),
-          Point(l, 0),
-          Point(l, w),
-          Point(0, w),
-          Point(0, b),
-          Point(a, b),
-        ];
-      case RoomCorner.nearRight:
-        return [
-          Point(0, 0),
-          Point(l - a, 0),
-          Point(l - a, b),
-          Point(l, b),
-          Point(l, w),
-          Point(0, w),
-        ];
-      case RoomCorner.farRight:
-        return [
-          Point(0, 0),
-          Point(l, 0),
-          Point(l, w - b),
-          Point(l - a, w - b),
-          Point(l - a, w),
-          Point(0, w),
-        ];
-      case RoomCorner.farLeft:
-        return [
-          Point(0, 0),
-          Point(l, 0),
-          Point(l, w),
-          Point(a, w),
-          Point(a, w - b),
-          Point(0, w - b),
-        ];
-    }
-  }
-
-  @override
-  List<int> wallLengths() {
-    final a = notchLength;
-    final b = notchWidth;
-    switch (corner) {
-      case RoomCorner.nearLeft:
-        return [length - a, width, length, width - b, a, b];
-      case RoomCorner.nearRight:
-        return [length - a, b, a, width - b, length, width];
-      case RoomCorner.farRight:
-        return [length, width - b, a, b, length - a, width];
-      case RoomCorner.farLeft:
-        return [length, width, length - a, b, a, width - b];
-    }
-  }
-
-  /// The cut keeps its size when the floor steps in from the walls.
-  ///
-  /// Both walls of the cut move away from it by the gap and both walls opposite
-  /// move towards it by the same, so the missing rectangle comes out
-  /// [notchLength] by [notchWidth] still, sitting in the corner of the floor's
-  /// own bounding box. Worth stating because it is not what an offset usually
-  /// does, and because [floor] arrives at the same six points the long way
-  /// round, through [insetPolygon] — test/room_shape_test.dart holds the two
-  /// together.
-  @override
-  List<Point<double>> floorNotch(int indentFromWall) {
-    final g = indentFromWall.toDouble();
-    final left = g;
-    final right = length - g;
-    final near = g;
-    final far = width - g;
-    final a = notchLength.toDouble();
-    final b = notchWidth.toDouble();
-    switch (corner) {
-      case RoomCorner.nearLeft:
-        return _rectangle(left, near, left + a, near + b);
-      case RoomCorner.nearRight:
-        return _rectangle(right - a, near, right, near + b);
-      case RoomCorner.farRight:
-        return _rectangle(right - a, far - b, right, far);
-      case RoomCorner.farLeft:
-        return _rectangle(left, far - b, left + a, far);
-    }
-  }
 }
-
-List<Point<double>> _rectangle(double x0, double y0, double x1, double y1) =>
-    [Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1)];
 
 /// [polygon] with every edge moved [gap] towards the inside, corners
 /// re-cut where the moved edges now meet.

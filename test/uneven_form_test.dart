@@ -52,18 +52,19 @@ void main() {
 
   // The shape is a choice of three now, so turning the walls on means picking
   // them out of the list rather than ticking a box.
-  Future<void> pickShape(WidgetTester tester, String name) async {
-    await tester.tap(find.byType(DropdownButtonFormField<RoomKind>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(name).last);
+  /// The shape is a tile in a row of them now, not a line in a menu, so one tap
+  /// does it. Found by key rather than by the name under it: the names are
+  /// translated and the keys are not.
+  Future<void> pickShape(WidgetTester tester, RoomKind kind) async {
+    await tester.tap(find.byKey(ValueKey('shape-${kind.name}')));
     await tester.pumpAndSettle();
   }
 
   Future<void> turnOnUnevenWalls(WidgetTester tester) =>
-      pickShape(tester, 'Walls of different lengths');
+      pickShape(tester, RoomKind.uneven);
 
   Future<void> turnOffUnevenWalls(WidgetTester tester) =>
-      pickShape(tester, 'Rectangular');
+      pickShape(tester, RoomKind.rectangle);
 
   bool nextEnabled(WidgetTester tester) =>
       tester.widget<TextButton>(find.widgetWithText(TextButton, 'Next')).onPressed != null;
@@ -72,11 +73,15 @@ void main() {
     await pumpForm(tester);
     await fill(tester, ['5010', '3000']);
     await turnOnUnevenWalls(tester);
-    // The second pair and the diagonal arrive already filled with the rectangle
-    // the user had, so only what was actually measured needs changing.
-    expect(cubit.state.roomLength2, 5010);
-    expect(cubit.state.roomWidth2, 3000);
-    expect(cubit.state.roomDiagonal, RoomShape.rectangleDiagonal(5010, 3000));
+    // The second pair and the diagonal arrive empty: saying the walls differ
+    // is not the same as having measured them, and a box filled in with the
+    // wall opposite would be the form telling the user what they measured.
+    expect(cubit.state.roomLength2, isNull);
+    expect(cubit.state.roomWidth2, isNull);
+    expect(cubit.state.roomDiagonal, isNull);
+    expect(nextEnabled(tester), isFalse);
+    // The drawing has a room to show all the same — a wall left blank is the
+    // one opposite it, and it is drawn with a question mark beside it.
     expect(cubit.state.shape!.isRectangular, isTrue,
         reason: 'turning the switch on must not change the room on its own');
 
@@ -90,7 +95,6 @@ void main() {
     expect(shape.problem, isNull);
     expect(shape.isRectangular, isFalse);
 
-    await fill(tester, ['1200', '190', '8'], from: 5);
     expect(nextEnabled(tester), isTrue);
   });
 
@@ -117,8 +121,7 @@ void main() {
     await pumpForm(tester);
     await fill(tester, ['5010', '3000']);
     await turnOnUnevenWalls(tester);
-    await fill(tester, ['4980', '3025'], from: 2);
-    await fill(tester, ['1200', '190', '8'], from: 5);
+    await fill(tester, ['4980', '3025', '5840'], from: 2);
     expect(nextEnabled(tester), isTrue);
 
     // Longer than the two walls it has to reach across put together. The field
@@ -142,11 +145,92 @@ void main() {
     await fill(tester, ['6000', '3000']);
     await turnOnUnevenWalls(tester);
     await fill(tester, ['800', '3000', '3300'], from: 2);
-    await fill(tester, ['1200', '190', '8'], from: 5);
     expect(cubit.state.shape!.problem, RoomProblem.notConvex);
     expect(find.text('The walls do not close'), findsOneWidget,
         reason: 'a disabled button on its own does not say what is wrong');
     expect(nextEnabled(tester), isFalse);
+  });
+
+  testWidgets('a wall nobody has measured is drawn as a question mark', (tester) async {
+    // The outline needs a number for every wall or it is not an outline, so an
+    // empty box is filled in with the wall opposite. Writing that number on the
+    // wall would be the drawing telling the user what they measured.
+    await pumpForm(tester);
+    // The shape first and the sizes after, which is the order that leaves the
+    // other three boxes empty — picking the shape with the sizes already typed
+    // fills them in.
+    await pickShape(tester, RoomKind.uneven);
+    await fill(tester, ['12000', '3000']);
+
+    RoomSketch sketch() => tester.widget<RoomSketch>(find.byType(RoomSketch));
+    // [RoomShape.wallLengths] is near, right, far, left: the right wall is the
+    // second width and the far wall is the second length.
+    expect(sketch().unknownWalls, {1, 2});
+    expect(sketch().unknownDiagonal, isTrue);
+
+    await fill(tester, ['11900'], from: 2);
+    expect(sketch().unknownWalls, {1});
+    await fill(tester, ['3050'], from: 3);
+    expect(sketch().unknownWalls, isEmpty);
+    expect(sketch().unknownDiagonal, isTrue, reason: 'the diagonal is still blank');
+    await fill(tester, ['12300'], from: 4);
+    expect(sketch().unknownDiagonal, isFalse);
+  });
+
+  testWidgets('a shape tried on in between does not fill in what was left blank',
+      (tester) async {
+    // Picking the shape never fills a box; nor does picking it a second time.
+    // The form used to hand over a rectangle on the way in, and the way that
+    // showed itself was here: three boxes the user had left blank came back
+    // full after a look at another shape.
+    await pumpForm(tester);
+    await pickShape(tester, RoomKind.uneven);
+    await fill(tester, ['5010', '3000']);
+    expect(cubit.state.roomLength2, isNull);
+    expect(nextEnabled(tester), isFalse);
+
+    await pickShape(tester, RoomKind.rectangle);
+    await pickShape(tester, RoomKind.uneven);
+
+    expect(cubit.state.roomLength2, isNull);
+    expect(cubit.state.roomWidth2, isNull);
+    expect(cubit.state.roomDiagonal, isNull);
+    // And the boxes say the same as the state: three measurements still to take.
+    for (final i in [2, 3, 4]) {
+      expect(tester.widget<TextField>(find.byType(TextField).at(i)).controller!.text, isEmpty,
+          reason: 'box $i was filled in by the round trip');
+    }
+    expect(nextEnabled(tester), isFalse,
+        reason: 'a room three measurements short cannot be calculated');
+  });
+
+  testWidgets('the measurement being typed is picked out on the sketch', (tester) async {
+    // Four walls and a diagonal is a crowded little drawing, and which of five
+    // numbers belongs to the box under the cursor is otherwise a puzzle.
+    await pumpForm(tester);
+    await fill(tester, ['5010', '3000']);
+    await pickShape(tester, RoomKind.uneven);
+    await fill(tester, ['4980', '3025', '5840'], from: 2);
+
+    RoomSketch sketch() => tester.widget<RoomSketch>(find.byType(RoomSketch));
+    expect(sketch().litWalls, isEmpty, reason: 'nothing has the cursor yet');
+
+    Future<void> cursorInto(int box) async {
+      await tester.tap(find.byType(TextField).at(box));
+      await tester.pumpAndSettle();
+    }
+
+    await cursorInto(0);
+    expect(sketch().litWalls, {0}, reason: 'the near wall');
+    await cursorInto(1);
+    expect(sketch().litWalls, {3}, reason: 'the left wall');
+    await cursorInto(2);
+    expect(sketch().litWalls, {2}, reason: 'the far wall');
+    await cursorInto(3);
+    expect(sketch().litWalls, {1}, reason: 'the right wall');
+    await cursorInto(4);
+    expect(sketch().litWalls, isEmpty, reason: 'the diagonal is no wall');
+    expect(sketch().litDiagonal, isTrue);
   });
 
   testWidgets('the sketch is on screen to say which wall is which', (tester) async {

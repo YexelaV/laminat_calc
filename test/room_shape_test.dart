@@ -244,9 +244,9 @@ void main() {
       // walls of the cut move away from it by the gap and both walls opposite
       // move towards it, so the piece missing from the floor is the same piece
       // that is missing from the room, sitting in the corner of the floor's
-      // own bounding box. [floorNotch] says so in closed form; [floor] arrives
-      // the long way round through [insetPolygon], and the two have to agree
-      // or the drawing cuts planks against a different floor than the one laid.
+      // own bounding box. [floor] arrives there the long way round, through
+      // [insetPolygon], and has to land on the room one gap smaller — or the
+      // drawing cuts planks against a different floor than the one laid.
       for (final corner in RoomCorner.values) {
         for (final gap in [0, 10, 12, 50]) {
           final shape = cut(corner);
@@ -264,10 +264,8 @@ void main() {
             expect(floor[i].y, closeTo(smaller[i].y + gap, 1e-9),
                 reason: '$corner gap $gap: corner $i');
           }
-          // And the rectangle handed to the drawing is the one missing from it.
-          final notch = shape.floorNotch(gap);
-          expect(_area(notch), closeTo(notchLength * notchWidth, 1e-6),
-              reason: '$corner gap $gap');
+          // And the piece missing from the floor is the piece missing from the
+          // room, undiminished by the offset.
           expect(_area(floor),
               closeTo((length - gap * 2) * (width - gap * 2) - notchLength * notchWidth, 1e-6),
               reason: '$corner gap $gap');
@@ -346,6 +344,187 @@ void main() {
       // And the bounds themselves are rooms.
       expect(sized(MIN_NOTCH_MM, MIN_NOTCH_MM).problem, isNull);
       expect(sized(length - LRoomShape.minArmMm, width - LRoomShape.minArmMm).problem, isNull);
+    });
+  });
+
+  group('a room with several corners cut away', () {
+    const length = 4000;
+    const width = 3000;
+
+    CutCornersRoomShape shaped(CornerCut cut, Map<RoomCorner, CornerSize> cuts) =>
+        CutCornersRoomShape(length: length, width: width, cut: cut, cuts: cuts);
+
+    CornerSize size(int a, int b) => CornerSize(along: a, across: b);
+
+    test('one notch is the L it always was, corner for corner', () {
+      // The oracle. [LRoomShape] used to write its six corners and its six
+      // walls out by hand, one table per corner; the walk that replaced them
+      // has to arrive at the same numbers in the same order, or every golden
+      // in the suite is drawing a different room. The old tables are copied
+      // here rather than referred to, so that this keeps checking the walk
+      // even after nothing else remembers what they said.
+      const a = 1500;
+      const b = 1000;
+      const l = length;
+      const w = width;
+      const wasCorners = {
+        RoomCorner.nearLeft: [[a, 0], [l, 0], [l, w], [0, w], [0, b], [a, b]],
+        RoomCorner.nearRight: [[0, 0], [l - a, 0], [l - a, b], [l, b], [l, w], [0, w]],
+        RoomCorner.farRight: [[0, 0], [l, 0], [l, w - b], [l - a, w - b], [l - a, w], [0, w]],
+        RoomCorner.farLeft: [[0, 0], [l, 0], [l, w], [a, w], [a, w - b], [0, w - b]],
+      };
+      const wasWalls = {
+        RoomCorner.nearLeft: [l - a, w, l, w - b, a, b],
+        RoomCorner.nearRight: [l - a, b, a, w - b, l, w],
+        RoomCorner.farRight: [l, w - b, a, b, l - a, w],
+        RoomCorner.farLeft: [l, w, l - a, b, a, w - b],
+      };
+      for (final corner in RoomCorner.values) {
+        final now = shaped(CornerCut.notch, {corner: size(a, b)});
+        expect(now.corners().map((p) => [p.x.round(), p.y.round()]).toList(),
+            wasCorners[corner], reason: '$corner');
+        expect(now.wallLengths(), wasWalls[corner], reason: '$corner');
+      }
+    });
+
+    test('a chamfer leaves five corners, and the cut wall is their hypotenuse',
+        () {
+      final shape = shaped(CornerCut.chamfer, {RoomCorner.farRight: size(900, 1200)});
+      expect(shape.corners().length, 5);
+      expect(shape.wallLengths().length, 5);
+      expect(isConvexPolygon(shape.corners()), isTrue);
+      expect(reflexCorners(shape.corners()), isEmpty);
+      // 900 by 1200 is a 3-4-5 triangle, so the cut wall is exactly 1500 and
+      // the rounding cannot hide a mistake in it.
+      expect(shape.wallLengths(), contains(1500));
+      expect(_area(shape.corners()),
+          closeTo(length * width - 900 * 1200 / 2, 1e-9));
+    });
+
+    test('every arrangement of cuts fills its box but for the cuts', () {
+      for (final cut in CornerCut.values) {
+        // The whole power set, so that nothing passes by being the only case
+        // tried. A cut corner is worth one rectangle or half of one.
+        for (var mask = 0; mask < 16; mask++) {
+          final cuts = <RoomCorner, CornerSize>{};
+          var gone = 0.0;
+          for (var i = 0; i < 4; i++) {
+            if (mask & (1 << i) == 0) continue;
+            final a = 600 + i * 100;
+            final b = 500 + i * 50;
+            cuts[RoomCorner.values[i]] = size(a, b);
+            gone += cut == CornerCut.notch ? a * b : a * b / 2;
+          }
+          final shape = shaped(cut, cuts);
+          final corners = shape.corners();
+          expect(corners.length, 4 + cuts.length * (cut == CornerCut.notch ? 2 : 1),
+              reason: '$cut mask $mask');
+          expect(shape.wallLengths().length, corners.length,
+              reason: '$cut mask $mask: a wall per corner');
+          expect(_area(corners), closeTo(length * width - gone, 1e-9),
+              reason: '$cut mask $mask');
+          expect(reflexCorners(corners).length,
+              cut == CornerCut.notch ? cuts.length : 0,
+              reason: '$cut mask $mask: one inside corner per notch');
+          expect(shape.problem, isNull, reason: '$cut mask $mask');
+        }
+      }
+    });
+
+    test('every row is one unbroken run, whatever is cut away', () {
+      // The load-bearing claim, and the only reason any of these rooms can be
+      // laid at all: a cut corner eats into one *end* of a row and never into
+      // its middle. Checked against the floor worked out a second way — each
+      // cut taken off the bounding box by arithmetic, at every height, with no
+      // appeal to [spanAt] — and the two have to agree on a single interval.
+      for (final cut in CornerCut.values) {
+        for (var mask = 1; mask < 16; mask++) {
+          final cuts = <RoomCorner, CornerSize>{};
+          for (var i = 0; i < 4; i++) {
+            if (mask & (1 << i) == 0) continue;
+            cuts[RoomCorner.values[i]] = size(600 + i * 100, 500 + i * 50);
+          }
+          final polygon = shaped(cut, cuts).corners();
+          for (var v = 1.0; v < width; v += 7.3) {
+            var lo = 0.0;
+            var hi = length.toDouble();
+            cuts.forEach((corner, s) {
+              // How far this cut reaches in at height v: the whole leg for a
+              // notch, and a leg tapering to nothing for a chamfer.
+              final near = corner == RoomCorner.nearLeft || corner == RoomCorner.nearRight;
+              final depth = near ? v : width - v;
+              if (depth >= s.across) return;
+              final double reach = cut == CornerCut.notch
+                  ? s.along.toDouble()
+                  : s.along * (1 - depth / s.across);
+              final left = corner == RoomCorner.nearLeft || corner == RoomCorner.farLeft;
+              if (left) {
+                lo = math.max(lo, reach);
+              } else {
+                hi = math.min(hi, length - reach);
+              }
+            });
+            final span = spanAt(polygon, v);
+            expect(span, isNotNull, reason: '$cut mask $mask at $v');
+            expect(span!.lo, closeTo(lo, 1e-9), reason: '$cut mask $mask at $v');
+            expect(span.hi, closeTo(hi, 1e-9), reason: '$cut mask $mask at $v');
+          }
+        }
+      }
+    });
+
+    test('two cuts on one wall may not eat it between them', () {
+      // Each bound is the one a single cut has always had, with the other end
+      // of the wall contributing nothing — so the arithmetic the form shows
+      // the user does not change when a second cut appears, it only tightens.
+      const arm = CutCornersRoomShape.minArmMm;
+      CutCornersRoomShape pair(int first, int second) =>
+          shaped(CornerCut.notch, {
+            RoomCorner.nearLeft: size(first, 800),
+            RoomCorner.nearRight: size(second, 800),
+          });
+      expect(pair(1000, 1000).problem, isNull);
+      expect(pair(length - arm, MIN_NOTCH_MM).problem, RoomProblem.notchLeavesNoRoom);
+      expect(pair((length - arm) ~/ 2, (length - arm) ~/ 2).problem, isNull);
+      expect(pair((length - arm) ~/ 2 + 1, (length - arm) ~/ 2 + 1).problem,
+          RoomProblem.notchLeavesNoRoom);
+      // The same wall read the other way: two cuts down the left wall.
+      expect(
+          shaped(CornerCut.notch, {
+            RoomCorner.nearLeft: size(800, width - arm),
+            RoomCorner.farLeft: size(800, MIN_NOTCH_MM),
+          }).problem,
+          RoomProblem.notchLeavesNoRoom);
+    });
+
+    test('a notch gives up the 45° layout and a chamfer keeps it', () {
+      final notched = shaped(CornerCut.notch, {RoomCorner.farRight: size(900, 800)});
+      final chamfered = shaped(CornerCut.chamfer, {RoomCorner.farRight: size(900, 800)});
+      expect(notched.takesDiagonal, isFalse);
+      expect(notched.isRectilinear, isTrue);
+      expect(chamfered.takesDiagonal, isTrue,
+          reason: 'it is convex, so a 45° strip crosses it once');
+      expect(chamfered.isRectilinear, isFalse, reason: 'the cut wall is not square');
+      // Neither is ever the rectangle it was cut from: [Calculation.rowLength]
+      // casts on the strength of that answer.
+      expect(notched.isRectangular, isFalse);
+      expect(chamfered.isRectangular, isFalse);
+    });
+
+    test('rooms that differ anywhere are told apart by their key', () {
+      final keys = <String>{
+        shaped(CornerCut.notch, {RoomCorner.farRight: size(900, 800)}).key,
+        shaped(CornerCut.chamfer, {RoomCorner.farRight: size(900, 800)}).key,
+        shaped(CornerCut.notch, {RoomCorner.farLeft: size(900, 800)}).key,
+        shaped(CornerCut.notch, {RoomCorner.farRight: size(901, 800)}).key,
+        shaped(CornerCut.notch, {RoomCorner.farRight: size(900, 801)}).key,
+        shaped(CornerCut.notch, {
+          RoomCorner.farRight: size(900, 800),
+          RoomCorner.nearLeft: size(900, 800),
+        }).key,
+        RoomShape.rectangle(length, width).key,
+      };
+      expect(keys.length, 7);
     });
   });
 }

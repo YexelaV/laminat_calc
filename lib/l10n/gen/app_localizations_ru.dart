@@ -98,6 +98,50 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shape_l => 'Г-образное';
 
   @override
+  String get shape_chamfer => 'Срезанный угол';
+
+  @override
+  String get shape_chamfer_pair => 'Два среза';
+
+  @override
+  String get shape_t => 'Т-образное';
+
+  @override
+  String shoulder(int number) {
+    return 'Срез $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Срез $number (мм)';
+  }
+
+  @override
+  String get chamfer_leg => 'Срез (45°)';
+
+  @override
+  String get chamfer_leg_mm => 'Срез под 45° (мм)';
+
+  @override
+  String notch(int number) {
+    return 'Вырез $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Вырез $number (мм)';
+  }
+
+  @override
+  String get cut_depth => 'Глубина вырезов';
+
+  @override
+  String get cut_depth_mm => 'Глубина вырезов (мм)';
+
+  @override
+  String get tap_wall_to_cut => 'Коснитесь стены, чтобы перенести вырезы';
+
+  @override
   String get overall_length => 'Общая длина';
 
   @override
@@ -147,6 +191,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'Нижний левый';
+
+  @override
+  String get wall_top => 'Верхняя стена';
+
+  @override
+  String get wall_right => 'Правая стена';
+
+  @override
+  String get wall_bottom => 'Нижняя стена';
+
+  @override
+  String get wall_left => 'Левая стена';
 
   @override
   String get pieces_per_package => 'В упаковке (штук)';

@@ -48,10 +48,11 @@ void main() {
     }
   }
 
-  Future<void> pickShape(WidgetTester tester, String name) async {
-    await tester.tap(find.byType(DropdownButtonFormField<RoomKind>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(name).last);
+  /// The shape is a tile in a row of them now, not a line in a menu, so one tap
+  /// does it. Found by key rather than by the name under it: the names are
+  /// translated and the keys are not.
+  Future<void> pickShape(WidgetTester tester, RoomKind kind) async {
+    await tester.tap(find.byKey(ValueKey('shape-${kind.name}')));
     await tester.pumpAndSettle();
   }
 
@@ -61,12 +62,15 @@ void main() {
   testWidgets('the cut typed reaches the calculation as the room measured', (tester) async {
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
-    await pickShape(tester, 'L-shaped');
-    // The cut arrives already filled with a third of the room, so the form is
-    // valid the moment the shape changes and the sketch shows an L the user
-    // can recognise before typing a thing.
-    expect(cubit.state.notchLength, 1333);
-    expect(cubit.state.notchWidth, 1000);
+    await pickShape(tester, RoomKind.lShaped);
+    // The cut arrives empty and the button stays grey: the shape is something
+    // the user says about the room, not two measurements the form takes for
+    // them. The sketch has an L to draw all the same — see [CalculateState
+    // .shape], where a cut nobody has typed is a third of the room — so the
+    // boxes below it are the only place that admits to a guess.
+    expect(cubit.state.notchLength, isNull);
+    expect(cubit.state.notchWidth, isNull);
+    expect(nextEnabled(tester), isFalse);
 
     await fill(tester, ['1500', '1000'], from: 2);
     final shape = cubit.state.shape! as LRoomShape;
@@ -79,14 +83,13 @@ void main() {
     expect(shape.isRectangular, isFalse);
     expect(shape.corners().length, 6);
 
-    await fill(tester, ['1200', '190', '8'], from: 4);
     expect(nextEnabled(tester), isTrue);
   });
 
   testWidgets('the corner is picked on the sketch', (tester) async {
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
-    await pickShape(tester, 'L-shaped');
+    await pickShape(tester, RoomKind.lShaped);
     expect(cubit.state.notchCorner, RoomCorner.farRight);
 
     for (final corner in RoomCorner.values) {
@@ -101,11 +104,11 @@ void main() {
   testWidgets('changing the shape back leaves the rectangle behind', (tester) async {
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
-    await pickShape(tester, 'L-shaped');
+    await pickShape(tester, RoomKind.lShaped);
     await fill(tester, ['1500', '1000'], from: 2);
     expect(cubit.state.shape!.isRectangular, isFalse);
 
-    await pickShape(tester, 'Rectangular');
+    await pickShape(tester, RoomKind.rectangle);
     expect(cubit.state.lShaped, isFalse);
     // The cut is still in the state, but it is off screen and out of the room.
     final shape = cubit.state.shape! as RoomShape;
@@ -120,11 +123,11 @@ void main() {
     // finds each as they left it.
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
-    await pickShape(tester, 'Walls of different lengths');
+    await pickShape(tester, RoomKind.uneven);
     await fill(tester, ['3980', '3010', '5010'], from: 2);
-    await pickShape(tester, 'L-shaped');
+    await pickShape(tester, RoomKind.lShaped);
     await fill(tester, ['1500', '1000'], from: 2);
-    await pickShape(tester, 'Walls of different lengths');
+    await pickShape(tester, RoomKind.uneven);
     expect(cubit.state.roomLength2, 3980);
     expect(cubit.state.roomWidth2, 3010);
     expect(cubit.state.roomDiagonal, 5010);
@@ -135,9 +138,8 @@ void main() {
   testWidgets('a cut that leaves no room is refused by its own field', (tester) async {
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
-    await pickShape(tester, 'L-shaped');
+    await pickShape(tester, RoomKind.lShaped);
     await fill(tester, ['1500', '1000'], from: 2);
-    await fill(tester, ['1200', '190', '8'], from: 4);
     expect(nextEnabled(tester), isTrue);
 
     // Longer than the room less the narrowest room there is. The field knows
@@ -156,7 +158,7 @@ void main() {
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
     expect(find.byType(RoomSketch), findsNothing);
-    await pickShape(tester, 'L-shaped');
+    await pickShape(tester, RoomKind.lShaped);
     expect(find.byType(RoomSketch), findsOneWidget);
     expect(find.text('Tap the corner that is cut away'), findsOneWidget);
   });
@@ -174,7 +176,7 @@ void main() {
     await pumpForm(tester, system: MeasurementSystem.imperial);
     // Feet, inches, feet, inches: length then width, as before.
     await fill(tester, ['13', '1', '9', '10']);
-    await pickShape(tester, 'L-shaped');
+    await pickShape(tester, RoomKind.lShaped);
     expect(cubit.state.roomLength, feetInchesToMm(13, 1));
     expect(cubit.state.roomWidth, feetInchesToMm(9, 10));
 
@@ -192,7 +194,6 @@ void main() {
   testWidgets('a 45° layout is out of reach in such a room', (tester) async {
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
-    await fill(tester, ['1200', '190', '8'], from: 2);
 
     // Chosen while the room was still a rectangle...
     cubit.setDirection(Direction.diagonal);
@@ -200,9 +201,17 @@ void main() {
 
     // ...and un-chosen by the room, not merely greyed out on the next screen:
     // the direction is read by the row plan and the validators too.
-    await pickShape(tester, 'L-shaped');
+    await pickShape(tester, RoomKind.lShaped);
     expect(cubit.state.direction, Direction.length);
 
+    // The cut itself, which nothing fills in for the user.
+    await fill(tester, ['1500', '1000'], from: 2);
+
+    // The laminate sits between the room and the laying now, so the walk to
+    // the direction buttons goes through it.
+    await tester.tap(find.widgetWithText(TextButton, 'Next'));
+    await tester.pumpAndSettle();
+    await fill(tester, ['1200', '190', '8']);
     await tester.tap(find.widgetWithText(TextButton, 'Next'));
     await tester.pumpAndSettle();
     final segments = tester

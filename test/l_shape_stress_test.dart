@@ -19,6 +19,8 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'polygon.dart';
+
 import 'package:floor_calculator/calculate.dart';
 import 'package:floor_calculator/constants.dart';
 import 'package:floor_calculator/models.dart';
@@ -28,16 +30,6 @@ import 'package:floor_calculator/scheme_geometry.dart';
 import 'package:floor_calculator/utils/units.dart';
 
 final violations = <String>[];
-
-double _area(List<Offset> polygon) {
-  var sum = 0.0;
-  for (var i = 0; i < polygon.length; i++) {
-    final from = polygon[i];
-    final to = polygon[(i + 1) % polygon.length];
-    sum += from.dx * to.dy - to.dx * from.dy;
-  }
-  return sum.abs() / 2;
-}
 
 /// Every length the floor takes across the rows: two for a room with one
 /// corner cut away, and their difference is the step.
@@ -128,7 +120,7 @@ void checkResult(String cfg, Calculation c, Result r, RowPlan plan) {
     if (shape.outline.length > 6) {
       bad('plank ${shape.plank.number}: ${shape.outline.length} corners, more than an L has');
     }
-    drawn += _area(shape.outline);
+    drawn += polygonArea(shape.outline);
     for (final point in shape.outline) {
       final depth = walls.insideDepth(point);
       if (depth < -0.5) {
@@ -140,7 +132,7 @@ void checkResult(String cfg, Calculation c, Result r, RowPlan plan) {
   }
 
   final floorPolygon = drawnFloor(r);
-  final floor = _area(floorPolygon);
+  final floor = polygonArea(floorPolygon);
   final rotated = [for (final p in floorPolygon) Point(p.dx, p.dy)];
   final reaches = _reaches(rotated);
   if (reaches.length != 2) {

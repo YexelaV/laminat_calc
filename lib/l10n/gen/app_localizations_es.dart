@@ -98,6 +98,50 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shape_l => 'En forma de L';
 
   @override
+  String get shape_chamfer => 'Esquina cortada';
+
+  @override
+  String get shape_chamfer_pair => 'Dos esquinas cortadas';
+
+  @override
+  String get shape_t => 'En forma de T';
+
+  @override
+  String shoulder(int number) {
+    return 'Corte $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Corte $number (mm)';
+  }
+
+  @override
+  String get chamfer_leg => 'Corte (45°)';
+
+  @override
+  String get chamfer_leg_mm => 'Corte a 45° (mm)';
+
+  @override
+  String notch(int number) {
+    return 'Hueco $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Hueco $number (mm)';
+  }
+
+  @override
+  String get cut_depth => 'Profundidad de los huecos';
+
+  @override
+  String get cut_depth_mm => 'Profundidad de los huecos (mm)';
+
+  @override
+  String get tap_wall_to_cut => 'Toca una pared para mover los huecos';
+
+  @override
   String get overall_length => 'Longitud total';
 
   @override
@@ -147,6 +191,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'Inferior izquierda';
+
+  @override
+  String get wall_top => 'Pared superior';
+
+  @override
+  String get wall_right => 'Pared derecha';
+
+  @override
+  String get wall_bottom => 'Pared inferior';
+
+  @override
+  String get wall_left => 'Pared izquierda';
 
   @override
   String get pieces_per_package => 'Piezas por paquete';

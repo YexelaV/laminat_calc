@@ -181,12 +181,12 @@ RowPlan planFor({
   // way on the drawing side — through the same [RoomOutline.turned], so the two
   // cannot end up looking at different rooms.
   final laid = direction == Direction.width ? shape.turned(floor) : floor;
-  // A floor that is its own bounding box less a corner is exactly what
+  // A floor that is its own bounding box less some corners is exactly what
   // [rectilinearPlan] is for: square walls, and one unbroken run of floor
   // across every row.
-  if (shape.floorNotch(indentFromWall) != null) {
+  if (shape.isRectilinear) {
     assert(direction != Direction.diagonal,
-        'a 45° row crosses a cut-away corner twice and is two rows, not one');
+        'a 45° row crosses a notched-out corner twice and is two rows, not one');
     return rectilinearPlan(
       floor: laid,
       laminateLength: laminateLength,

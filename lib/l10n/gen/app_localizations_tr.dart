@@ -98,6 +98,50 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shape_l => 'L şeklinde';
 
   @override
+  String get shape_chamfer => 'Pahlı köşe';
+
+  @override
+  String get shape_chamfer_pair => 'İki pahlı köşe';
+
+  @override
+  String get shape_t => 'T biçiminde';
+
+  @override
+  String shoulder(int number) {
+    return 'Kesim $number';
+  }
+
+  @override
+  String shoulder_mm(int number) {
+    return 'Kesim $number (mm)';
+  }
+
+  @override
+  String get chamfer_leg => 'Pah (45°)';
+
+  @override
+  String get chamfer_leg_mm => '45° pah (mm)';
+
+  @override
+  String notch(int number) {
+    return 'Girinti $number';
+  }
+
+  @override
+  String notch_mm(int number) {
+    return 'Girinti $number (mm)';
+  }
+
+  @override
+  String get cut_depth => 'Girintilerin derinliği';
+
+  @override
+  String get cut_depth_mm => 'Girintilerin derinliği (mm)';
+
+  @override
+  String get tap_wall_to_cut => 'Girintileri taşımak için bir duvara dokunun';
+
+  @override
   String get overall_length => 'Toplam uzunluk';
 
   @override
@@ -147,6 +191,18 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get corner_bottom_left => 'Sol alt';
+
+  @override
+  String get wall_top => 'Üst duvar';
+
+  @override
+  String get wall_right => 'Sağ duvar';
+
+  @override
+  String get wall_bottom => 'Alt duvar';
+
+  @override
+  String get wall_left => 'Sol duvar';
 
   @override
   String get pieces_per_package => 'Paketteki adet';

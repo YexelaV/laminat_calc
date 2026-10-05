@@ -18,7 +18,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:floor_calculator/cubit/calculate_state.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 
@@ -70,6 +69,12 @@ void main() {
 
       var shot = 0;
       Future<void> capture(String name) async {
+        // Nothing is being typed in a listing picture. The last box filled
+        // still holds the cursor, and with it a caret, a drag handle and —
+        // since the sketch picks out the measurement under the cursor — one
+        // number in a colour the rest are not.
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
         shot++;
         final index = shot.toString().padLeft(2, '0');
         await expectLater(
@@ -110,49 +115,55 @@ void main() {
       // app rather than listed here, so a new locale costs nothing.
       Finder next() => find.text(AppStrings.of(tester.element(find.byType(Scaffold))).next);
 
+      // Scrolled to before it is pressed. The room form is taller than the
+      // phone once the shapes are on it, and a tap aimed below the fold lands
+      // on nothing — silently, leaving the next screen's answers to be typed
+      // into this one's boxes.
+      Future<void> tapNext() async {
+        await tester.ensureVisible(next());
+        await tester.pumpAndSettle();
+        await tester.tap(next());
+        await tester.pumpAndSettle();
+      }
+
       // The room is Г-shaped, which is what the listing leads on and what no
       // shot used to show. It costs nothing to show it here: Play takes eight
       // phone screenshots and there are eight, so a ninth is not an option and
       // the room shot is the one that can carry it. The form still reads as
       // "type your room" — there are two more boxes and a sketch — and the
       // scheme in shot 07 comes out more worth looking at for it.
-      Finder shapeField() => find.byType(DropdownButtonFormField<RoomKind>);
-      final strings = AppStrings.of(tester.element(find.byType(Scaffold)));
-
       // Overall length and width first: the cut's own bounds are worked out
       // from them, so they have to be there before the shape changes.
       await fill(['3000', '6000']);
-      await tester.tap(shapeField());
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(strings.shape_l).last);
+      await tester.tap(find.byKey(const ValueKey('shape-lShaped')));
       await tester.pumpAndSettle();
 
-      // Length and width of the cut, then the plank and the pack. The corner
-      // is the one the form starts on, which is the far one — the cut lands at
-      // the bottom of the sketch and of the scheme, clear of both captions.
-      await fill(['3000', '6000', '1200', '2000', '1200', '190', '8']);
+      // Length and width of the cut. The corner is the one the form starts on,
+      // which is the far one — the cut lands at the bottom of the sketch and of
+      // the scheme, clear of both captions.
+      await fill(['3000', '6000', '1200', '2000']);
       await tester.pumpAndSettle();
       await capture('room');
 
-      await tester.tap(find.byIcon(Icons.settings));
-      await tester.pumpAndSettle();
-      await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 1)));
-      await tester.pumpAndSettle();
-      await capture('settings');
-      // Dismissed by tapping the barrier, the way the sheet is meant to close.
-      await tester.tapAt(const Offset(10, 10));
-      await tester.pumpAndSettle();
+      await tapNext();
 
-      await tester.tap(next());
-      await tester.pumpAndSettle();
+      // The laminate: plank, plank, pack, copied off the side of the carton.
+      // Three boxes make a plain picture, but it is the second of the three
+      // things a user has to type, and a listing that skips it reads as though
+      // the room were the whole of the input. Play takes eight phone
+      // screenshots and there are eight; this one has the settings sheet's
+      // place, which was showing a list of languages the listing already names
+      // and a unit switch shot 02 already asks about.
+      await fill(['1200', '190', '8']);
+      await capture('laminate');
+      await tapNext();
 
       // Expansion gap, then the shortest offcut worth laying.
       await fill(['10', '300']);
       await tester.pumpAndSettle();
       await capture('laying');
 
-      await tester.tap(next());
-      await tester.pumpAndSettle();
+      await tapNext();
       await capture('variants');
 
       await tester.tap(find.byType(TextButton).first);
