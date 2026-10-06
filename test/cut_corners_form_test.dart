@@ -295,6 +295,33 @@ void main() {
     expect(shape.width, 3000);
   });
 
+  testWidgets('a room too small for any cut says so instead of falling over',
+      (tester) async {
+    // The smallest room the form takes is 500 mm across, and a cut needs 100 mm
+    // of its own plus 500 mm of floor beside it — so there are rooms it accepts
+    // that no cut fits into, and in those the ceiling on a cut lands below its
+    // floor. The drawing still has to be drawn while the user works that out.
+    await pumpForm(tester);
+    await fill(tester, ['500', '500']);
+    for (final kind in RoomKind.values.where((k) => k.isCut)) {
+      await pickShape(tester, kind);
+      expect(cubit.state.shape!.problem, isNotNull, reason: '$kind');
+      expect(find.text('The notch leaves no room'), findsOneWidget, reason: '$kind');
+      expect(nextEnabled(tester), isFalse, reason: '$kind');
+    }
+
+    // And the other way round: the shape first, the room typed down to nothing
+    // after it.
+    await pickShape(tester, RoomKind.rectangle);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, RoomKind.lShaped);
+    await fill(tester, ['1500', '1000'], from: 2);
+    expect(nextEnabled(tester), isTrue);
+    await fill(tester, ['500', '500']);
+    expect(cubit.state.shape!.problem, isNotNull);
+    expect(nextEnabled(tester), isFalse);
+  });
+
   testWidgets('a cut left unmeasured is still unmeasured on the way back',
       (tester) async {
     // Picking the shape never fills a box; nor does picking it a second time.

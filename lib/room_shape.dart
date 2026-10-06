@@ -632,6 +632,19 @@ class LRoomShape extends CutCornersRoomShape {
   static int maxNotchWidth(int width) => width - minArmMm;
 }
 
+/// [value] held between [least] and [most], and [least] itself where a room is
+/// too small for those two to be in that order.
+///
+/// A room may be [MIN_ROOM_MM] across, and a cut needs [MIN_NOTCH_MM] of its
+/// own plus [CutCornersRoomShape.minArmMm] of floor beside it — so there are
+/// rooms the form accepts that no cut fits into, and in those the ceiling on a
+/// cut lands below its floor. [num.clamp] throws when its bounds cross, which
+/// is no way to answer "how big may this cut be" — the answer is that the
+/// smallest cut there is is already too big, and [RoomOutline.problem] is what
+/// says so, under the sketch and at the Next button.
+int heldBetween(int value, int least, int most) =>
+    value.clamp(least, math.max(least, most));
+
 /// [polygon] with every edge moved [gap] towards the inside, corners
 /// re-cut where the moved edges now meet.
 ///

@@ -238,7 +238,7 @@ class CalculateState extends Equatable {
     // the third a lone cut gets: a third each would leave them meeting in the
     // middle with barely a room between.
     final side = cutWall.runsAlongLength ? length : width;
-    final quarter = (side ~/ 4).clamp(MIN_NOTCH_MM, side - MIN_ROOM_MM);
+    final quarter = heldBetween(side ~/ 4, MIN_NOTCH_MM, side - MIN_ROOM_MM);
     final first = notchLength ?? quarter;
     final second = notchLength2 ?? quarter;
     if (roomKind.hasOneLeg) {
@@ -263,7 +263,7 @@ class CalculateState extends Equatable {
   /// turning the walls on pays — the form stays valid and only what was
   /// actually measured needs typing.
   static int defaultNotch(int side) =>
-      (side ~/ 3).clamp(MIN_NOTCH_MM, side - LRoomShape.minArmMm);
+      heldBetween(side ~/ 3, MIN_NOTCH_MM, side - LRoomShape.minArmMm);
 
   CalculateState copyWith({
     final int? roomLength,

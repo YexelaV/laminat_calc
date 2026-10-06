@@ -255,15 +255,24 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
       final lone = kind.hasOneLeg ? math.min(length, width) : length;
       final loneMax = kind.hasOneLeg ? CornerSize.wallOfLeg(notchMax(lone)) : notchMax(lone);
       final floor = kind.hasOneLeg ? CornerSize.wallOfLeg(MIN_NOTCH_MM) : MIN_NOTCH_MM;
+      // [heldBetween] rather than clamp: a room may be small enough that no cut
+      // fits in it at all, and then the ceiling lands under the floor. What is
+      // carried over is the smallest cut there is, and the sketch says it does
+      // not fit.
       if (kind.isPaired) {
-        final share = (along ~/ 4).clamp(floor, shoulderMax(along, MIN_NOTCH_MM));
-        if (notchLength != null) cubit.setNotchLength(notchLength.clamp(floor, share));
-        if (notchLength2 != null) cubit.setNotchLength2(notchLength2.clamp(floor, share));
+        final share =
+            heldBetween(along ~/ 4, floor, shoulderMax(along, MIN_NOTCH_MM));
+        if (notchLength != null) {
+          cubit.setNotchLength(heldBetween(notchLength, floor, share));
+        }
+        if (notchLength2 != null) {
+          cubit.setNotchLength2(heldBetween(notchLength2, floor, share));
+        }
       } else if (notchLength != null) {
-        cubit.setNotchLength(notchLength.clamp(floor, loneMax));
+        cubit.setNotchLength(heldBetween(notchLength, floor, loneMax));
       }
       if (!kind.hasOneLeg && notchWidth != null) {
-        cubit.setNotchWidth(notchWidth.clamp(MIN_NOTCH_MM, notchMax(into)));
+        cubit.setNotchWidth(heldBetween(notchWidth, MIN_NOTCH_MM, notchMax(into)));
       }
     }
     cubit.setRoomKind(kind);
