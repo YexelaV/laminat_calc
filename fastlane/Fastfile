@@ -1,0 +1,54 @@
+default_platform(:android)
+
+# The listing is written in store/<locale>/ and shot into it by
+# test/store_screenshots_test.dart; tool/build_store_metadata.dart lays that
+# out as fastlane/metadata/android/ and checks it against Play's limits, so
+# every lane here starts by rebuilding it.
+#
+# Titles, the feature graphic and the icon are never uploaded: supply only
+# overwrites a field it finds a file for, so the ones live on Play stay put.
+
+platform :android do
+  desc "Push the texts and the screenshots for all twelve locales, and nothing else"
+  desc "Options: dry_run:true to validate against Play without changing anything"
+  lane :listing do |options|
+    build_metadata
+
+    upload_to_play_store(
+      track: options[:track] || "production",
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_images: true,       # feature graphic and icon are left alone
+      skip_upload_changelogs: true,   # release notes only travel with a build
+      sync_image_upload: true,        # a screenshot whose sha256 already matches is not re-sent
+      validate_only: options[:dry_run] || false
+    )
+  end
+
+  desc "Build a signed bundle and release it with the listing and the release notes"
+  desc "Options: track:internal|production, draft:true, dry_run:true"
+  lane :release do |options|
+    build_metadata
+
+    sh("cd .. && flutter build appbundle --release")
+
+    upload_to_play_store(
+      track: options[:track] || "internal",
+      release_status: options[:draft] ? "draft" : "completed",
+      aab: "build/app/outputs/bundle/release/app-release.aab",
+      skip_upload_apk: true,
+      skip_upload_images: true,
+      sync_image_upload: true,
+      validate_only: options[:dry_run] || false
+    )
+  end
+
+  desc "Read the live listing into play_current/ to see what Play holds right now"
+  lane :pull do
+    sh("cd .. && fastlane supply init -m fastlane/play_current")
+  end
+
+  private_lane :build_metadata do
+    sh("cd .. && dart run tool/build_store_metadata.dart")
+  end
+end

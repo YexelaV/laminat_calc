@@ -15,3 +15,11 @@ test/failures/
 features_plan.md
 # Pictures for stores
 /store
+# Laid out from /store by tool/build_store_metadata.dart, and read back off Play
+fastlane/metadata/
+fastlane/play_current/
+fastlane/report.xml
+# Play Developer API credentials. The key belongs outside the repository,
+# in ~/.config/laminat_calc/play-api.json — this is only a second lock.
+fastlane/*.json
+fastlane/.env*

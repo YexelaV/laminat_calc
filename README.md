@@ -116,3 +116,50 @@ flutter test --update-goldens test/store_screenshots_test.dart
 # The stress test also runs standalone, without the Flutter test harness
 dart test/stress_test.dart
 ```
+
+## Releasing
+
+The Play listing is written in `store/<locale>/listing.txt` and
+`store/<locale>/whatsnew.txt` and shot into `store/<locale>/*.png`;
+`tool/build_store_metadata.dart` lays all of it out as
+`fastlane/metadata/android/` under the locale codes Play uses, checks it
+against Play's limits, and `fastlane supply` sends it. The feature graphic and
+the icon are never uploaded — supply overwrites only the fields it finds a file
+for, so those stay as they are on Play. The title works the same way: write
+`store/<locale>/title.txt` (30 characters) only to change one, or to give a
+locale Play does not carry yet a title at all, because a listing Play has never
+seen starts out empty and it will not take an empty title.
+
+Portuguese is filed as `pt-PT`, the text being European. Play still carries the
+older `pt-BR` listing, and supply cannot delete a listing — until that one is
+removed by hand in the Play Console, Brazil goes on seeing it.
+
+Publishing needs a service account key at `~/.config/laminat_calc/play-api.json`
+(override with `PLAY_JSON_KEY`), and `android/key.properties` for the signing.
+Neither is in the repository.
+
+```bash
+# One-off: install the pinned fastlane
+bundle install
+
+# Lay out fastlane/metadata/ from store/ and check the lengths. Run it on its
+# own after editing any listing text — it reports every problem at once.
+dart run tool/build_store_metadata.dart
+
+# Texts and screenshots for all twelve locales, nothing else.
+# dry_run:true validates the whole edit against Play and discards it.
+bundle exec fastlane android listing dry_run:true
+bundle exec fastlane android listing
+
+# A whole release: metadata, a signed bundle, and the release notes.
+bundle exec fastlane android release track:internal draft:true
+bundle exec fastlane android release track:production
+
+# Read the live listing into fastlane/play_current/ to see what Play holds now
+bundle exec fastlane android pull
+```
+
+The order for a release: bump `version` in `pubspec.yaml` (the build number is
+Play's versionCode and must go up), rewrite the twelve `whatsnew.txt` — their
+first line carries the version and the generator refuses a stale one — reshoot
+the screenshots, then `fastlane android release`.
