@@ -52,18 +52,19 @@ const _maxShort = 80;
 const _maxFull = 4000;
 const _maxChangelog = 500;
 
-/// Play takes eight phone screenshots at most, and the test shoots exactly that.
-const _screenshotCount = 8;
+/// Play takes eight phone screenshots at most; the listing shows five, because
+/// the first two or three are what decides the install and the rest are only
+/// read by someone already persuaded. The order is
+/// test/store_screenshots_test.dart's, and the numbers in these names are what
+/// puts them in it — supply uploads in alphabetical order.
+const _screenshotCount = 5;
 
 const _screenshotNames = <String>[
-  '01_language',
-  '02_units',
-  '03_room',
+  '01_room',
+  '02_scheme',
+  '03_cut_list',
   '04_laminate',
   '05_laying',
-  '06_variants',
-  '07_scheme',
-  '08_cut_list',
 ];
 
 final List<String> _problems = <String>[];
