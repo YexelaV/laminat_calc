@@ -363,6 +363,7 @@ class Calculation {
           lines,
           pieces,
           trash,
+          laminateWidth: laminateWidth,
           direction: direction,
           indentFromWall: indentFromWall,
           steppedRows: [

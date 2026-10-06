@@ -306,6 +306,9 @@ class AppLocalizationsBg extends AppLocalizations {
   }
 
   @override
+  String get whole => 'цели';
+
+  @override
   String get leftovers => 'Остатъци';
 
   @override

@@ -254,6 +254,7 @@ void main() {
         ],
         [],
         [],
+        laminateWidth: 190,
         direction: Direction.length,
         indentFromWall: 10,
       );
@@ -307,6 +308,7 @@ void main() {
       ],
       [],
       [],
+      laminateWidth: 190,
       direction: Direction.length,
       indentFromWall: 10,
     );

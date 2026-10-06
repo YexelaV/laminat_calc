@@ -108,6 +108,7 @@ Result variantWithPlanks(int totalPlanks) => Result(
       ],
       [],
       [],
+      laminateWidth: 190,
       direction: Direction.length,
       indentFromWall: 10,
     );

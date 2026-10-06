@@ -122,6 +122,7 @@
     "variant": "N.º {number}",
     "cut_list": "Lista de cortes",
     "row": "Fileira {number}",
+    "whole": "inteiras",
     "leftovers": "Sobras",
     "waste": "Descarte"
 }

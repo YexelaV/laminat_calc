@@ -155,6 +155,12 @@ class Result extends Equatable {
   final List<Plank> trash = [];
   final int laminateLength;
 
+  /// What a plank measured before anything was done to it. The length is above;
+  /// this is the other half, and the cut list needs both to say which planks go
+  /// down untouched — a row narrowed across its width is laid with planks of
+  /// full length that have still been ripped.
+  final int laminateWidth;
+
   /// The room the planks were laid in. The drawing rebuilds the outline from it
   /// rather than being handed one, so the floor that is drawn and the floor
   /// that was laid are the same measurements.
@@ -183,6 +189,7 @@ class Result extends Equatable {
     List<Line> lines,
     List<Plank> pieces,
     List<Plank> trash, {
+    required this.laminateWidth,
     required this.direction,
     required this.indentFromWall,
     this.steppedRows = const [],

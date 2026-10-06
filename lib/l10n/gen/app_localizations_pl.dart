@@ -307,6 +307,9 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get whole => 'całe';
+
+  @override
   String get leftovers => 'Pozostałości';
 
   @override

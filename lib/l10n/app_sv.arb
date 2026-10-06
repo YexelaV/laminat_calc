@@ -122,6 +122,7 @@
     "variant": "#{number}",
     "cut_list": "Kaplista",
     "row": "Rad {number}",
+    "whole": "hela",
     "leftovers": "Rester",
     "waste": "Spill"
 }

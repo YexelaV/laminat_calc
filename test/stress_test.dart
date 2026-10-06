@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:floor_calculator/calculate.dart';
+import 'package:floor_calculator/constants.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/room_shape.dart';
 
@@ -164,6 +165,48 @@ void main() {
       final indent = rnd.nextInt(3) * 5; // 0/5/10
       run(roomLength, roomWidth, lamLength, lamWidth, 8, indent, minLen, offset);
     }
+    expect(violations, isEmpty, reason: report());
+  });
+
+  // The ranges above are the laminate anybody actually buys. The two below are
+  // the edges of what the form takes, which moved down when the floors under
+  // the plank, the offset and the shortest offcut stopped being guesses: a
+  // herringbone block or a tile is 200 mm long and may be 50 mm across, and
+  // neither of those had ever been through this harness.
+  test('the smallest plank the form takes holds the invariants', () {
+    final rnd = Random(7);
+    // Rooms stay mid-sized here. What a small plank costs is the number of them
+    // it takes to fill a room, and the two extremes together are the case
+    // below rather than this one.
+    for (var i = 0; i < 300; i++) {
+      final roomLength = rnd.nextInt(6001) + 2000; // 2000 - 8000
+      final roomWidth = rnd.nextInt(4001) + 2000; // 2000 - 6000
+      final lamLength = MIN_PLANK_LENGTH + rnd.nextInt(9) * 50; // 200 - 600
+      final lamWidth = MIN_PLANK_WIDTH + rnd.nextInt(11) * 5; // 50 - 100
+      final minLen = MIN_MIN_LENGTH + rnd.nextInt(3) * 25; // 50 - 100
+      // Inside what the form offers: never under the floor, never over half the
+      // plank, which is the ceiling the offset field shows.
+      final offset = MIN_ROW_OFFSET + rnd.nextInt(lamLength ~/ 2 - MIN_ROW_OFFSET + 1);
+      final indent = rnd.nextInt(3) * 5;
+      run(roomLength, roomWidth, lamLength, lamWidth, 8, indent, minLen, offset);
+    }
+    expect(violations, isEmpty, reason: report());
+  });
+
+  test('the largest room the form takes, laid with the smallest plank', () {
+    // 320 rows of 120 planks: the biggest layout the form can be asked for, and
+    // the pairing the plank floors are really held against — planks per layout
+    // is room over plank on both axes, so neither bound means anything without
+    // the other. Measured at about 130 ms for the four variants.
+    run(MAX_LENGTH_MM, MAX_WIDTH_MM, MIN_PLANK_LENGTH, MIN_PLANK_WIDTH, 8, 10, MIN_MIN_LENGTH,
+        MIN_PLANK_LENGTH ~/ 2);
+    run(MAX_LENGTH_MM, MAX_WIDTH_MM, MIN_PLANK_LENGTH, MIN_PLANK_WIDTH, 8, 10, MIN_MIN_LENGTH,
+        MIN_ROW_OFFSET);
+    // And the ceilings, which no random case has ever come near either. The
+    // second is a plank wider than it is long — a square tile and then some,
+    // which the two bounds have always allowed between them.
+    run(MAX_LENGTH_MM, MAX_WIDTH_MM, MAX_PLANK_LENGTH, MAX_PLANK_WIDTH, 8, 10, 300, 300);
+    run(8000, 5000, MIN_PLANK_LENGTH, MAX_PLANK_WIDTH, 8, 10, MIN_MIN_LENGTH, MIN_ROW_OFFSET);
     expect(violations, isEmpty, reason: report());
   });
 }

@@ -305,6 +305,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get whole => 'inteiras';
+
+  @override
   String get leftovers => 'Sobras';
 
   @override

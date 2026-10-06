@@ -122,6 +122,7 @@
     "variant": "N. {number}",
     "cut_list": "Lista di taglio",
     "row": "Fila {number}",
+    "whole": "intere",
     "leftovers": "Sfridi riutilizzabili",
     "waste": "Scarto"
 }

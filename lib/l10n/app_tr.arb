@@ -122,6 +122,7 @@
     "variant": "No. {number}",
     "cut_list": "Kesim listesi",
     "row": "Sıra {number}",
+    "whole": "tam",
     "leftovers": "Artan parçalar",
     "waste": "Fire"
 }

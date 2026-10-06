@@ -305,6 +305,9 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get whole => 'intere';
+
+  @override
   String get leftovers => 'Sfridi riutilizzabili';
 
   @override

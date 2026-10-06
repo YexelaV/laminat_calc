@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The name under the icon on the home screen and in the app list.
+     Android picks it by the phone's own language, not by the one chosen
+     inside the app: these two answers are usually the same and the
+     launcher has no way to be told otherwise.
+
+     The same words as AppLocalizations.title, which is what the first
+     screen writes across the top. -->
+<resources>
+    <!-- English, and the fallback for every language the app does not name -->
+    <string name="app_name">Laminate Calculator</string>
+</resources>

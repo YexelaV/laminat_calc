@@ -122,6 +122,7 @@
     "variant": "Nr. {number}",
     "cut_list": "Zuschnittliste",
     "row": "Reihe {number}",
+    "whole": "ganz",
     "leftovers": "Reststücke",
     "waste": "Verschnitt"
 }

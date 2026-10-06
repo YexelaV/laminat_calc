@@ -646,6 +646,12 @@ abstract class AppLocalizations {
   /// **'Ряд {number}'**
   String row(int number);
 
+  /// No description provided for @whole.
+  ///
+  /// In ru, this message translates to:
+  /// **'целые'**
+  String get whole;
+
   /// No description provided for @leftovers.
   ///
   /// In ru, this message translates to:

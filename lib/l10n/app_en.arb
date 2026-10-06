@@ -122,6 +122,7 @@
     "variant": "#{number}",
     "cut_list": "Cut list",
     "row": "Row {number}",
+    "whole": "whole",
     "leftovers": "Leftovers",
     "waste": "Waste"
 }

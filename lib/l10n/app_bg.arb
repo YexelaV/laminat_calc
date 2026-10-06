@@ -122,6 +122,7 @@
     "variant": "№{number}",
     "cut_list": "Списък за разкрой",
     "row": "Ред {number}",
+    "whole": "цели",
     "leftovers": "Остатъци",
     "waste": "Отпадъци"
 }

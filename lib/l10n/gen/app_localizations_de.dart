@@ -306,6 +306,9 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get whole => 'ganz';
+
+  @override
   String get leftovers => 'Reststücke';
 
   @override

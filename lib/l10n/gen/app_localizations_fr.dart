@@ -305,6 +305,9 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get whole => 'entières';
+
+  @override
   String get leftovers => 'Chutes réutilisables';
 
   @override

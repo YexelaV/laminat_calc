@@ -122,6 +122,7 @@
     "variant": "nr {number}",
     "cut_list": "Lista cięć",
     "row": "Rząd {number}",
+    "whole": "całe",
     "leftovers": "Pozostałości",
     "waste": "Odpady"
 }

@@ -94,6 +94,22 @@ void main() {
     }
   }
 
+  test('every language the app ships can be set in the PDF font', () async {
+    // A character with no glyph is not an error: [schemePdf] leaves the whole
+    // cut list off the document rather than print a page of empty boxes. So a
+    // dash or a sign that Roboto happens not to carry would cost the user the
+    // list in silence, and this is the only place that would notice.
+    final result = laid(Direction.length);
+    for (final locale in AppLocalizations.supportedLocales) {
+      for (final system in MeasurementSystem.values) {
+        final lines = await report(result, system, locale.languageCode);
+        final unprintable = lines.where((line) => !fonts.canPrint(line));
+        expect(unprintable, isEmpty,
+            reason: '${locale.languageCode} in $system: $unprintable');
+      }
+    }
+  });
+
   for (final direction in [Direction.length, Direction.diagonal]) {
     test('$direction in a room measured wall by wall saves', () async {
       final result = laidSkewed(direction);
@@ -204,6 +220,7 @@ void main() {
       ],
       [],
       [],
+      laminateWidth: 190,
       direction: Direction.length,
       indentFromWall: 10,
     );

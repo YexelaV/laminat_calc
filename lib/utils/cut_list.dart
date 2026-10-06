@@ -18,6 +18,24 @@ List<String> cutList(
   String grouped(Map<int, int> counts) =>
       counts.entries.map((e) => '${size(e.key)} × ${e.value}').join(', ');
 
+  /// One run of planks, as the fitter will cut them: the numbers it covers, the
+  /// length they are all cut to, and whether that is a cut at all.
+  ///
+  /// Only the length. How wide a row is ripped is a property of the row and not
+  /// of what went into it — every plank in one carries the same width — so the
+  /// width is said once in front of the row and the pieces are a list of
+  /// lengths, which is the order they are cut in.
+  String runLabel(List<Plank> run, {required bool fullWidth}) {
+    final numbers = run.length == 1
+        ? s.variant(run.first.number)
+        : '${s.variant(run.first.number)}–${s.variant(run.last.number)}';
+    final length = system == MeasurementSystem.imperial
+        ? sizeLabel(run.first.length, system)
+        : '${run.first.length}';
+    final whole = fullWidth && run.first.length == result.laminateLength;
+    return whole ? '$numbers $length (${s.whole})' : '$numbers $length';
+  }
+
   final lines = <String>[
     '${s.laying_scheme} ${s.variant(number)}',
     '${s.packages_required}: ${totalPacks(result)}',
@@ -25,8 +43,12 @@ List<String> cutList(
     '',
   ];
   for (final line in result.lines) {
-    final planks = line.planks.map((p) => '${s.variant(p.number)} ${size(p.length)}').join(', ');
-    lines.add('${s.row(line.number + 1)}: $planks');
+    if (line.planks.isEmpty) continue;
+    final width = line.planks.first.width;
+    final cut = runsOf(line.planks)
+        .map((run) => runLabel(run, fullWidth: width == result.laminateWidth))
+        .join(', ');
+    lines.add('${s.row(line.number + 1)} (×${size(width)}): $cut');
   }
   lines.add('');
   // The row that crosses the inside corner of a cut-away corner is laid to the
@@ -45,6 +67,33 @@ List<String> cutList(
   final waste = '${s.waste} (${wastePercent(result)}%)';
   lines.add(trash.isEmpty ? waste : '$waste: ${grouped(trash)}');
   return lines;
+}
+
+/// A row broken into runs that can be written as one line each.
+///
+/// A row is mostly planks straight out of the pack, all the same size and all
+/// cut from boards the fitter opened one after another — eight lines that say
+/// the same thing but for the number. One line with the numbers it spans says
+/// it once: `№1–№8 1270 × 270 (whole)`.
+///
+/// Consecutive numbers as well as equal sizes, because the number is which
+/// board a piece came off and not a running count: a row usually opens with
+/// the offcut of a board laid two rows ago, and that piece keeps its own
+/// number. A range that skipped it would be a lie about where to look for it.
+List<List<Plank>> runsOf(List<Plank> planks) {
+  final runs = <List<Plank>>[];
+  for (final plank in planks) {
+    final last = runs.isEmpty ? null : runs.last.last;
+    if (last != null &&
+        last.length == plank.length &&
+        last.width == plank.width &&
+        last.number + 1 == plank.number) {
+      runs.last.add(plank);
+    } else {
+      runs.add([plank]);
+    }
+  }
+  return runs;
 }
 
 /// Distinct lengths in descending order, each with how many pieces share it.

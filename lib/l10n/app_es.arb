@@ -122,6 +122,7 @@
     "variant": "N.º {number}",
     "cut_list": "Lista de cortes",
     "row": "Fila {number}",
+    "whole": "enteras",
     "leftovers": "Sobrantes",
     "waste": "Desperdicio"
 }

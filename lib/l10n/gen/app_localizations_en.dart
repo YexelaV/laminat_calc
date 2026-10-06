@@ -305,6 +305,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get whole => 'whole';
+
+  @override
   String get leftovers => 'Leftovers';
 
   @override

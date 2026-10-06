@@ -122,6 +122,7 @@
     "variant": "č.{number}",
     "cut_list": "Seznam řezů",
     "row": "Řada {number}",
+    "whole": "celé",
     "leftovers": "Zbytky",
     "waste": "Odpad"
 }

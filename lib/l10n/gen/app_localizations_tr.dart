@@ -305,6 +305,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get whole => 'tam';
+
+  @override
   String get leftovers => 'Artan parçalar';
 
   @override

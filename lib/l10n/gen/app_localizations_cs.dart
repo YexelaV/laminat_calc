@@ -307,6 +307,9 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get whole => 'celé';
+
+  @override
   String get leftovers => 'Zbytky';
 
   @override

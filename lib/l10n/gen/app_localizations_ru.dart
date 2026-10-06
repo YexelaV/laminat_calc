@@ -307,6 +307,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get whole => 'целые';
+
+  @override
   String get leftovers => 'Остатки';
 
   @override

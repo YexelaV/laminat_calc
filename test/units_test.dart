@@ -90,7 +90,7 @@ void main() {
     });
 
     test('are shown as fractions, not decimals', () {
-      expect(formatInches(ceilInch(MIN_PLANK_LENGTH)), '11 13/16');
+      expect(formatInches(ceilInch(MIN_PLANK_LENGTH)), '7 7/8');
       expect(formatInches(floorInch(MAX_PLANK_LENGTH)), '118 1/16');
     });
 

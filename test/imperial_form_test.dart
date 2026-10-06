@@ -95,16 +95,17 @@ void main() {
 
   testWidgets('a fraction inside the bounds is accepted, one outside is not', (tester) async {
     await pumpLaminate(tester);
-    // The shortest plank is 300mm, which is 11 13/16'' once rounded up.
-    await tester.enterText(inches(0), '11');
-    await pick(tester, 0, '13/16');
-    expect(cubit.state.laminateLength, 300);
+    // The shortest plank is 200mm, which is 7 7/8'' once rounded up.
+    await tester.enterText(inches(0), '7');
+    await pick(tester, 0, '7/8');
+    expect(cubit.state.laminateLength, 200);
     // The bound, not the echo above the field, which shows the same number
     // whenever the value is accepted.
-    expect(find.textContaining('Minimum 11 13/16'), findsNothing, reason: 'no bound message');
+    expect(find.textContaining('Minimum 7 7/8'), findsNothing, reason: 'no bound message');
 
-    await pick(tester, 0, '3/4');
-    expect(find.textContaining('Minimum 11 13/16'), findsOneWidget, reason: 'below the minimum');
-    expect(cubit.state.laminateLength, 300, reason: 'a rejected value is not stored');
+    // One sixteenth under, which is the smallest step the picker offers.
+    await pick(tester, 0, '13/16');
+    expect(find.textContaining('Minimum 7 7/8'), findsOneWidget, reason: 'below the minimum');
+    expect(cubit.state.laminateLength, 200, reason: 'a rejected value is not stored');
   });
 }

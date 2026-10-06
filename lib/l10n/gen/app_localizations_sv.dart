@@ -305,6 +305,9 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
+  String get whole => 'hela';
+
+  @override
   String get leftovers => 'Rester';
 
   @override
