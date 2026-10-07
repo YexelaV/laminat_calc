@@ -43,6 +43,34 @@ platform :android do
     )
   end
 
+  desc "Move the build that is already on one track to another, without rebuilding"
+  desc "Options: from:internal, track:production, draft:true, dry_run:true"
+  #
+  # A build cannot be uploaded twice: Play refuses a versionCode it has already
+  # seen, so a release that has been through internal testing is promoted rather
+  # than sent again. Nothing is built here and the listing is left alone — the
+  # release notes travel, because they belong to the release and the production
+  # track has never had them.
+  lane :promote do |options|
+    build_metadata
+
+    upload_to_play_store(
+      track: options[:from] || "internal",
+      track_promote_to: options[:track] || "production",
+      release_status: options[:draft] ? "draft" : "completed",
+      # Nothing is being uploaded, so supply cannot read the build number off a
+      # bundle and has to be told which release is being moved — and without it
+      # it cannot find the changelog either.
+      version_code: (options[:version_code] || pubspec_version_code).to_i,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      validate_only: options[:dry_run] || false
+    )
+  end
+
   desc "Read the live listing into play_current/ to see what Play holds right now"
   lane :pull do
     sh("cd .. && fastlane supply init -m fastlane/play_current")
@@ -51,4 +79,13 @@ platform :android do
   private_lane :build_metadata do
     sh("cd .. && dart run tool/build_store_metadata.dart")
   end
+end
+
+# The build number out of `version: 1.12.1+23`, which is what Play calls the
+# versionCode. pubspec.yaml is the one place it is written down.
+def pubspec_version_code
+  pubspec = File.read(File.expand_path("../pubspec.yaml", __dir__))
+  code = pubspec[/^version:\s*\S+\+(\d+)/, 1]
+  UI.user_error!("pubspec.yaml has no version: line with a build number") if code.nil?
+  code
 end
