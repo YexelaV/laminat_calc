@@ -48,6 +48,96 @@ const _shots = ['room', 'scheme', 'cut_list', 'laminate', 'laying'];
 // Android's own face exactly.
 const _uiFont = '/System/Library/Fonts/Supplemental/Arial Unicode.ttf';
 
+/// The band above each shot, and the words in it.
+///
+/// A listing is read by someone scrolling a gallery, and what they read is the
+/// captions — the screens underneath are only evidence. Five bare screens left
+/// the reader to work out for themselves what the app was giving them.
+///
+/// The band takes a tenth of the picture, so the screen below it loses that
+/// much and the forms scroll a little sooner. No shot loses anything it was
+/// showing: what goes under the fold is the Next button, which the gallery is
+/// not there to demonstrate.
+const _bandHeight = 72.0;
+const _bandColour = Colors.blue;
+const _captionSize = 19.0;
+
+/// The captions of one listing, in [_shots] order, out of `store/<locale>/`.
+///
+/// Listing copy rather than app strings, so it lives beside listing.txt and not
+/// in the arb files — nothing here is ever shown inside the app.
+///
+/// A locale with none falls back to English and says so. That is for the middle
+/// of a translation round, when the words have been settled in one language and
+/// not yet in the rest; shipping in that state would put English captions over
+/// twelve listings, so the warning is loud and the test prints it once per run.
+List<String> _captions(String locale) {
+  final own = File('store/$locale/captions.txt');
+  final file = own.existsSync() ? own : File('store/en/captions.txt');
+  if (!own.existsSync()) {
+    printOnFailure('store/$locale/captions.txt is missing; using English');
+    stderr.writeln('!! store/$locale/captions.txt is missing — shot in English');
+  }
+  final lines = file.readAsLinesSync().where((l) => l.trim().isNotEmpty).toList();
+  if (lines.length != _shots.length) {
+    throw StateError('${file.path} has ${lines.length} captions, ${_shots.length} wanted');
+  }
+  return lines;
+}
+
+/// The band, and the running app under it.
+///
+/// The app is pumped once and walked through screen by screen, so the caption
+/// cannot be a constructor argument — changing it would rebuild the app and
+/// lose the walk. It arrives through a notifier that only the band listens to.
+class _Captioned extends StatelessWidget {
+  final ValueNotifier<String> caption;
+  final Widget child;
+
+  const _Captioned({required this.caption, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: ColoredBox(
+        color: _bandColour,
+        child: Column(
+          children: [
+            SizedBox(
+              height: _bandHeight,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: ValueListenableBuilder<String>(
+                    valueListenable: caption,
+                    builder: (context, text, _) => Text(
+                      text,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      // The family the tester has a real face for; left to
+                      // itself the caption comes out as empty boxes in every
+                      // alphabet the test shoots.
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        color: Colors.white,
+                        fontSize: _captionSize,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(child: child),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> _loadFonts() async {
   final root = Platform.environment['FLUTTER_ROOT'];
   if (root == null) throw StateError('FLUTTER_ROOT is unset; run through `flutter test`');
@@ -77,22 +167,31 @@ void main() {
       addTearDown(tester.view.reset);
       addTearDown(tester.platformDispatcher.clearLocalesTestValue);
 
+      final captions = _captions(locale);
+      final caption = ValueNotifier<String>('');
+      addTearDown(caption.dispose);
+
       Future<void> capture(String name) async {
         // Nothing is being typed in a listing picture. The last box filled
         // still holds the cursor, and with it a caret, a drag handle and —
         // since the sketch picks out the measurement under the cursor — one
         // number in a colour the rest are not.
         FocusManager.instance.primaryFocus?.unfocus();
+        final shot = _shots.indexOf(name);
+        caption.value = captions[shot];
         await tester.pumpAndSettle();
-        final index = (_shots.indexOf(name) + 1).toString().padLeft(2, '0');
+        final index = (shot + 1).toString().padLeft(2, '0');
         await expectLater(
-          find.byType(MaterialApp),
+          find.byType(_Captioned),
           matchesGoldenFile('../store/$locale/${index}_$name.png'),
         );
       }
 
       // Nothing answered yet, so the app opens on the language screen.
-      await tester.pumpWidget(const MyApp(savedLocaleCode: null, savedSystem: null));
+      await tester.pumpWidget(_Captioned(
+        caption: caption,
+        child: const MyApp(savedLocaleCode: null, savedSystem: null),
+      ));
       await tester.pumpAndSettle();
       // The ten flags are SVGs that only finish decoding across a real async
       // boundary; a pumpAndSettle alone leaves half of them blank.
