@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
+import 'package:floor_calculator/room_kind.dart';
 
 // A 414x736 logical phone at 3x. Play wants 16:9 or 9:16 exactly.
 const _size = Size(1242, 2208);
@@ -238,7 +239,7 @@ void main() {
       // Overall length and width first: the cut's own bounds are worked out
       // from them, so they have to be there before the shape changes.
       await fill(['3000', '6000']);
-      await tester.tap(find.byKey(const ValueKey('shape-lShaped')));
+      await tester.tap(find.byKey(const ValueKey(RoomKind.lShaped)));
       await tester.pumpAndSettle();
 
       // Length and width of the cut. The corner is the one the form starts on,

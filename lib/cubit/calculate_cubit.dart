@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_kind.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'calculate_state.dart';

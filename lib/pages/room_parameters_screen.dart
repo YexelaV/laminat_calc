@@ -5,6 +5,7 @@ import 'package:floor_calculator/constants.dart';
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
 import 'package:floor_calculator/cubit/calculate_state.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
+import 'package:floor_calculator/room_kind.dart';
 import 'package:floor_calculator/router/app_router.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
@@ -829,22 +830,22 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
     return rows;
   }
 
+  /// What the chosen shape is called, in the user's own language.
+  ///
+  /// A chain rather than a switch. The shapes are classes now and nothing a
+  /// 2.18 switch does with those is worth having: without a `default` the
+  /// method would not compile, and with one a shape nobody wrote a branch for
+  /// would quietly borrow another's name. A chain ends the same way, so the
+  /// guarantee is bought back in the test that walks [RoomKind.values] and
+  /// insists every shape has a name of its own.
   String roomKindName(BuildContext context, RoomKind kind) {
     final appStrings = AppStrings.of(context);
-    switch (kind) {
-      case RoomKind.rectangle:
-        return appStrings.shape_rectangle;
-      case RoomKind.uneven:
-        return appStrings.uneven_walls;
-      case RoomKind.chamfer:
-        return appStrings.shape_chamfer;
-      case RoomKind.chamferPair:
-        return appStrings.shape_chamfer_pair;
-      case RoomKind.lShaped:
-        return appStrings.shape_l;
-      case RoomKind.tShaped:
-        return appStrings.shape_t;
-    }
+    if (kind == RoomKind.rectangle) return appStrings.shape_rectangle;
+    if (kind == RoomKind.uneven) return appStrings.uneven_walls;
+    if (kind == RoomKind.chamfer) return appStrings.shape_chamfer;
+    if (kind == RoomKind.chamferPair) return appStrings.shape_chamfer_pair;
+    if (kind == RoomKind.lShaped) return appStrings.shape_l;
+    return appStrings.shape_t;
   }
 
   /// What the room is, as a row of shapes rather than a line of words.
@@ -940,7 +941,10 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   /// the thing that does.
   Widget shapeTile(BuildContext context, RoomKind kind, bool chosen, double side) {
     return GestureDetector(
-      key: ValueKey('shape-${kind.name}'),
+      // The shape itself is the key. Each is a const instance and there is one
+      // of each, so it identifies its tile as well as a name would and cannot
+      // drift from the shape it stands for the way a hand-written string can.
+      key: ValueKey(kind),
       behavior: HitTestBehavior.opaque,
       onTap: () => setRoomKind(context, kind),
       child: Semantics(
@@ -978,33 +982,39 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   /// Drawn from a fixed little shape rather than from the user's own room: the
   /// tile has to be recognisable before any measurement is typed, and a room
   /// 6 m by 1.2 m would make every tile a line.
-  List<Offset> kindIconCorners(RoomKind kind) {
-    const a = 0.34;
-    switch (kind) {
-      case RoomKind.rectangle:
-        return const [Offset(0, 0), Offset(1, 0), Offset(1, 1), Offset(0, 1)];
-      case RoomKind.uneven:
-        return const [Offset(0, 0.1), Offset(1, 0), Offset(0.92, 1), Offset(0.06, 0.88)];
-      case RoomKind.chamfer:
-        return const [
-          Offset(0, 0), Offset(1, 0), Offset(1, 1 - a), Offset(1 - a, 1), Offset(0, 1)
-        ];
-      case RoomKind.chamferPair:
-        return const [
-          Offset(a, 0), Offset(1 - a, 0), Offset(1, a), Offset(1, 1), Offset(0, 1), Offset(0, a)
-        ];
-      case RoomKind.lShaped:
-        return const [
-          Offset(0, 0), Offset(1, 0), Offset(1, 1 - a), Offset(1 - a, 1 - a),
-          Offset(1 - a, 1), Offset(0, 1)
-        ];
-      case RoomKind.tShaped:
-        return const [
-          Offset(a, 0), Offset(1 - a, 0), Offset(1 - a, a), Offset(1, a),
-          Offset(1, 1), Offset(0, 1), Offset(0, a), Offset(a, a)
-        ];
-    }
-  }
+  ///
+  /// A table on the screen rather than a getter on [RoomKind]: these are the
+  /// picker's drawings, not the room's — the T here is the letter, and no
+  /// measurement would ever produce it. Kept as one list so that all six can be
+  /// read against each other, which is how they were drawn.
+  ///
+  /// Not the third of a side a real cut defaults to: a third of a 40 dp square
+  /// is barely a nick, and the tile's one job is to be recognised across the
+  /// row.
+  static const double _ICON_CUT = 0.34;
+  static const Map<RoomKind, List<Offset>> _ICON_CORNERS = {
+    RoomKind.rectangle: [Offset(0, 0), Offset(1, 0), Offset(1, 1), Offset(0, 1)],
+    RoomKind.uneven: [Offset(0, 0.1), Offset(1, 0), Offset(0.92, 1), Offset(0.06, 0.88)],
+    RoomKind.chamfer: [
+      Offset(0, 0), Offset(1, 0), Offset(1, 1 - _ICON_CUT), Offset(1 - _ICON_CUT, 1), Offset(0, 1)
+    ],
+    RoomKind.chamferPair: [
+      Offset(_ICON_CUT, 0), Offset(1 - _ICON_CUT, 0), Offset(1, _ICON_CUT), Offset(1, 1), Offset(0, 1), Offset(0, _ICON_CUT)
+    ],
+    RoomKind.lShaped: [
+      Offset(0, 0), Offset(1, 0), Offset(1, 1 - _ICON_CUT), Offset(1 - _ICON_CUT, 1 - _ICON_CUT),
+      Offset(1 - _ICON_CUT, 1), Offset(0, 1)
+    ],
+    RoomKind.tShaped: [
+      Offset(_ICON_CUT, 0), Offset(1 - _ICON_CUT, 0), Offset(1 - _ICON_CUT, _ICON_CUT), Offset(1, _ICON_CUT),
+      Offset(1, 1), Offset(0, 1), Offset(0, _ICON_CUT), Offset(_ICON_CUT, _ICON_CUT)
+    ],
+  };
+
+  // Read with a `!`: a shape added to [RoomKind.values] and forgotten here
+  // fails the first widget test that builds the row, rather than quietly
+  // drawing somebody else's room.
+  List<Offset> kindIconCorners(RoomKind kind) => _ICON_CORNERS[kind]!;
 
   // The sketch that says which wall is which and which corner is cut, and the
   // one thing the fields cannot say on their own: that the measurements

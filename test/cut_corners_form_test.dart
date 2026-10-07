@@ -19,9 +19,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
-import 'package:floor_calculator/cubit/calculate_state.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/pages/room_parameters_screen.dart';
+import 'package:floor_calculator/room_kind.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/widgets/room_sketch.dart';
@@ -52,7 +53,7 @@ void main() {
   }
 
   Future<void> pickShape(WidgetTester tester, RoomKind kind) async {
-    await tester.tap(find.byKey(ValueKey('shape-${kind.name}')));
+    await tester.tap(find.byKey(ValueKey(kind)));
     await tester.pumpAndSettle();
   }
 
@@ -67,7 +68,7 @@ void main() {
     // The whole reason the dropdown went: a user looking for their own room has
     // to be able to see it without opening anything or scrolling anywhere.
     for (final kind in RoomKind.values) {
-      expect(find.byKey(ValueKey('shape-${kind.name}')), findsOneWidget,
+      expect(find.byKey(ValueKey(kind)), findsOneWidget,
           reason: '$kind has no tile');
     }
     await fill(tester, ['4000', '3000']);
@@ -75,6 +76,36 @@ void main() {
       await pickShape(tester, kind);
       expect(cubit.state.roomKind, kind);
     }
+  });
+
+  testWidgets('every shape has a name and an outline of its own', (tester) async {
+    // What the compiler used to do. While the shapes were an enum, a switch
+    // that missed one was an error; they are classes now, and a 2.18 switch
+    // over those proves nothing — so the screen names them down a chain of ifs
+    // and draws them out of a table, and neither says a word when a seventh
+    // shape is added and forgotten. A forgotten name would be the T's, read
+    // out under somebody else's tile; a forgotten outline would fail the
+    // lookup where the row is built. Both are caught here.
+    await pumpForm(tester);
+    final names = <String>{};
+    final outlines = <String>{};
+    for (final kind in RoomKind.values) {
+      final tile = find.byKey(ValueKey(kind));
+      names.add(tester
+          .widget<Semantics>(
+              find.descendant(of: tile, matching: find.byType(Semantics)))
+          .properties
+          .label!);
+      final icon = tester
+          .widget<CustomPaint>(
+              find.descendant(of: tile, matching: find.byType(CustomPaint)))
+          .painter! as RoomKindIcon;
+      outlines.add(icon.corners.toString());
+    }
+    expect(names, hasLength(RoomKind.values.length),
+        reason: 'two shapes answer to the same name: $names');
+    expect(outlines, hasLength(RoomKind.values.length),
+        reason: 'two shapes are drawn as the same room');
   });
 
   testWidgets('a chamfer is one number, and it is cut at 45°', (tester) async {

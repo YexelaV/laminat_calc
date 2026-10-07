@@ -1,78 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:equatable/equatable.dart';
-import 'package:floor_calculator/constants.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_kind.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
-
-/// Which shape the user says the room is.
-///
-/// One choice rather than a switch per shape: they are alternatives, not
-/// options. A room is measured wall by wall *or* it has corners cut out of it,
-/// and the second assumes the square corners the first exists to avoid.
-///
-/// Each of the cut shapes is a fixed shape and not a starting point — pick a T
-/// and a T is what the sketch keeps drawing, with the tap moving its stem to
-/// another wall rather than adding a third cut. [CutCornersRoomShape] would
-/// take any set of corners; the form offers the sets a room is actually built
-/// in, so that the name on the tile and the shape on the sketch can never
-/// disagree.
-enum RoomKind {
-  rectangle,
-  uneven,
-
-  /// One corner run straight across at 45°.
-  chamfer,
-
-  /// Both ends of one wall run across at 45°.
-  chamferPair,
-
-  /// One corner taken out square.
-  lShaped,
-
-  /// Both ends of one wall taken out square, leaving a stem.
-  tShaped,
-}
-
-/// What the room's cut corners are, for the [RoomKind]s that have any.
-extension RoomKindCuts on RoomKind {
-  bool get isCut => cutKind != null;
-
-  /// Square or straight across, or null where the room has no cuts at all.
-  CornerCut? get cutKind {
-    switch (this) {
-      case RoomKind.chamfer:
-      case RoomKind.chamferPair:
-        return CornerCut.chamfer;
-      case RoomKind.lShaped:
-      case RoomKind.tShaped:
-        return CornerCut.notch;
-      case RoomKind.rectangle:
-      case RoomKind.uneven:
-        return null;
-    }
-  }
-
-  /// Whether the cuts come in a pair on one wall rather than singly in a
-  /// corner — which decides whether the form asks for a wall or a corner, and
-  /// whether there are one or two shoulders to type.
-  bool get isPaired =>
-      this == RoomKind.chamferPair || this == RoomKind.tShaped;
-
-  /// Whether a cut is measured by one number rather than two.
-  ///
-  /// A chamfer is offered at 45° and nothing else, so the form asks once — for
-  /// the wall the cut leaves, which is the only one of the three lengths a tape
-  /// can be laid along once the corner is gone. That is a deliberate narrowing of what
-  /// [CutCornersRoomShape] can hold, and it pays twice: one number instead of
-  /// two to type, and a cut wall that leans at exactly 45° to the rows either
-  /// way the floor is laid. [Bevel.fromLean] refuses to cut an end steeper
-  /// than that, so a chamfer at any other angle would leave a wedge of floor
-  /// bare along it in one of the two laying directions and not the other —
-  /// which is a hard thing to explain and an easy thing not to offer.
-  bool get hasOneLeg => cutKind == CornerCut.chamfer;
-}
 
 class CalculateState extends Equatable {
   // Every dimension is in millimetres.
@@ -161,109 +91,15 @@ class CalculateState extends Equatable {
   /// The room the calculation and the drawing both work from, or null until the
   /// two sizes every room needs have been typed.
   ///
-  /// A wall left blank is the same as the wall opposite it, a diagonal left
-  /// blank is the one that makes the room a rectangle, and a cut left blank is
-  /// a third of the room — so a half-filled form still describes a room rather
-  /// than nothing.
+  /// What the shape is made of is the shape's own business — see
+  /// [RoomKind.outlineFor]. All this knows is that no room is anything until
+  /// those two sizes are.
   RoomOutline? get shape {
     final length = roomLength;
     final width = roomWidth;
     if (length == null || width == null) return null;
-    switch (roomKind) {
-      case RoomKind.rectangle:
-        return RoomShape.rectangle(length, width);
-      case RoomKind.uneven:
-        return RoomShape(
-          lengthNear: length,
-          lengthFar: roomLength2 ?? length,
-          widthLeft: width,
-          widthRight: roomWidth2 ?? width,
-          diagonal: roomDiagonal ?? RoomShape.rectangleDiagonal(length, width),
-        );
-      case RoomKind.chamfer:
-      case RoomKind.chamferPair:
-      case RoomKind.lShaped:
-      case RoomKind.tShaped:
-        final cuts = cutsFor(length, width);
-        if (roomKind == RoomKind.lShaped) {
-          // The one cut shape that keeps a name of its own. A room with a
-          // single square cut is an L to everyone who has ever stood in one,
-          // and [LRoomShape] says so to everything downstream that was written
-          // before there were others — at no cost, since it is the same outline
-          // under a different name. The sizes still come from [cutsFor], so
-          // there is one place that knows how a cut is measured.
-          final only = cuts.entries.single;
-          return LRoomShape(
-            length: length,
-            width: width,
-            notchLength: only.value.along,
-            notchWidth: only.value.across,
-            corner: only.key,
-          );
-        }
-        return CutCornersRoomShape(
-          length: length,
-          width: width,
-          cut: roomKind.cutKind!,
-          cuts: cuts,
-        );
-    }
+    return roomKind.outlineFor(this, length, width);
   }
-
-  /// Which corners this room has taken off and how far each cut reaches.
-  ///
-  /// The form collects a cut the way it is measured — a chamfer by its one leg,
-  /// a T by two shoulders and a depth — and this is where that turns into the
-  /// along-and-across pairs the outline wants. Which of the two a shoulder is
-  /// depends on the wall the pair stands on, and that is the whole of the
-  /// arithmetic here.
-  Map<RoomCorner, CornerSize> cutsFor(int length, int width) {
-    // A chamfer is given by the wall it leaves, and reaches the same distance
-    // along each of the two walls it joins — so what it has to fit against is
-    // the shorter side of the room.
-    final cutWallMm = notchLength ?? defaultNotch(math.min(length, width));
-
-    if (!roomKind.isPaired) {
-      return {
-        notchCorner: roomKind.hasOneLeg
-            ? CornerSize.chamfer(cutWallMm)
-            : CornerSize(
-                along: notchLength ?? defaultNotch(length),
-                across: notchWidth ?? defaultNotch(width)),
-      };
-    }
-
-    final pair = cutWall.corners;
-    // Two cuts share the wall, so each is offered a quarter of it rather than
-    // the third a lone cut gets: a third each would leave them meeting in the
-    // middle with barely a room between.
-    final side = cutWall.runsAlongLength ? length : width;
-    final quarter = heldBetween(side ~/ 4, MIN_NOTCH_MM, side - MIN_ROOM_MM);
-    final first = notchLength ?? quarter;
-    final second = notchLength2 ?? quarter;
-    if (roomKind.hasOneLeg) {
-      return {
-        pair[0]: CornerSize.chamfer(first),
-        pair[1]: CornerSize.chamfer(second),
-      };
-    }
-    // A shoulder is measured along the wall the pair stands on and the depth
-    // across it, so which of the two is [CornerSize.along] turns on the wall.
-    final depth =
-        notchWidth ?? defaultNotch(cutWall.runsAlongLength ? width : length);
-    CornerSize sized(int shoulder) => cutWall.runsAlongLength
-        ? CornerSize(along: shoulder, across: depth)
-        : CornerSize(along: depth, across: shoulder);
-    return {pair[0]: sized(first), pair[1]: sized(second)};
-  }
-
-  /// The cut a room of this size is given when the user first says it has one:
-  /// a third of the side, which is an L anybody recognises on the sketch and
-  /// is inside the bounds for every room the form takes. The same courtesy
-  /// turning the walls on pays — the form stays valid and only what was
-  /// actually measured needs typing.
-  static int defaultNotch(int side) =>
-      heldBetween(side ~/ 3, MIN_NOTCH_MM, side - LRoomShape.minArmMm);
 
   CalculateState copyWith({
     final int? roomLength,

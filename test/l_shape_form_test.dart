@@ -12,9 +12,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:floor_calculator/cubit/calculate_cubit.dart';
-import 'package:floor_calculator/cubit/calculate_state.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/models.dart';
+import 'package:floor_calculator/room_kind.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/widgets/room_sketch.dart';
@@ -52,7 +52,7 @@ void main() {
   /// does it. Found by key rather than by the name under it: the names are
   /// translated and the keys are not.
   Future<void> pickShape(WidgetTester tester, RoomKind kind) async {
-    await tester.tap(find.byKey(ValueKey('shape-${kind.name}')));
+    await tester.tap(find.byKey(ValueKey(kind)));
     await tester.pumpAndSettle();
   }
 
