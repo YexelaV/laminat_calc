@@ -4,6 +4,7 @@ import 'package:floor_calculator/router/app_router.dart';
 import 'package:floor_calculator/widgets/app_background.dart';
 import '../l10n/app_localizations.dart';
 import '../models.dart';
+import '../utils/app_review.dart';
 import '../utils/cut_list.dart';
 
 class ResultScreen extends StatelessWidget {
@@ -86,8 +87,18 @@ class ResultScreen extends StatelessWidget {
                     physics: NeverScrollableScrollPhysics(),
                     itemBuilder: (context, i) {
                       return TextButton(
-                        onPressed: () =>
-                            context.router.push(SchemeRoute(result: result[i], number: i + 1)),
+                        // The push finishes when the user comes back off the
+                        // scheme, which is the first moment the app has done
+                        // the whole of what it is for and the user has seen it.
+                        // Nothing is awaited on the way there: the count and
+                        // the rating that may follow it happen behind the list
+                        // the user has just returned to, and neither can fail
+                        // in a way worth hearing about.
+                        onPressed: () async {
+                          await context.router
+                              .push(SchemeRoute(result: result[i], number: i + 1));
+                          await countSchemeSeen();
+                        },
                         child: Container(
                           alignment: Alignment.center,
                           padding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
