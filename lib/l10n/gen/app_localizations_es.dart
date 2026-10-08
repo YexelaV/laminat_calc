@@ -60,24 +60,28 @@ class AppLocalizationsEs extends AppLocalizations {
   String get uneven_walls => 'Paredes de distinta longitud';
 
   @override
-  String wall_length(int number) {
-    return 'Longitud $number';
-  }
+  String get wall_length_near => 'Longitud (arriba)';
 
   @override
-  String wall_width(int number) {
-    return 'Ancho $number';
-  }
+  String get wall_length_far => 'Longitud (abajo)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Longitud $number (mm)';
-  }
+  String get wall_width_left => 'Ancho (izquierda)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Ancho $number (mm)';
-  }
+  String get wall_width_right => 'Ancho (derecha)';
+
+  @override
+  String get wall_length_near_mm => 'Longitud (arriba) mm';
+
+  @override
+  String get wall_length_far_mm => 'Longitud (abajo) mm';
+
+  @override
+  String get wall_width_left_mm => 'Ancho (izquierda) mm';
+
+  @override
+  String get wall_width_right_mm => 'Ancho (derecha) mm';
 
   @override
   String get wall_diagonal => 'Diagonal';
@@ -107,39 +111,52 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shape_t => 'En forma de T';
 
   @override
-  String shoulder(int number) {
-    return 'Corte $number';
-  }
+  String get shape_z => 'En forma de Z';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Corte $number (mm)';
-  }
+  String get shape_u => 'En forma de U';
 
   @override
-  String get chamfer_leg => 'Corte (45°)';
+  String get chamfer_leg => 'Longitud del corte';
 
   @override
-  String get chamfer_leg_mm => 'Corte a 45° (mm)';
+  String get chamfer_leg_mm => 'Longitud del corte (mm)';
 
   @override
-  String notch(int number) {
-    return 'Hueco $number';
-  }
+  String get chamfer_leg_left => 'Corte a la izquierda';
 
   @override
-  String notch_mm(int number) {
-    return 'Hueco $number (mm)';
-  }
+  String get chamfer_leg_left_mm => 'Corte a la izquierda (mm)';
 
   @override
-  String get cut_depth => 'Profundidad de los huecos';
+  String get chamfer_leg_right => 'Corte a la derecha';
 
   @override
-  String get cut_depth_mm => 'Profundidad de los huecos (mm)';
+  String get chamfer_leg_right_mm => 'Corte a la derecha (mm)';
+
+  @override
+  String get chamfer_leg_near => 'Corte arriba';
+
+  @override
+  String get chamfer_leg_near_mm => 'Corte arriba (mm)';
+
+  @override
+  String get chamfer_leg_far => 'Corte abajo';
+
+  @override
+  String get chamfer_leg_far_mm => 'Corte abajo (mm)';
 
   @override
   String get tap_wall_to_cut => 'Toca una pared para mover los huecos';
+
+  @override
+  String get tap_wall_notch => 'Toque la pared con el hueco';
+
+  @override
+  String get notch_depth => 'Profundidad del hueco';
+
+  @override
+  String get notch_depth_mm => 'Profundidad del hueco (mm)';
 
   @override
   String get overall_length => 'Longitud total';
@@ -166,7 +183,65 @@ class AppLocalizationsEs extends AppLocalizations {
   String get notch_width_mm => 'Ancho del hueco (mm)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Longitud del hueco $number';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Longitud del hueco $number (mm)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Ancho del hueco $number';
+  }
+
+  @override
+  String get symmetric_cut => 'Simétrico';
+
+  @override
+  String get stub_length => 'Longitud del saliente';
+
+  @override
+  String get stub_length_mm => 'Longitud del saliente (mm)';
+
+  @override
+  String get stub_width => 'Anchura del saliente';
+
+  @override
+  String get stub_width_mm => 'Anchura del saliente (mm)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Longitud del saliente $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Longitud del saliente $number (mm)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Anchura del saliente $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Anchura del saliente $number (mm)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Ancho del hueco $number (mm)';
+  }
+
+  @override
   String get notch_does_not_fit => 'El hueco no deja habitación';
+
+  @override
+  String get notches_overlap => 'Los huecos se solapan';
 
   @override
   String row_steps_at_notch(int number) {
@@ -177,8 +252,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tap_corner_to_cut => 'Toque la esquina recortada';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'La colocación en diagonal aún no se admite en una habitación en forma de L';
+  String get tap_corner_notched => 'Toque la esquina que está recortada';
+
+  @override
+  String get tap_corner_to_move => 'Toque una esquina para mover los huecos';
+
+  @override
+  String get tap_wall_stem => 'Toque la pared donde está el saliente';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'La colocación en diagonal aún no se admite en una habitación con una esquina recortada';
+
+  @override
+  String get direction_across_notch_only =>
+      'Una habitación con un hueco en la pared solo se puede colocar en perpendicular a esa pared';
 
   @override
   String get corner_top_left => 'Superior izquierda';
@@ -211,9 +299,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get laying => 'Instalación';
 
   @override
-  String get laying_direction => 'Dirección de instalación';
-
-  @override
   String get along_length => 'A lo largo';
 
   @override
@@ -227,6 +312,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get joint_offset => 'Desfase de juntas';
+
+  @override
+  String get laying_direction => 'Dirección de colocación';
+
+  @override
+  String get expansion_gap => 'Junta de dilatación';
+
+  @override
+  String get min_piece_length => 'Longitud mínima de lama';
 
   @override
   String get exact_offset => 'exacto';
@@ -305,7 +399,15 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get whole => 'enteras';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'enteras',
+      one: 'entera',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Sobrantes';

@@ -60,24 +60,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get uneven_walls => 'Walls of different lengths';
 
   @override
-  String wall_length(int number) {
-    return 'Length $number';
-  }
+  String get wall_length_near => 'Length (top)';
 
   @override
-  String wall_width(int number) {
-    return 'Width $number';
-  }
+  String get wall_length_far => 'Length (bottom)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Length $number (mm)';
-  }
+  String get wall_width_left => 'Width (left)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Width $number (mm)';
-  }
+  String get wall_width_right => 'Width (right)';
+
+  @override
+  String get wall_length_near_mm => 'Length (top) mm';
+
+  @override
+  String get wall_length_far_mm => 'Length (bottom) mm';
+
+  @override
+  String get wall_width_left_mm => 'Width (left) mm';
+
+  @override
+  String get wall_width_right_mm => 'Width (right) mm';
 
   @override
   String get wall_diagonal => 'Diagonal';
@@ -107,39 +111,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shape_t => 'T-shaped';
 
   @override
-  String shoulder(int number) {
-    return 'Cut $number';
-  }
+  String get shape_z => 'Z-shaped';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Cut $number (mm)';
-  }
+  String get shape_u => 'U-shaped';
 
   @override
-  String get chamfer_leg => 'Cut (45°)';
+  String get chamfer_leg => 'Cut length';
 
   @override
-  String get chamfer_leg_mm => '45° cut (mm)';
+  String get chamfer_leg_mm => 'Cut length (mm)';
 
   @override
-  String notch(int number) {
-    return 'Notch $number';
-  }
+  String get chamfer_leg_left => 'Left cut';
 
   @override
-  String notch_mm(int number) {
-    return 'Notch $number (mm)';
-  }
+  String get chamfer_leg_left_mm => 'Left cut (mm)';
 
   @override
-  String get cut_depth => 'Notch depth';
+  String get chamfer_leg_right => 'Right cut';
 
   @override
-  String get cut_depth_mm => 'Notch depth (mm)';
+  String get chamfer_leg_right_mm => 'Right cut (mm)';
+
+  @override
+  String get chamfer_leg_near => 'Top cut';
+
+  @override
+  String get chamfer_leg_near_mm => 'Top cut (mm)';
+
+  @override
+  String get chamfer_leg_far => 'Bottom cut';
+
+  @override
+  String get chamfer_leg_far_mm => 'Bottom cut (mm)';
 
   @override
   String get tap_wall_to_cut => 'Tap a wall to move the cuts';
+
+  @override
+  String get tap_wall_notch => 'Tap the wall the notch is in';
+
+  @override
+  String get notch_depth => 'Notch depth';
+
+  @override
+  String get notch_depth_mm => 'Notch depth (mm)';
 
   @override
   String get overall_length => 'Overall length';
@@ -166,7 +183,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notch_width_mm => 'Notch width (mm)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Notch $number length';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Notch $number length (mm)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Notch $number width';
+  }
+
+  @override
+  String get symmetric_cut => 'Symmetrical';
+
+  @override
+  String get stub_length => 'Stem length';
+
+  @override
+  String get stub_length_mm => 'Stem length (mm)';
+
+  @override
+  String get stub_width => 'Stem width';
+
+  @override
+  String get stub_width_mm => 'Stem width (mm)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Stem length $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Stem length $number (mm)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Stem width $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Stem width $number (mm)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Notch $number width (mm)';
+  }
+
+  @override
   String get notch_does_not_fit => 'The notch leaves no room';
+
+  @override
+  String get notches_overlap => 'The notches overlap each other';
 
   @override
   String row_steps_at_notch(int number) {
@@ -177,8 +252,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tap_corner_to_cut => 'Tap the corner that is cut away';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'Diagonal laying is not supported in an L-shaped room yet';
+  String get tap_corner_notched => 'Tap the corner that is notched';
+
+  @override
+  String get tap_corner_to_move => 'Tap a corner to move the notches';
+
+  @override
+  String get tap_wall_stem => 'Tap the wall the stem stands on';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'Diagonal laying is not supported in a room with a notched corner yet';
+
+  @override
+  String get direction_across_notch_only =>
+      'A room with a notch in a wall can only be laid across that wall';
 
   @override
   String get corner_top_left => 'Top left';
@@ -211,9 +299,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get laying => 'Laying';
 
   @override
-  String get laying_direction => 'Laying direction';
-
-  @override
   String get along_length => 'Along length';
 
   @override
@@ -227,6 +312,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get joint_offset => 'Joint offset';
+
+  @override
+  String get laying_direction => 'Laying direction';
+
+  @override
+  String get expansion_gap => 'Expansion gap';
+
+  @override
+  String get min_piece_length => 'Minimum plank length';
 
   @override
   String get exact_offset => 'exact';
@@ -305,7 +399,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get whole => 'whole';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'whole',
+      one: 'whole',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Leftovers';

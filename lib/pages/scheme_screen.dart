@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../cubit/calculate_cubit.dart';
+import '../cubit/settings_cubit.dart';
 import '../l10n/app_localizations.dart';
 import '../models.dart';
 import '../scheme_geometry.dart';
@@ -30,7 +30,11 @@ class _SchemeScreenState extends State<SchemeScreen> {
   Result get result => widget.result;
   int get number => widget.number;
 
-  MeasurementSystem get system => context.read<CalculateCubit>().state.system;
+  MeasurementSystem get system => context.read<SettingsCubit>().state.system;
+
+  /// How a row is numbered beside itself on the drawing: the number sign in
+  /// the user's own language and the number the cut list calls that row.
+  String rowMark(int number) => AppStrings.of(context).variant(number);
 
   // How far the user can zoom in past the scale the scheme opens at.
   static const double _maxZoom = 12;
@@ -66,8 +70,9 @@ class _SchemeScreenState extends State<SchemeScreen> {
     super.dispose();
   }
 
-  Future<void> shareResult(String caption, List<String> cutList) async {
-    final pdf = schemePdf(result, system, await PdfFonts.load(rootBundle), cutList: cutList);
+  Future<void> shareResult(String caption, List<CutLine> cutList) async {
+    final pdf = schemePdf(result, system, await PdfFonts.load(rootBundle),
+        cutList: cutList, rowMark: rowMark);
     final dir = await getApplicationDocumentsDirectory();
     // Colons and spaces out of DateTime.toString() break the name on the
     // receiving side, and the extension has to be last for viewers to open it.
@@ -82,7 +87,8 @@ class _SchemeScreenState extends State<SchemeScreen> {
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final caption = '${s.laying_scheme} ${s.variant(number)}';
-    final scheme = buildScheme(result, system: system, minTextMm: _minTextMm);
+    final scheme = buildScheme(result,
+        system: system, minTextMm: _minTextMm, rowMark: rowMark);
     return Scaffold(
         appBar: AppBar(
           title: Text(caption, style: TextStyle(fontSize: 18, color: Colors.black)),

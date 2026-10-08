@@ -16,38 +16,14 @@
     "length_mm": "Length (mm)",
     "width_mm": "Width (mm)",
     "uneven_walls": "Walls of different lengths",
-    "wall_length": "Length {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Width {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Length {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Width {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Length (top)",
+    "wall_length_far": "Length (bottom)",
+    "wall_width_left": "Width (left)",
+    "wall_width_right": "Width (right)",
+    "wall_length_near_mm": "Length (top) mm",
+    "wall_length_far_mm": "Length (bottom) mm",
+    "wall_width_left_mm": "Width (left) mm",
+    "wall_width_right_mm": "Width (right) mm",
     "wall_diagonal": "Diagonal",
     "wall_diagonal_mm": "Diagonal (mm)",
     "walls_do_not_close": "The walls do not close",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Cut corner",
     "shape_chamfer_pair": "Two cut corners",
     "shape_t": "T-shaped",
-    "shoulder": "Cut {number}",
-    "shoulder_mm": "Cut {number} (mm)",
-    "chamfer_leg": "Cut (45°)",
-    "chamfer_leg_mm": "45° cut (mm)",
-    "notch": "Notch {number}",
-    "notch_mm": "Notch {number} (mm)",
-    "cut_depth": "Notch depth",
-    "cut_depth_mm": "Notch depth (mm)",
+    "shape_z": "Z-shaped",
+    "shape_u": "U-shaped",
+    "chamfer_leg": "Cut length",
+    "chamfer_leg_mm": "Cut length (mm)",
+    "chamfer_leg_left": "Left cut",
+    "chamfer_leg_left_mm": "Left cut (mm)",
+    "chamfer_leg_right": "Right cut",
+    "chamfer_leg_right_mm": "Right cut (mm)",
+    "chamfer_leg_near": "Top cut",
+    "chamfer_leg_near_mm": "Top cut (mm)",
+    "chamfer_leg_far": "Bottom cut",
+    "chamfer_leg_far_mm": "Bottom cut (mm)",
     "tap_wall_to_cut": "Tap a wall to move the cuts",
+    "tap_wall_notch": "Tap the wall the notch is in",
+    "notch_depth": "Notch depth",
+    "notch_depth_mm": "Notch depth (mm)",
     "overall_length": "Overall length",
     "overall_width": "Overall width",
     "overall_length_mm": "Overall length (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Notch width",
     "notch_length_mm": "Notch length (mm)",
     "notch_width_mm": "Notch width (mm)",
+    "notch_length_n": "Notch {number} length",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Notch {number} length (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Notch {number} width",
+    "symmetric_cut": "Symmetrical",
+    "stub_length": "Stem length",
+    "stub_length_mm": "Stem length (mm)",
+    "stub_width": "Stem width",
+    "stub_width_mm": "Stem width (mm)",
+    "stub_length_n": "Stem length {number}",
+    "stub_length_n_mm": "Stem length {number} (mm)",
+    "stub_width_n": "Stem width {number}",
+    "stub_width_n_mm": "Stem width {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Notch {number} width (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "The notch leaves no room",
+    "notches_overlap": "The notches overlap each other",
     "row_steps_at_notch": "Row {number} crosses the cut-away corner: the planks at its end are notched round it, see the drawing for the shape",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Tap the corner that is cut away",
-    "diagonal_not_for_l_shape": "Diagonal laying is not supported in an L-shaped room yet",
+    "tap_corner_notched": "Tap the corner that is notched",
+    "tap_corner_to_move": "Tap a corner to move the notches",
+    "tap_wall_stem": "Tap the wall the stem stands on",
+    "diagonal_not_for_notch": "Diagonal laying is not supported in a room with a notched corner yet",
+    "direction_across_notch_only": "A room with a notch in a wall can only be laid across that wall",
     "corner_top_left": "Top left",
     "corner_top_right": "Top right",
     "corner_bottom_right": "Bottom right",
@@ -95,12 +124,14 @@
     "wall_left": "Left wall",
     "pieces_per_package": "Pieces per package",
     "laying": "Laying",
-    "laying_direction": "Laying direction",
     "along_length": "Along length",
     "along_width": "Along width",
     "diagonally": "Diagonal",
     "expansion_gap_mm": "Expansion gap (mm)",
     "joint_offset": "Joint offset",
+    "laying_direction": "Laying direction",
+    "expansion_gap": "Expansion gap",
+    "min_piece_length": "Minimum plank length",
     "exact_offset": "exact",
     "joint_offset_mm": "Joint offset (mm)",
     "minimal_piece_length": "Minimal piece length (mm)",
@@ -122,7 +153,7 @@
     "variant": "#{number}",
     "cut_list": "Cut list",
     "row": "Row {number}",
-    "whole": "whole",
+    "whole": "{count, plural, one{whole} other{whole}}",
     "leftovers": "Leftovers",
     "waste": "Waste"
 }

@@ -2,9 +2,10 @@ import 'dart:math' as math;
 
 import 'package:auto_route/auto_route.dart';
 import 'package:floor_calculator/constants.dart';
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
-import 'package:floor_calculator/cubit/calculate_state.dart';
+import 'package:floor_calculator/cubit/room_cubit.dart';
+import 'package:floor_calculator/cubit/settings_cubit.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
+import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/room_kind.dart';
 import 'package:floor_calculator/router/app_router.dart';
 import 'package:floor_calculator/room_shape.dart';
@@ -27,10 +28,20 @@ const double _GAP = kFormGap;
 const double _NUMBER_FIELD_WIDTH = 72;
 const double _INCH_FIELD_WIDTH = _NUMBER_FIELD_WIDTH + INCH_FRACTION_GAP + INCH_FRACTION_WIDTH;
 
-// A shape tile is square and takes a sixth of the card, up to this. Beyond it
+// A shape tile is square and takes its share of the card, up to this. Beyond it
 // the button stops reading as a button — the outline inside has long since been
 // as clear as it is going to get.
 const double _TILE_MAX = 60;
+
+// How many shapes go on a line before the next one starts.
+//
+// The width of the card divided by this is what a tile gets, and four is as far
+// as that can be pushed: inside the card there are 280 dp on a 360 dp phone, so
+// four tiles are 64 dp and seven on one line would be 33 — under the smallest
+// thing a thumb is asked to hit. The row was one line while there were six
+// shapes and it was 40 dp a tile, which was already the floor rather than the
+// plan.
+const int _TILES_PER_ROW = 4;
 
 // Rounded enough to read as a button, square enough that the corner of the room
 // drawn inside it is still the sharpest corner on the tile.
@@ -44,6 +55,143 @@ const double _TILE_GAP = 8;
 // laid out and a reserved line that is short by a pixel clips the descenders.
 const double _CAPTION_SIZE = 14;
 const double _CAPTION_HEIGHT = 1.2;
+
+/// One measurement the room form asked for: what it is called, and what was
+/// typed into it.
+class RoomMeasurement {
+  final String title;
+  final int? valueMm;
+
+  const RoomMeasurement(this.title, this.valueMm);
+}
+
+/// Every measurement the room form asks for, in the order it asks them, for
+/// whatever shape the room is.
+///
+/// The same list the boxes are built from, said twice: once here as names and
+/// values, and once in [RoomParametersScreenState._roomBoxes] as boxes with
+/// controllers and bounds. They are kept apart because the review screen wants
+/// no controllers and the form wants nothing else, and kept honest by
+/// test/review_screen_test.dart, which walks every shape and insists the two
+/// lists are the same length with the same names. A shape measured on one
+/// screen and missed on the other fails there rather than on a user's phone.
+List<RoomMeasurement> roomMeasurements(
+    AppLocalizations appStrings, RoomState state) {
+  final kind = state.roomKind;
+  final overall = kind.isCut;
+  final out = <RoomMeasurement>[
+    RoomMeasurement(
+      state.unevenWalls
+          ? appStrings.wall_length_near
+          : overall
+              ? appStrings.overall_length
+              : appStrings.length,
+      state.roomLength,
+    ),
+    RoomMeasurement(
+      state.unevenWalls
+          ? appStrings.wall_width_left
+          : overall
+              ? appStrings.overall_width
+              : appStrings.width,
+      state.roomWidth,
+    ),
+  ];
+
+  if (state.unevenWalls) {
+    out.add(RoomMeasurement(appStrings.wall_length_far, state.roomLength2));
+    out.add(RoomMeasurement(appStrings.wall_width_right, state.roomWidth2));
+    out.add(RoomMeasurement(appStrings.wall_diagonal, state.roomDiagonal));
+    return out;
+  }
+  if (!kind.isCut) return out;
+
+  // A room measured by the piece in the middle of its cut wall is two numbers
+  // rather than three or four, and they are the ones the form asked for — see
+  // the boxes, where the reasons are.
+  final across = kind.isPaired && !state.cutWall.runsAlongLength;
+  final reach = [state.notchLength, state.notchLength2];
+  if (kind.isWallNotch) {
+    if (kind.symmetricStem(state)) {
+      out.add(RoomMeasurement(
+          across ? appStrings.notch_width : appStrings.notch_length, state.midSpan));
+      out.add(RoomMeasurement(
+          across ? appStrings.notch_length : appStrings.notch_width, state.notchWidth));
+      return out;
+    }
+    final leg = across ? appStrings.stub_width_n : appStrings.stub_length_n;
+    out.add(RoomMeasurement(leg(1), state.notchLength));
+    out.add(RoomMeasurement(leg(2), state.notchLength2));
+    out.add(RoomMeasurement(
+        across ? appStrings.stub_length : appStrings.stub_width, state.notchWidth));
+    return out;
+  }
+
+  // The names the form asks for them under — see the boxes, where the reasons
+  // are: a chamfer's pair is named by side rather than by number, and a notch's
+  // two sizes are named for the room's axes, which swap over when the pair is
+  // moved onto a side wall.
+  final acrossWall = across;
+  if (kind.symmetricStem(state)) {
+    out.add(RoomMeasurement(
+        acrossWall ? appStrings.stub_width : appStrings.stub_length, state.midSpan));
+    out.add(RoomMeasurement(
+        acrossWall ? appStrings.stub_length : appStrings.stub_width, state.notchWidth));
+    return out;
+  }
+  if (kind.isPaired) {
+    final legs = state.cutWall.runsAlongLength
+        ? [appStrings.chamfer_leg_left, appStrings.chamfer_leg_right]
+        : [appStrings.chamfer_leg_near, appStrings.chamfer_leg_far];
+    final shoulder = acrossWall ? appStrings.notch_width_n : appStrings.notch_length_n;
+    for (var i = 0; i < 2; i++) {
+      out.add(RoomMeasurement(kind.hasOneLeg ? legs[i] : shoulder(i + 1), reach[i]));
+    }
+  } else if (kind.cutCount > 1) {
+    for (var i = 0; i < 2; i++) {
+      out.add(RoomMeasurement(appStrings.notch_length_n(i + 1), reach[i]));
+    }
+  } else {
+    out.add(RoomMeasurement(
+      kind.hasOneLeg ? appStrings.chamfer_leg : appStrings.notch_length,
+      state.notchLength,
+    ));
+  }
+
+  if (!kind.hasOneLeg) {
+    final depth = [state.notchWidth, state.notchWidth2];
+    for (var i = 0; i < kind.cutCount; i++) {
+      out.add(RoomMeasurement(
+        kind.cutCount == 1
+            ? appStrings.notch_width
+            : acrossWall
+                ? appStrings.notch_length_n(i + 1)
+                : appStrings.notch_width_n(i + 1),
+        depth[i],
+      ));
+    }
+  }
+  return out;
+}
+
+/// What a shape is called, in the user's own language.
+///
+/// A free function because two screens name these: the form, under the tile
+/// that is lit, and the review, beside the room it is about.
+String roomKindNameOf(AppLocalizations appStrings, RoomKind kind) {
+    if (kind == RoomKind.rectangle) return appStrings.shape_rectangle;
+    if (kind == RoomKind.uneven) return appStrings.uneven_walls;
+    if (kind == RoomKind.chamfer) return appStrings.shape_chamfer;
+    if (kind == RoomKind.chamferPair) return appStrings.shape_chamfer_pair;
+    if (kind == RoomKind.lShaped) return appStrings.shape_l;
+    if (kind == RoomKind.tShaped) return appStrings.shape_t;
+    if (kind == RoomKind.zShaped) return appStrings.shape_z;
+    return appStrings.shape_u;
+}
+
+/// The outline a shape is drawn as, for anything that wants to draw one.
+List<Offset> roomKindIconCorners(RoomKind kind) =>
+    RoomParametersScreenState._ICON_CORNERS[kind]!;
 
 class RoomParametersScreen extends StatefulWidget {
   const RoomParametersScreen({super.key});
@@ -75,6 +223,10 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   final notchLength2InchFocusNode = FocusNode();
   final notchWidthFocusNode = FocusNode();
   final notchWidthInchFocusNode = FocusNode();
+  final notchWidth2FocusNode = FocusNode();
+  final notchWidth2InchFocusNode = FocusNode();
+  final midSpanFocusNode = FocusNode();
+  final midSpanInchFocusNode = FocusNode();
 
   // In imperial mode length/width controllers hold feet and the inch
   // controllers hold the remaining inches.
@@ -94,6 +246,10 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   final notchLength2InchController = TextEditingController(text: '0');
   final notchWidthController = TextEditingController();
   final notchWidthInchController = TextEditingController(text: '0');
+  final notchWidth2Controller = TextEditingController();
+  final notchWidth2InchController = TextEditingController(text: '0');
+  final midSpanController = TextEditingController();
+  final midSpanInchController = TextEditingController(text: '0');
 
   // Every box on the form, so that one list can be listened to and disposed of.
   List<TextEditingController> get _controllers => [
@@ -113,6 +269,10 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
         notchLength2InchController,
         notchWidthController,
         notchWidthInchController,
+        notchWidth2Controller,
+        notchWidth2InchController,
+        midSpanController,
+        midSpanInchController,
       ];
 
   @override
@@ -151,6 +311,10 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
         notchLength2InchFocusNode,
         notchWidthFocusNode,
         notchWidthInchFocusNode,
+        notchWidth2FocusNode,
+        notchWidth2InchFocusNode,
+        midSpanFocusNode,
+        midSpanInchFocusNode,
       ];
 
   void _onFieldChanged() {
@@ -181,6 +345,10 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
     notchLength2InchController.dispose();
     notchWidthController.dispose();
     notchWidthInchController.dispose();
+    notchWidth2Controller.dispose();
+    notchWidth2InchController.dispose();
+    midSpanController.dispose();
+    midSpanInchController.dispose();
     lengthFocusNode.dispose();
     lengthInchFocusNode.dispose();
     widthFocusNode.dispose();
@@ -197,12 +365,16 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
     notchLength2InchFocusNode.dispose();
     notchWidthFocusNode.dispose();
     notchWidthInchFocusNode.dispose();
+    notchWidth2FocusNode.dispose();
+    notchWidth2InchFocusNode.dispose();
+    midSpanFocusNode.dispose();
+    midSpanInchFocusNode.dispose();
     super.dispose();
   }
 
   // Rewrites the field texts from the canonical state, which is always
   // millimetres, so that values already entered survive a change of units.
-  void rewriteFieldsFor(MeasurementSystem system, CalculateState state) {
+  void rewriteFieldsFor(MeasurementSystem system, RoomState state) {
     void setRoomField(int? mm, TextEditingController main, TextEditingController inchPart) {
       if (mm == null) {
         main.clear();
@@ -225,6 +397,7 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
     setRoomField(state.notchLength, notchLengthController, notchLengthInchController);
     setRoomField(state.notchLength2, notchLength2Controller, notchLength2InchController);
     setRoomField(state.notchWidth, notchWidthController, notchWidthInchController);
+    setRoomField(state.notchWidth2, notchWidth2Controller, notchWidth2InchController);
   }
 
   // Changing the shape never puts a number in a box the user did not type.
@@ -238,46 +411,68 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   // not measured the other two yet.
   //
   // What the user *did* type is carried from shape to shape and kept — see
-  // [CalculateState.notchLength] — and clamped into the new shape's bounds,
+  // [RoomState.notchLength] — and clamped into the new shape's bounds,
   // which is not a guess but the arithmetic of the shape they just picked: a
   // cut that was legal as the only one on its wall may be too deep to share it.
   void setRoomKind(BuildContext context, RoomKind kind) {
-    final cubit = context.read<CalculateCubit>();
+    final cubit = context.read<RoomCubit>();
     final state = cubit.state;
     final length = state.roomLength;
     final width = state.roomWidth;
-    final notchLength = state.notchLength;
-    final notchLength2 = state.notchLength2;
-    final notchWidth = state.notchWidth;
     if (length != null && width != null && kind.isCut) {
       final alongWall = state.cutWall.runsAlongLength;
       final along = alongWall ? length : width;
       final into = kind.isPaired ? (alongWall ? width : length) : width;
       final lone = kind.hasOneLeg ? math.min(length, width) : length;
-      final loneMax = kind.hasOneLeg ? CornerSize.wallOfLeg(notchMax(lone)) : notchMax(lone);
       final floor = kind.hasOneLeg ? CornerSize.wallOfLeg(MIN_NOTCH_MM) : MIN_NOTCH_MM;
+      // How far a cut may reach in the shape being moved to. A pair standing on
+      // one wall divides it, so each gets a share; a lone cut and a pair across
+      // the room are each held off the far side of the room on their own,
+      // because nothing holds two opposite cuts apart until they actually meet
+      // — and the sketch says so when they do.
+      final reach = kind.isPaired
+          ? heldBetween(along ~/ 4, floor, shoulderMax(along, MIN_NOTCH_MM))
+          : kind.hasOneLeg
+              ? CornerSize.wallOfLeg(notchMax(lone))
+              : notchMax(lone);
       // [heldBetween] rather than clamp: a room may be small enough that no cut
       // fits in it at all, and then the ceiling lands under the floor. What is
       // carried over is the smallest cut there is, and the sketch says it does
       // not fit.
-      if (kind.isPaired) {
-        final share =
-            heldBetween(along ~/ 4, floor, shoulderMax(along, MIN_NOTCH_MM));
-        if (notchLength != null) {
-          cubit.setNotchLength(heldBetween(notchLength, floor, share));
-        }
-        if (notchLength2 != null) {
-          cubit.setNotchLength2(heldBetween(notchLength2, floor, share));
-        }
-      } else if (notchLength != null) {
-        cubit.setNotchLength(heldBetween(notchLength, floor, loneMax));
+      void carry(int? typed, void Function(int) set, int least, int most) {
+        if (typed != null) set(heldBetween(typed, least, most));
       }
-      if (!kind.hasOneLeg && notchWidth != null) {
-        cubit.setNotchWidth(heldBetween(notchWidth, MIN_NOTCH_MM, notchMax(into)));
+
+      // A notch in a wall measures the floor it leaves rather than the cut it
+      // takes, so the same three numbers mean something else and are held
+      // against something else — what is left for the notch between the two
+      // ends, and what is left under it.
+      if (kind.isWallNotch) {
+        final across = alongWall ? width : length;
+        carry(state.notchLength, cubit.setNotchLength, MIN_NOTCH_MM,
+            WallNotchRoomShape.maxOffset(along, MIN_NOTCH_MM));
+        carry(state.notchLength2, cubit.setNotchLength2, MIN_NOTCH_MM,
+            WallNotchRoomShape.maxOffset(along, MIN_NOTCH_MM));
+        carry(state.notchWidth, cubit.setNotchWidth, MIN_NOTCH_MM,
+            WallNotchRoomShape.maxDepth(across));
+        cubit.setRoomKind(kind);
+        rewriteFieldsFor(context.read<SettingsCubit>().state.system, cubit.state);
+        return;
+      }
+
+      carry(state.notchLength, cubit.setNotchLength, floor, reach);
+      if (kind.cutCount > 1) {
+        carry(state.notchLength2, cubit.setNotchLength2, floor, reach);
+      }
+      if (!kind.hasOneLeg) {
+        carry(state.notchWidth, cubit.setNotchWidth, MIN_NOTCH_MM, notchMax(into));
+        if (kind.cutCount > 1) {
+          carry(state.notchWidth2, cubit.setNotchWidth2, MIN_NOTCH_MM, notchMax(into));
+        }
       }
     }
     cubit.setRoomKind(kind);
-    rewriteFieldsFor(cubit.state.system, cubit.state);
+    rewriteFieldsFor(context.read<SettingsCubit>().state.system, cubit.state);
   }
 
   void openSettings(BuildContext context) => showModalBottomSheet(
@@ -288,10 +483,13 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
             RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (_) => SettingsSheet(
           onSystemChanged: (system) {
-            final cubit = context.read<CalculateCubit>();
-            if (system == cubit.state.system) return;
-            rewriteFieldsFor(system, cubit.state);
-            cubit.setMeasurementSystem(system);
+            final settings = context.read<SettingsCubit>();
+            if (system == settings.state.system) return;
+            // The boxes hold text in the old unit and the cubit holds
+            // millimetres, so the text is rewritten before the setting moves —
+            // otherwise the rebuild lands on a form reading feet as metres.
+            rewriteFieldsFor(system, context.read<RoomCubit>().state);
+            settings.setSystem(system);
           },
         ),
       );
@@ -308,7 +506,7 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
       if (wholeFeet != null && restInches != null) set(feetInchesToMm(wholeFeet, restInches));
     }
 
-    final cubit = context.read<CalculateCubit>();
+    final cubit = context.read<RoomCubit>();
     apply(lengthController, lengthInchController, cubit.setRoomLength);
     apply(widthController, widthInchController, cubit.setRoomWidth);
     apply(length2Controller, length2InchController, cubit.setRoomLength2);
@@ -317,6 +515,7 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
     apply(notchLengthController, notchLengthInchController, cubit.setNotchLength);
     apply(notchLength2Controller, notchLength2InchController, cubit.setNotchLength2);
     apply(notchWidthController, notchWidthInchController, cubit.setNotchWidth);
+    apply(notchWidth2Controller, notchWidth2InchController, cubit.setNotchWidth2);
   }
 
   /// One room measurement the shape asks for, and everything the form needs to
@@ -338,13 +537,14 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   /// a wall that a cut put there carries that cut's own leg: one rule for every
   /// shape that is built out of a rectangle. A room measured wall by wall is
   /// square to nothing, so it keeps the one listing there is.
-  _WallMap _wallsOf(CalculateState state) {
+  _WallMap _wallsOf(RoomState state) {
     final shape = state.shape;
     if (shape == null) return const _WallMap();
     if (shape is RoomShape) {
       // [RoomShape.wallLengths] is near, right, far, left, in that order.
       return const _WallMap(alongLength: [0], acrossWidth: [3], farLength: [2], farWidth: [1]);
     }
+    if (shape is WallNotchRoomShape) return _notchWalls(shape);
     if (shape is! CutCornersRoomShape) return const _WallMap();
 
     final corners = shape.corners();
@@ -408,9 +608,56 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
     );
   }
 
-  List<_RoomBox> _roomBoxes(BuildContext context, CalculateState state) {
+  /// The same, for the room whose missing piece is in a wall rather than a
+  /// corner.
+  ///
+  /// Its own walk because nothing here is keyed to a corner: a notch belongs to
+  /// a wall, and what the form asks about it are the two pieces of that wall it
+  /// leaves. The ring [WallNotchRoomShape] builds puts the notch's four points
+  /// straight after the corner its wall starts at, so where they are is known
+  /// rather than searched for.
+  _WallMap _notchWalls(WallNotchRoomShape shape) {
+    final corners = shape.corners();
+    final n = corners.length;
+    // One point per corner before the notch's wall, so the notch's own first
+    // point lands one past the wall's index.
+    final start = shape.wall.index + 1;
+    final notch = [for (var i = 0; i < 5; i++) (start - 1 + i) % n];
+
+    // The near and right walls are walked from the corner the first offset is
+    // measured at; the far and left ones are walked backwards, so the piece the
+    // walk meets first is the one the *second* offset measures.
+    final forwards = shape.wall == RoomWall.near || shape.wall == RoomWall.right;
+    final ends = forwards ? [notch[0], notch[4]] : [notch[4], notch[0]];
+
+    final taken = notch.toSet();
+    final alongLength = <int>[];
+    final acrossWidth = <int>[];
+    for (var i = 0; i < n; i++) {
+      if (taken.contains(i)) continue;
+      final from = corners[i];
+      final to = corners[(i + 1) % n];
+      final flat = from.y == to.y;
+      // The overall size owns the wall that *is* that size. The wall the notch
+      // is cut into is in two pieces and neither of them is, which is exactly
+      // right: those two are the user's own numbers and have boxes of their own.
+      final span = flat ? (to.x - from.x).abs() : (to.y - from.y).abs();
+      if (span != (flat ? shape.length : shape.width).toDouble()) continue;
+      (flat ? alongLength : acrossWidth).add(i);
+    }
+
+    return _WallMap(
+      alongLength: alongLength,
+      acrossWidth: acrossWidth,
+      notchEnds: ends,
+      notchLegs: [notch[1], notch[3]],
+      notchSpan: [notch[2]],
+    );
+  }
+
+  List<_RoomBox> _roomBoxes(BuildContext context, RoomState state) {
     final appStrings = AppStrings.of(context);
-    final cubit = context.read<CalculateCubit>();
+    final cubit = context.read<RoomCubit>();
     final kind = state.roomKind;
     final walls = _wallsOf(state);
 
@@ -425,12 +672,12 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
         focusNode: lengthFocusNode,
         inchFocusNode: lengthInchFocusNode,
         label: state.unevenWalls
-            ? appStrings.wall_length_mm(1)
+            ? appStrings.wall_length_near_mm
             : overall
                 ? appStrings.overall_length_mm
                 : appStrings.length_mm,
         title: state.unevenWalls
-            ? appStrings.wall_length(1)
+            ? appStrings.wall_length_near
             : overall
                 ? appStrings.overall_length
                 : appStrings.length,
@@ -446,12 +693,12 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
         focusNode: widthFocusNode,
         inchFocusNode: widthInchFocusNode,
         label: state.unevenWalls
-            ? appStrings.wall_width_mm(1)
+            ? appStrings.wall_width_left_mm
             : overall
                 ? appStrings.overall_width_mm
                 : appStrings.width_mm,
         title: state.unevenWalls
-            ? appStrings.wall_width(1)
+            ? appStrings.wall_width_left
             : overall
                 ? appStrings.overall_width
                 : appStrings.width,
@@ -470,8 +717,8 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
           inchController: length2InchController,
           focusNode: length2FocusNode,
           inchFocusNode: length2InchFocusNode,
-          label: appStrings.wall_length_mm(2),
-          title: appStrings.wall_length(2),
+          label: appStrings.wall_length_far_mm,
+          title: appStrings.wall_length_far,
           minMm: MIN_ROOM_MM,
           maxMm: MAX_LENGTH_MM,
           valueMm: state.roomLength2,
@@ -483,8 +730,8 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
           inchController: width2InchController,
           focusNode: width2FocusNode,
           inchFocusNode: width2InchFocusNode,
-          label: appStrings.wall_width_mm(2),
-          title: appStrings.wall_width(2),
+          label: appStrings.wall_width_right_mm,
+          title: appStrings.wall_width_right,
           minMm: MIN_ROOM_MM,
           maxMm: MAX_WIDTH_MM,
           valueMm: state.roomWidth2,
@@ -510,10 +757,107 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
 
     if (!kind.isCut) return boxes;
 
-    // A cut may be a hand's width, so its boxes have no floor of a whole foot
-    // the way a wall does.
-    final alongSide = state.cutWall.runsAlongLength ? state.roomLength : state.roomWidth;
-    final pair = state.cutWall.corners;
+    // A notch in the middle of a wall asks for the same three numbers a pair of
+    // cuts on one wall does and means the opposite by them: not what is taken
+    // off each end, but what is left there. So it is measured and bounded on
+    // its own terms rather than borrowed from the branch below, and the one
+    // thing it shares is the boxes those numbers are typed into.
+    if (kind.isWallNotch) {
+      final along = state.cutWall.runsAlongLength ? state.roomLength : state.roomWidth;
+      final across = state.cutWall.runsAlongLength ? state.roomWidth : state.roomLength;
+      final acrossWall = !state.cutWall.runsAlongLength;
+      final symmetric = kind.symmetricStem(state);
+      // Centred, the notch is measured itself: how far it runs along the wall
+      // and how deep it goes. Off centre, the two legs either side of it are
+      // what is measured instead and the notch between them is what is left —
+      // where the notch sits being the one thing a centred one has no room to
+      // say.
+      if (symmetric) {
+        boxes.add(_RoomBox(
+          controller: midSpanController,
+          inchController: midSpanInchController,
+          focusNode: midSpanFocusNode,
+          inchFocusNode: midSpanInchFocusNode,
+          label: acrossWall ? appStrings.notch_width_mm : appStrings.notch_length_mm,
+          title: acrossWall ? appStrings.notch_width : appStrings.notch_length,
+          minMm: MIN_NOTCH_MM,
+          maxMm: WallNotchRoomShape.maxSpan(along ?? MIN_ROOM_MM),
+          valueMm: state.midSpan,
+          walls: walls.notchSpan,
+          derived: walls.notchEnds,
+          minFeet: 0,
+          apply: cubit.setMidSpan,
+        ));
+      } else {
+        // The two legs, each by how far it runs along the wall.
+        final ends = [state.notchLength, state.notchLength2];
+        final apply = [cubit.setNotchLength, cubit.setNotchLength2];
+        final leg = acrossWall ? appStrings.stub_width_n : appStrings.stub_length_n;
+        final legMm =
+            acrossWall ? appStrings.stub_width_n_mm : appStrings.stub_length_n_mm;
+        for (var i = 0; i < 2; i++) {
+          boxes.add(_cutBox(
+            slot: i,
+            reach: true,
+            walls: i < walls.notchEnds.length ? [walls.notchEnds[i]] : const [],
+            // The notch between them is what the room works out from the pair,
+            // so it is a guess while either of them is.
+            derived: walls.notchSpan,
+            label: legMm(i + 1),
+            title: leg(i + 1),
+            minMm: MIN_NOTCH_MM,
+            // Bounded by what the other leg already takes and by the notch that
+            // has to be left between them.
+            maxMm: WallNotchRoomShape.maxOffset(along ?? MIN_ROOM_MM, ends[1 - i]),
+            valueMm: ends[i],
+            apply: apply[i],
+          ));
+        }
+      }
+      // How far the legs come out, which is the same thing as how deep the
+      // notch goes — one number either way round. Not one per leg: the two
+      // stand on one crossbar, so a second box would be a second name for the
+      // first, and two names for one number is a form that can disagree with
+      // itself.
+      boxes.add(_RoomBox(
+        controller: notchWidthController,
+        inchController: notchWidthInchController,
+        focusNode: notchWidthFocusNode,
+        inchFocusNode: notchWidthInchFocusNode,
+        label: symmetric
+            ? (acrossWall ? appStrings.notch_length_mm : appStrings.notch_width_mm)
+            : (acrossWall ? appStrings.stub_length_mm : appStrings.stub_width_mm),
+        title: symmetric
+            ? (acrossWall ? appStrings.notch_length : appStrings.notch_width)
+            : (acrossWall ? appStrings.stub_length : appStrings.stub_width),
+        minMm: MIN_NOTCH_MM,
+        maxMm: WallNotchRoomShape.maxDepth(across ?? MIN_ROOM_MM),
+        valueMm: state.notchWidth,
+        walls: walls.notchLegs,
+        minFeet: 0,
+        apply: cubit.setNotchWidth,
+      ));
+      return boxes;
+    }
+
+    // Which corner each cut sits in, numbered the way the boxes are. A pair
+    // standing on one wall is numbered along that wall; a lone cut is the
+    // tapped corner itself; a pair across the room is numbered left to right,
+    // starting from whichever of its two corners is the left one.
+    //
+    // Left to right because the boxes are read down the screen beside the
+    // drawing: a "cut 1" that changed sides when the pair was tapped across the
+    // room would have the user typing into the box for the other end of the
+    // floor. [RoomCornerSides.leftOfPair] is where that is decided, and the
+    // outline is built the same way round, so the two cannot drift.
+    final corners = kind.isPaired
+        ? state.cutWall.corners
+        : kind.cutCount > 1
+            ? [state.notchCorner.leftOfPair, state.notchCorner.leftOfPair.opposite]
+            : [state.notchCorner];
+    final reachTyped = [state.notchLength, state.notchLength2];
+    final reachApply = [cubit.setNotchLength, cubit.setNotchLength2];
+
     if (kind.isPaired) {
       // Two shoulders, each measured along the wall the pair stands on, and
       // each bounded by what the other one leaves.
@@ -524,38 +868,123 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
       // notches. The screen said "cut" for both and then asked for the depth of
       // the *notches* underneath, and the caption below the drawing calls them
       // notches too.
-      final shoulder = kind.hasOneLeg ? appStrings.shoulder : appStrings.notch;
-      final shoulderMm = kind.hasOneLeg ? appStrings.shoulder_mm : appStrings.notch_mm;
-      boxes.add(_RoomBox(
-        controller: notchLengthController,
-        inchController: notchLengthInchController,
-        focusNode: notchLengthFocusNode,
-        inchFocusNode: notchLengthInchFocusNode,
-        label: shoulderMm(1),
-        title: shoulder(1),
-        minMm: kind.hasOneLeg ? CornerSize.wallOfLeg(MIN_NOTCH_MM) : MIN_NOTCH_MM,
-        maxMm: shoulderMax(alongSide, state.notchLength2),
-        valueMm: state.notchLength,
-        walls: walls.cutLegOf(pair[0], along: state.cutWall.runsAlongLength),
-        derived: walls.shortenedBy(pair[0]),
-        minFeet: 0,
-        apply: cubit.setNotchLength,
-      ));
-      boxes.add(_RoomBox(
-        controller: notchLength2Controller,
-        inchController: notchLength2InchController,
-        focusNode: notchLength2FocusNode,
-        inchFocusNode: notchLength2InchFocusNode,
-        label: shoulderMm(2),
-        title: shoulder(2),
-        minMm: kind.hasOneLeg ? CornerSize.wallOfLeg(MIN_NOTCH_MM) : MIN_NOTCH_MM,
-        maxMm: shoulderMax(alongSide, state.notchLength),
-        valueMm: state.notchLength2,
-        walls: walls.cutLegOf(pair[1], along: state.cutWall.runsAlongLength),
-        derived: walls.shortenedBy(pair[1]),
-        minFeet: 0,
-        apply: cubit.setNotchLength2,
-      ));
+      //
+      // A chamfer's pair is named by which of the two it is on the drawing, not
+      // 1 and 2. The wall they stand on is chosen by tapping, so a number named
+      // nothing the user could point at; [RoomWallCorners.corners] runs the
+      // pair left to right along the near and far walls and top to bottom down
+      // the other two, and these names follow it.
+      final legs = state.cutWall.runsAlongLength
+          ? [appStrings.chamfer_leg_left, appStrings.chamfer_leg_right]
+          : [appStrings.chamfer_leg_near, appStrings.chamfer_leg_far];
+      final legsMm = state.cutWall.runsAlongLength
+          ? [appStrings.chamfer_leg_left_mm, appStrings.chamfer_leg_right_mm]
+          : [appStrings.chamfer_leg_near_mm, appStrings.chamfer_leg_far_mm];
+      // A notch's two measurements are named for the room's own axes, not for
+      // their part in the cut. The reach runs along the wall the pair stands on,
+      // and that wall turns: on a side wall the reach runs across the room's
+      // width and the depth runs along its length, so calling the reach "length"
+      // there put the word on the number drawn up and down the page.
+      final acrossWall = !state.cutWall.runsAlongLength;
+      // A T measured by the stem it leaves rather than by the two cuts that
+      // leave it. One number along the wall and one out from it, and the cuts
+      // either side are what is left — which is how a room with an alcove comes
+      // off a tape, the stem being a thing in the room and the cuts being what
+      // is not. The depth box below is shared with the four-box form: it means
+      // the same thing either way round.
+      if (kind.symmetricStem(state)) {
+        final side = acrossWall ? state.roomWidth : state.roomLength;
+        // Both cuts' legs along the wall are what the stem leaves, so they are
+        // what this one number works out; both their depths *are* this one
+        // number, so the depth box lights them rather than deriving them.
+        final legs = [
+          for (final corner in corners) ...walls.cutLegOf(corner, along: !acrossWall)
+        ];
+        final depths = [
+          for (final corner in corners) ...walls.cutLegOf(corner, along: acrossWall)
+        ];
+        boxes.add(_RoomBox(
+          controller: midSpanController,
+          inchController: midSpanInchController,
+          focusNode: midSpanFocusNode,
+          inchFocusNode: midSpanInchFocusNode,
+          label: acrossWall ? appStrings.stub_width_mm : appStrings.stub_length_mm,
+          title: acrossWall ? appStrings.stub_width : appStrings.stub_length,
+          // Wide enough to be the room the stem is, and narrow enough to leave
+          // a cut worth cutting at either end of it.
+          minMm: CutCornersRoomShape.minArmMm,
+          maxMm: (side ?? MIN_ROOM_MM) - MIN_NOTCH_MM * 2,
+          valueMm: state.midSpan,
+          walls: walls.stemBetween(corners),
+          derived: legs,
+          minFeet: 0,
+          apply: cubit.setMidSpan,
+        ));
+        boxes.add(_RoomBox(
+          controller: notchWidthController,
+          inchController: notchWidthInchController,
+          focusNode: notchWidthFocusNode,
+          inchFocusNode: notchWidthInchFocusNode,
+          label: acrossWall ? appStrings.stub_length_mm : appStrings.stub_width_mm,
+          title: acrossWall ? appStrings.stub_length : appStrings.stub_width,
+          minMm: MIN_NOTCH_MM,
+          maxMm: notchMax(acrossWall ? state.roomLength : state.roomWidth),
+          valueMm: state.notchWidth,
+          walls: depths,
+          minFeet: 0,
+          apply: cubit.setNotchWidth,
+        ));
+        return boxes;
+      }
+      final shoulder = kind.hasOneLeg
+          ? (int n) => legs[n - 1]
+          : (acrossWall ? appStrings.notch_width_n : appStrings.notch_length_n);
+      final shoulderMm = kind.hasOneLeg
+          ? (int n) => legsMm[n - 1]
+          : (acrossWall ? appStrings.notch_width_n_mm : appStrings.notch_length_n_mm);
+      final alongSide =
+          state.cutWall.runsAlongLength ? state.roomLength : state.roomWidth;
+      for (var i = 0; i < 2; i++) {
+        boxes.add(_cutBox(
+          slot: i,
+          reach: true,
+          // A notch leaves its corner two legs, one square to each axis, and
+          // which of them this box measures turns on which way the wall runs. A
+          // chamfer leaves one, slanted, and it is filed as the along leg
+          // whatever wall the pair stands on — asking for the across leg of a
+          // chamfer standing on a side wall found nothing, and the box lit no
+          // part of the drawing at all.
+          walls: walls.cutLegOf(corners[i],
+              along: kind.hasOneLeg || state.cutWall.runsAlongLength),
+          derived: walls.shortenedBy(corners[i]),
+          label: shoulderMm(i + 1),
+          title: shoulder(i + 1),
+          minMm: kind.hasOneLeg ? CornerSize.wallOfLeg(MIN_NOTCH_MM) : MIN_NOTCH_MM,
+          maxMm: shoulderMax(alongSide, reachTyped[1 - i]),
+          valueMm: reachTyped[i],
+          apply: reachApply[i],
+        ));
+      }
+    } else if (kind.cutCount > 1) {
+      // Two cuts across the room from each other. They share no wall to be
+      // measured off, so each is given its own length and its own width, and
+      // each is bounded by the room alone — what stops them meeting in the
+      // middle is [RoomProblem.cutsOverlap] under the sketch rather than a
+      // ceiling on either box, because either one of them may be the deep one.
+      for (var i = 0; i < 2; i++) {
+        boxes.add(_cutBox(
+          slot: i,
+          reach: true,
+          walls: walls.cutLegOf(corners[i], along: true),
+          derived: walls.shortenedBy(corners[i]),
+          label: appStrings.notch_length_n_mm(i + 1),
+          title: appStrings.notch_length_n(i + 1),
+          minMm: MIN_NOTCH_MM,
+          maxMm: notchMax(state.roomLength),
+          valueMm: reachTyped[i],
+          apply: reachApply[i],
+        ));
+      }
     } else {
       // A chamfer is given by the wall it leaves and reaches the same way
       // along both sides, so what bounds it is the shorter of the two — and
@@ -564,11 +993,11 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
       final lone = kind.hasOneLeg
           ? math.min(state.roomLength ?? MIN_ROOM_MM, state.roomWidth ?? MIN_ROOM_MM)
           : state.roomLength;
-      boxes.add(_RoomBox(
-        controller: notchLengthController,
-        inchController: notchLengthInchController,
-        focusNode: notchLengthFocusNode,
-        inchFocusNode: notchLengthInchFocusNode,
+      boxes.add(_cutBox(
+        slot: 0,
+        reach: true,
+        walls: walls.cutLegOf(corners[0], along: true),
+        derived: walls.shortenedBy(corners[0]),
         label: kind.hasOneLeg ? appStrings.chamfer_leg_mm : appStrings.notch_length_mm,
         title: kind.hasOneLeg ? appStrings.chamfer_leg : appStrings.notch_length,
         minMm: kind.hasOneLeg ? CornerSize.wallOfLeg(MIN_NOTCH_MM) : MIN_NOTCH_MM,
@@ -576,42 +1005,107 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
             ? CornerSize.wallOfLeg(notchMax(lone))
             : notchMax(lone),
         valueMm: state.notchLength,
-        walls: walls.cutLegOf(state.notchCorner, along: true),
-        derived: walls.shortenedBy(state.notchCorner),
-        minFeet: 0,
         apply: cubit.setNotchLength,
       ));
     }
     if (!kind.hasOneLeg) {
-      // How deep the square cut goes: across the wall for a pair, and down the
-      // width for a lone one.
+      // How deep each square cut goes: across the wall for a pair standing on
+      // one, and down the width for every other.
+      //
+      // One box per cut, and that is the point of the pair of them. A T used to
+      // ask once and give both its cuts that depth, which is a boxed-in riser
+      // and a cupboard on one wall being the same depth by assumption — and
+      // they are not, so a user with the usual kitchen wall had to pick which
+      // of the two to get wrong.
       final into = kind.isPaired
           ? (state.cutWall.runsAlongLength ? state.roomWidth : state.roomLength)
           : state.roomWidth;
-      boxes.add(_RoomBox(
-        controller: notchWidthController,
-        inchController: notchWidthInchController,
-        focusNode: notchWidthFocusNode,
-        inchFocusNode: notchWidthInchFocusNode,
-        label: kind.isPaired ? appStrings.cut_depth_mm : appStrings.notch_width_mm,
-        title: kind.isPaired ? appStrings.cut_depth : appStrings.notch_width,
-        minMm: MIN_NOTCH_MM,
-        maxMm: notchMax(into),
-        valueMm: state.notchWidth,
-        walls: kind.isPaired
-            ? [
-                for (final corner in state.cutWall.corners)
-                  ...walls.cutLegOf(corner, along: !state.cutWall.runsAlongLength)
-              ]
-            : walls.cutLegOf(state.notchCorner, along: false),
-        derived: kind.isPaired
-            ? [for (final corner in state.cutWall.corners) ...walls.shortenedBy(corner)]
-            : walls.shortenedBy(state.notchCorner),
-        minFeet: 0,
-        apply: cubit.setNotchWidth,
-      ));
+      final depthIsLength = kind.isPaired && !state.cutWall.runsAlongLength;
+      final depthTyped = [state.notchWidth, state.notchWidth2];
+      final depthApply = [cubit.setNotchWidth, cubit.setNotchWidth2];
+      for (var i = 0; i < kind.cutCount; i++) {
+        boxes.add(_cutBox(
+          slot: i,
+          reach: false,
+          walls: walls.cutLegOf(corners[i],
+              along: kind.isPaired && !state.cutWall.runsAlongLength),
+          derived: walls.shortenedBy(corners[i]),
+          // One name for a cut's reach and one for its depth, whether the pair
+          // stands on a wall or straddles the room: a notch is a notch, and two
+          // sets of words for the same two measurements only left the user
+          // deciding whether they meant different things.
+          //
+          // The depth goes into the room from the wall the pair stands on, so
+          // it is the across-the-width measurement for a pair on the near or
+          // far wall and the along-the-length one for a pair on either side —
+          // the opposite way round from the reach above, and named the same way
+          // round as the room.
+          label: kind.cutCount == 1
+              ? appStrings.notch_width_mm
+              : depthIsLength
+                  ? appStrings.notch_length_n_mm(i + 1)
+                  : appStrings.notch_width_n_mm(i + 1),
+          title: kind.cutCount == 1
+              ? appStrings.notch_width
+              : depthIsLength
+                  ? appStrings.notch_length_n(i + 1)
+                  : appStrings.notch_width_n(i + 1),
+          minMm: MIN_NOTCH_MM,
+          maxMm: notchMax(into),
+          valueMm: depthTyped[i],
+          apply: depthApply[i],
+        ));
+      }
     }
     return boxes;
+  }
+
+  /// One box for one measurement of one cut.
+  ///
+  /// Which box it is typed into is the one thing every cut shape agrees on: a
+  /// cut is the first or the second, and the measurement is the one along the
+  /// wall or the one into the room — four boxes, and the shape picks among them
+  /// by those two answers. Everything else differs between a shoulder off a
+  /// shared wall and a cut standing on its own, so it is asked for rather than
+  /// worked out here.
+  _RoomBox _cutBox({
+    required int slot,
+    required bool reach,
+    required List<int> walls,
+    required List<int> derived,
+    required String label,
+    required String title,
+    required int minMm,
+    required int maxMm,
+    required int? valueMm,
+    required void Function(int) apply,
+  }) {
+    final first = slot == 0;
+    return _RoomBox(
+      controller: reach
+          ? (first ? notchLengthController : notchLength2Controller)
+          : (first ? notchWidthController : notchWidth2Controller),
+      inchController: reach
+          ? (first ? notchLengthInchController : notchLength2InchController)
+          : (first ? notchWidthInchController : notchWidth2InchController),
+      focusNode: reach
+          ? (first ? notchLengthFocusNode : notchLength2FocusNode)
+          : (first ? notchWidthFocusNode : notchWidth2FocusNode),
+      inchFocusNode: reach
+          ? (first ? notchLengthInchFocusNode : notchLength2InchFocusNode)
+          : (first ? notchWidthInchFocusNode : notchWidth2InchFocusNode),
+      label: label,
+      title: title,
+      minMm: minMm,
+      maxMm: maxMm,
+      valueMm: valueMm,
+      walls: walls,
+      derived: derived,
+      // A cut may be a hand's width, so its boxes have no floor of a whole foot
+      // the way a wall does.
+      minFeet: 0,
+      apply: apply,
+    );
   }
 
   // What a cut-away corner is allowed to be, given the overall size typed so
@@ -630,14 +1124,14 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   // What the diagonal field is allowed to be, given the four walls typed so
   // far: the triangle inequality on each half of the room. Asking the shape
   // itself means the number the user is shown is the one that actually closes.
-  int diagonalMin(CalculateState state) => RoomShape.minDiagonal(
+  int diagonalMin(RoomState state) => RoomShape.minDiagonal(
         lengthNear: state.roomLength ?? MIN_ROOM_MM,
         lengthFar: state.roomLength2 ?? state.roomLength ?? MIN_ROOM_MM,
         widthLeft: state.roomWidth ?? MIN_ROOM_MM,
         widthRight: state.roomWidth2 ?? state.roomWidth ?? MIN_ROOM_MM,
       );
 
-  int diagonalMax(CalculateState state) => RoomShape.maxDiagonal(
+  int diagonalMax(RoomState state) => RoomShape.maxDiagonal(
         lengthNear: state.roomLength ?? MIN_ROOM_MM,
         lengthFar: state.roomLength2 ?? state.roomLength ?? MIN_ROOM_MM,
         widthLeft: state.roomWidth ?? MIN_ROOM_MM,
@@ -672,11 +1166,11 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
             null;
   }
 
-  bool areAllFieldsValid(BuildContext context, CalculateState state) {
+  bool areAllFieldsValid(BuildContext context, RoomState state, MeasurementSystem system) {
     // The same list the boxes are drawn from, so a shape cannot put a box on
     // screen that nothing checks, or check one it never shows.
     for (final box in _roomBoxes(context, state)) {
-      if (!roomSizeValid(context, state.system,
+      if (!roomSizeValid(context, system,
           controller: box.controller,
           inchController: box.inchController,
           minMm: box.minMm,
@@ -767,17 +1261,80 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
     );
   }
 
+  /// What tapping the sketch does, in the words of the shape it is drawing.
+  String tapCaption(AppLocalizations appStrings, RoomKind kind) {
+    if (kind.isWallNotch) return appStrings.tap_wall_notch;
+    if (kind.isPaired) {
+      return kind.hasOneLeg ? appStrings.tap_wall_to_cut : appStrings.tap_wall_stem;
+    }
+    if (kind.hasOneLeg) return appStrings.tap_corner_to_cut;
+    return kind.cutCount > 1
+        ? appStrings.tap_corner_to_move
+        : appStrings.tap_corner_notched;
+  }
+
+  /// Whether a T is measured by the stem it leaves or by the two cuts that
+  /// leave it. Only a T is ever asked.
+  ///
+  /// Under the boxes rather than over them, where it reads as a note on what
+  /// was just typed. Over them it was a question to answer before the form
+  /// began, and most users have no answer to it until they have seen what the
+  /// form asks.
+  ///
+  /// On by default: a room with an alcove is read off a tape as the alcove, and
+  /// the two cuts either side of it are usually the same by construction — a
+  /// chimney breast centred on its wall, a doorway recess. The user who has the
+  /// other kind turns it off and gets four boxes back, with what they typed in
+  /// them still there.
+  Widget symmetryField(BuildContext context, RoomState state) {
+    if (!state.roomKind.isPaired || state.roomKind.hasOneLeg) {
+      return const SizedBox.shrink();
+    }
+    final appStrings = AppStrings.of(context);
+    final cubit = context.read<RoomCubit>();
+    return Padding(
+      padding: const EdgeInsets.only(top: kFormGap),
+      child: InkWell(
+        onTap: () => cubit.setSymmetricCut(!state.symmetricCut),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: Checkbox(
+                key: const ValueKey('symmetric-cut'),
+                value: state.symmetricCut,
+                // The form's own blue, not the theme's purple: every other
+                // thing on this card that answers back is blue.
+                activeColor: Colors.blue,
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onChanged: (on) => cubit.setSymmetricCut(on ?? true),
+              ),
+            ),
+            SizedBox(width: _GAP),
+            Text(
+              appStrings.symmetric_cut,
+              style: TextStyle(color: Colors.black.withValues(alpha: 0.8), fontSize: 15),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// The room boxes the shape asks for, laid out for the unit system in use:
   /// two to a row in millimetres, one stack of title-and-two-boxes each in feet
   /// and inches. The order is [_roomBoxes]' order, and so is the keyboard's walk
   /// from one to the next.
-  List<Widget> roomFields(BuildContext context, CalculateState state) {
+  List<Widget> roomFields(
+      BuildContext context, RoomState state, MeasurementSystem system) {
     final boxes = _roomBoxes(context, state);
     // The last box has nowhere to send the keyboard on: the laminate is on a
     // screen of its own now, and the Next button is the way to it.
     FocusNode? after(int i) => i + 1 < boxes.length ? boxes[i + 1].focusNode : null;
 
-    if (state.system != MeasurementSystem.metric) {
+    if (system != MeasurementSystem.metric) {
       return [
         for (var i = 0; i < boxes.length; i++) ...[
           // The same gap as anywhere else on the form, which reads as more than
@@ -838,92 +1395,120 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   /// would quietly borrow another's name. A chain ends the same way, so the
   /// guarantee is bought back in the test that walks [RoomKind.values] and
   /// insists every shape has a name of its own.
-  String roomKindName(BuildContext context, RoomKind kind) {
-    final appStrings = AppStrings.of(context);
-    if (kind == RoomKind.rectangle) return appStrings.shape_rectangle;
-    if (kind == RoomKind.uneven) return appStrings.uneven_walls;
-    if (kind == RoomKind.chamfer) return appStrings.shape_chamfer;
-    if (kind == RoomKind.chamferPair) return appStrings.shape_chamfer_pair;
-    if (kind == RoomKind.lShaped) return appStrings.shape_l;
-    return appStrings.shape_t;
-  }
+  String roomKindName(BuildContext context, RoomKind kind) =>
+      roomKindNameOf(AppStrings.of(context), kind);
 
-  /// What the room is, as a row of shapes rather than a line of words.
+  /// What the room is, as a grid of shapes rather than a list of words.
   ///
   /// This was a dropdown while there were three shapes, chosen because three
   /// segmented buttons on a 360 dp phone leave about a word each and "Wände
-  /// unterschiedlicher Länge" is not a word. Six shapes would be six lines of
-  /// prose in a menu nobody opens, and the shapes are the one thing here that
+  /// unterschiedlicher Länge" is not a word. Seven shapes would be seven lines
+  /// of prose in a menu nobody opens, and the shapes are the one thing here that
   /// needs no translating: a user looking for the room they are standing in
-  /// recognises it faster than they read it. A row of outlines has no three-item
-  /// ceiling, and it shows the trapezium and the parallelogram that the engine
-  /// has always been able to lay and the word "uneven walls" never admitted to.
+  /// recognises it faster than they read it. A grid of outlines has no
+  /// three-item ceiling, and it shows the trapezium and the parallelogram that
+  /// the engine has always been able to lay and the word "uneven walls" never
+  /// admitted to.
   ///
-  /// All six on one line, with the name of the chosen one under the row. Two
-  /// rows of three were what six captions cost; one caption buys the line back
-  /// and leaves every shape in sight at once.
-  Widget roomKindField(BuildContext context, CalculateState state) {
-    // The caption is one line and the row below it must not move as the name
-    // changes, so the line is reserved at the height one line of it takes —
-    // which is the font size the user asked for, not the one written here.
+  /// Four to a line, with the name of the chosen one directly under its own
+  /// tile. All of them on one line was what six fitted into and seven does not:
+  /// the tile would come down to 33 dp, which is smaller than the thing pressing
+  /// it. The break falls where the shapes themselves divide — the first line is
+  /// every shape that stays convex and so keeps the 45° layout, the second is
+  /// the three with a corner taken out square, which is what costs them it.
+  ///
+  /// One caption rather than one per tile. Seven names under seven tiles is what
+  /// would force the grid wider still: a quarter of a 360 dp card is about seven
+  /// characters, and "Wände unterschiedlicher Länge" is not seven characters in
+  /// any language we ship. Named one at a time the caption has the whole card to
+  /// itself, so it is read rather than guessed at — and the six shapes nobody
+  /// picked say what they are by their outline, which is what they were drawn
+  /// for.
+  ///
+  /// It does have to be under the tile it names, though, and under the grid is
+  /// not that: with two lines of tiles the name of a shape on the first line
+  /// ends up a whole row away from it, pointing at a column of the second. So
+  /// the caption goes under its own line, and only that line carries one.
+  Widget roomKindField(BuildContext context, RoomState state) {
+    // How tall one line of the caption is at the font size the user asked for,
+    // not the one written here: the line is laid out before the name is
+    // measured, so its height is given rather than discovered.
     final lineHeight =
         MediaQuery.textScalerOf(context).scale(_CAPTION_SIZE) * _CAPTION_HEIGHT;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final perRow = RoomKind.values.length;
+        final kinds = RoomKind.values;
+        final perRow = math.min(_TILES_PER_ROW, kinds.length);
         final width = constraints.maxWidth;
         final cell = (width - _TILE_GAP * (perRow - 1)) / perRow;
-        // The square is the cell, up to a ceiling: on a tablet a sixth of the
-        // card is still a thumb wide, and a button much bigger than that reads
+        // The square is the cell, up to a ceiling: on a tablet a quarter of the
+        // card is wider than a thumb, and a button much bigger than that reads
         // as a picture of something rather than as something to press.
         final side = math.min(cell, _TILE_MAX);
-        // Spread rather than packed, so the first tile is flush with the left
-        // edge of the boxes below and the last with their right. Only visible
-        // once the squares stop filling their cells — on a phone they fill them
-        // exactly. The tiles then stand one [step] apart, which is what the
-        // caption below needs to find the one it names.
+        // Spread rather than packed, so the first tile of a line is flush with
+        // the left edge of the boxes below and the last of a full line with
+        // their right. Only visible once the squares stop filling their cells —
+        // on a phone they fill them exactly. The tiles then stand one [step]
+        // apart, which is what the caption below needs to find the one it names,
+        // and what holds a short last line in the same columns as the first.
         final step = (width - side) / (perRow - 1);
-        final chosen = RoomKind.values.indexOf(state.roomKind);
+        final chosen = kinds.indexOf(state.roomKind);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // No heading over the tiles. Six little rooms under the word "Room"
-            // are a row of rooms to choose from however they are captioned, and
-            // the caption only pushed the first box of the form further down the
-            // screen. Laid out rather than scrolled. A row that has to be
-            // scrolled hides whatever is off the end of it — which is how a user
-            // with a T-shaped room would never learn the calculator takes one.
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                for (final kind in RoomKind.values)
-                  shapeTile(context, kind, kind == state.roomKind, side),
-              ],
-            ),
-            SizedBox(height: 6),
-            // One caption for the row, under the tile it names. Six names under
-            // six tiles is what forced the shapes into two rows: a sixth of a
-            // 360 dp card is about four characters, and "Wände unterschiedlicher
-            // Länge" is not four characters in any language we ship. Named one
-            // at a time the caption has the whole card to itself, so it is read
-            // rather than guessed at — and the five shapes nobody picked say
-            // what they are by their outline, which is what they were drawn for.
-            SizedBox(
-              height: lineHeight,
-              child: CustomSingleChildLayout(
-                delegate: _CaptionUnder(chosen * step + side / 2),
-                child: Text(
-                  roomKindName(context, state.roomKind),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: _CAPTION_SIZE,
-                    height: _CAPTION_HEIGHT,
-                    color: Colors.blue,
+            // No heading over the tiles. Little rooms under the word "Room" are
+            // rooms to choose from however they are captioned, and the caption
+            // only pushed the first box of the form further down the screen.
+            // Laid out rather than scrolled: a row that has to be scrolled hides
+            // whatever is off the end of it — which is how a user with a
+            // T-shaped room would never learn the calculator takes one.
+            for (var start = 0; start < kinds.length; start += perRow) ...[
+              if (start > 0) SizedBox(height: _TILE_GAP),
+              Row(
+                children: [
+                  for (var i = start; i < math.min(start + perRow, kinds.length); i++) ...[
+                    if (i > start) SizedBox(width: step - side),
+                    shapeTile(context, kinds[i], kinds[i] == state.roomKind, side),
+                  ],
+                ],
+              ),
+              // The name, under the row the chosen tile is on and under no
+              // other. One line, and it is only there once — the row that does
+              // not hold the chosen tile carries nothing and takes no height
+              // for it.
+              //
+              // So the block is a line taller when the chosen tile is on the
+              // bottom row than when it is on the top one, and the boxes under
+              // it sit a line lower. That is the trade: the alternative is a
+              // line of reserved air under whichever row is not chosen, which
+              // holds everything still at the price of a visible gap between
+              // the rows most of the time. A step of one line as the user tries
+              // the shapes on is the smaller of the two.
+              if (chosen >= start && chosen < start + perRow) ...[
+                SizedBox(height: 6),
+                SizedBox(
+                  // Written down rather than left to the text, because the line
+                  // is laid out before the name is measured and a line short by
+                  // a pixel clips the descenders.
+                  height: lineHeight,
+                  child: CustomSingleChildLayout(
+                    // The column the chosen tile stands in, counted from the
+                    // start of its own row.
+                    delegate: _CaptionUnder((chosen - start) * step + side / 2),
+                    child: Text(
+                      roomKindName(context, state.roomKind),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: _CAPTION_SIZE,
+                        height: _CAPTION_HEIGHT,
+                        color: Colors.blue,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+              ],
+            ],
           ],
         );
       },
@@ -931,8 +1516,8 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   }
 
   /// One shape to choose: its outline, boxed, and blue when it is the shape the
-  /// room is. What it is called is written once under the row — see
-  /// [roomKindField].
+  /// room is. What it is called is written once, under whichever tile is lit —
+  /// see [roomKindField].
   ///
   /// The box is square. A tile as wide as its share of the card and only as tall
   /// as an outline needs came out a letterbox, and a letterbox is the one shape
@@ -1009,6 +1594,18 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
       Offset(_ICON_CUT, 0), Offset(1 - _ICON_CUT, 0), Offset(1 - _ICON_CUT, _ICON_CUT), Offset(1, _ICON_CUT),
       Offset(1, 1), Offset(0, 1), Offset(0, _ICON_CUT), Offset(_ICON_CUT, _ICON_CUT)
     ],
+    RoomKind.zShaped: [
+      Offset(_ICON_CUT, 0), Offset(1, 0), Offset(1, 1 - _ICON_CUT), Offset(1 - _ICON_CUT, 1 - _ICON_CUT),
+      Offset(1 - _ICON_CUT, 1), Offset(0, 1), Offset(0, _ICON_CUT), Offset(_ICON_CUT, _ICON_CUT)
+    ],
+    // The notch is drawn in the near wall, which is the wall the form starts
+    // on, and deeper than a third so that it reads as a bite out of the wall
+    // rather than a nick in it.
+    RoomKind.uShaped: [
+      Offset(0, 0), Offset(_ICON_CUT, 0), Offset(_ICON_CUT, _ICON_CUT),
+      Offset(1 - _ICON_CUT, _ICON_CUT), Offset(1 - _ICON_CUT, 0), Offset(1, 0),
+      Offset(1, 1), Offset(0, 1)
+    ],
   };
 
   // Read with a `!`: a shape added to [RoomKind.values] and forgotten here
@@ -1019,12 +1616,15 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   // The sketch that says which wall is which and which corner is cut, and the
   // one thing the fields cannot say on their own: that the measurements
   // describe no room at all.
-  Widget roomSketch(BuildContext context, CalculateState state) {
+  Widget roomSketch(
+      BuildContext context, RoomState state, MeasurementSystem system) {
     final appStrings = AppStrings.of(context);
     final shape = state.shape;
-    if (state.roomKind == RoomKind.rectangle || shape == null) {
-      return const SizedBox.shrink();
-    }
+    // No room yet, nothing to draw. Every shape is drawn once there is one,
+    // including the rectangle: it has four walls and two of them are the
+    // numbers just typed, and seeing them on an outline is how a user catches
+    // the length and the width the wrong way round.
+    if (shape == null) return const SizedBox.shrink();
     final problem = shape.problem;
     // Which numbers on the drawing are guesses, and which one is being typed.
     // Both come off the same list the boxes are built from, so a box and the
@@ -1034,7 +1634,13 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
     final litWalls = <int>{};
     var unknownDiagonal = false;
     var litDiagonal = false;
+    // Whether the diagonal is on the drawing at all: it is there when a box
+    // asked for it and not otherwise. Read off the same list as everything else
+    // the sketch is told, so the drawing cannot carry a measurement the form
+    // never asked for — which is what a rectangle's hypotenuse would be.
+    var withDiagonal = false;
     for (final box in boxes) {
+      withDiagonal |= box.isDiagonal;
       // Empty rather than unparsed: a half-typed number is still the user
       // telling us something, and blanking it out mid-keystroke would make the
       // drawing flicker between a number and a question mark.
@@ -1058,28 +1664,32 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
         SizedBox(height: kFormSectionGap),
         RoomSketch(
           shape: shape,
-          system: state.system,
+          system: system,
           cutCorner:
               state.cutCorners && !state.roomKind.isPaired ? state.notchCorner : null,
           cutWall: state.cutCorners && state.roomKind.isPaired ? state.cutWall : null,
           onCorner: state.cutCorners && !state.roomKind.isPaired
-              ? (corner) => context.read<CalculateCubit>().setNotchCorner(corner)
+              ? (corner) => context.read<RoomCubit>().setNotchCorner(corner)
               : null,
           onWall: state.cutCorners && state.roomKind.isPaired
-              ? (wall) => context.read<CalculateCubit>().setCutWall(wall)
+              ? (wall) => context.read<RoomCubit>().setCutWall(wall)
               : null,
           unknownWalls: unknownWalls,
           unknownDiagonal: unknownDiagonal,
           litWalls: litWalls,
           litDiagonal: litDiagonal,
+          withDiagonal: withDiagonal,
         ),
         if (state.cutCorners && problem == null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              state.roomKind.isPaired
-                  ? appStrings.tap_wall_to_cut
-                  : appStrings.tap_corner_to_cut,
+              // One line per shape, because what the tap does differs: a lone
+              // cut names the corner it is in, a pair across the room is named
+              // by either of its two, and a pair on a wall is named by the
+              // wall. And a 45° cut is a cut while a square one is a notch —
+              // the words the boxes use, so the caption uses them too.
+              tapCaption(appStrings, state.roomKind),
               style: TextStyle(color: Colors.black.withValues(alpha: 0.6), fontSize: 13),
             ),
           ),
@@ -1087,7 +1697,15 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              state.cutCorners ? appStrings.notch_does_not_fit : appStrings.walls_do_not_close,
+              // Two cuts that have reached each other get their own words. "The
+              // cut leaves no room" is true of them and no help: both boxes are
+              // inside the bounds printed under them, and what is wrong is the
+              // pair rather than either one.
+              problem == RoomProblem.cutsOverlap
+                  ? appStrings.notches_overlap
+                  : state.cutCorners
+                      ? appStrings.notch_does_not_fit
+                      : appStrings.walls_do_not_close,
               style: TextStyle(color: Colors.red.shade700, fontSize: 13),
             ),
           ),
@@ -1099,30 +1717,48 @@ class RoomParametersScreenState extends State<RoomParametersScreen> {
   Widget build(BuildContext context) {
     final appStrings = AppStrings.of(context);
 
-    return BlocBuilder<CalculateCubit, CalculateState>(
-      builder: (context, state) {
-        return ParametersCard(
-          title: appStrings.room,
-          icon: Icons.home_filled,
-          canProceed: areAllFieldsValid(context, state),
-          onNext: () => context.router.push(LaminateParametersRoute()),
-          onSettings: () => openSettings(context),
-          children: [
-            // Above the sizes, because it decides what they are called: a
-            // length, a first wall, or an overall length a cut is taken out of.
-            SizedBox(height: _GAP),
-            roomKindField(context, state),
-            // A section's worth of air under the tiles, not a row's. What is
-            // above the line is a choice already made and what is below it is
-            // the typing still to do; the shape names and the field labels are
-            // both small grey text, and without the gap the two blocks read as
-            // one list.
-            SizedBox(height: kFormSectionGap),
-            ...roomFields(context, state),
-            roomSketch(context, state),
-          ],
-        );
-      },
+    // Two builders: what the room is, and what it is measured in. The second
+    // changes from the gear on this very screen, and every label, bound and
+    // number on the drawing turns with it.
+    return BlocBuilder<SettingsCubit, SettingsState>(
+      buildWhen: (was, now) => was.system != now.system,
+      builder: (context, settings) => BlocBuilder<RoomCubit, RoomState>(
+        builder: (context, state) {
+          final system = settings.system;
+          return ParametersCard(
+            title: appStrings.room,
+            // The shape the room is, drawn the way the tiles below draw it.
+            // A house icon said "this is the room section" to somebody who has
+            // not scrolled to the tiles yet and nothing at all to somebody who
+            // has; the outline says which of the eight is chosen, from the top
+            // of the card, where the eye lands first.
+            icon: CustomPaint(
+              painter: RoomKindIcon(
+                corners: kindIconCorners(state.roomKind),
+                colour: Colors.blue,
+              ),
+            ),
+            canProceed: areAllFieldsValid(context, state, system),
+            onNext: () => context.router.push(LaminateAndLayingRoute()),
+            onSettings: () => openSettings(context),
+            children: [
+              // Above the sizes, because it decides what they are called: a
+              // length, a first wall, or an overall length a cut is taken out of.
+              SizedBox(height: _GAP),
+              roomKindField(context, state),
+              // A section's worth of air under the tiles, not a row's. What is
+              // above the line is a choice already made and what is below it is
+              // the typing still to do; the shape names and the field labels are
+              // both small grey text, and without the gap the two blocks read as
+              // one list.
+              SizedBox(height: kFormSectionGap),
+              ...roomFields(context, state, system),
+              symmetryField(context, state),
+              roomSketch(context, state, system),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -1296,6 +1932,14 @@ class _WallMap {
   /// left empty leaves them guesses too.
   final Map<RoomCorner, List<int>> shortened;
 
+  /// A notch in the middle of a wall, which is keyed to no corner at all: the
+  /// two pieces of its wall left at the ends, in the order the boxes number
+  /// them; the notch's two legs, which are both its depth; and the notch's own
+  /// width, which nobody typed and the room worked out from the two ends.
+  final List<int> notchEnds;
+  final List<int> notchLegs;
+  final List<int> notchSpan;
+
   const _WallMap({
     this.alongLength = const [],
     this.acrossWidth = const [],
@@ -1304,6 +1948,9 @@ class _WallMap {
     this.cutAlong = const {},
     this.cutAcross = const {},
     this.shortened = const {},
+    this.notchEnds = const [],
+    this.notchLegs = const [],
+    this.notchSpan = const [],
   });
 
   /// The wall a cut's leg is written on, whichever way round the cut is.
@@ -1312,4 +1959,11 @@ class _WallMap {
 
   /// What that cut also makes a guess of while it is not typed.
   List<int> shortenedBy(RoomCorner corner) => shortened[corner] ?? const [];
+
+  /// The piece of wall a pair of cuts leaves between them: the stem of a T.
+  /// The one wall both of them shortened, which is what makes it theirs.
+  List<int> stemBetween(List<RoomCorner> pair) => [
+        for (final wall in shortenedBy(pair.first))
+          if (shortenedBy(pair.last).contains(wall)) wall
+      ];
 }

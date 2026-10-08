@@ -23,6 +23,13 @@ enum RoomProblem {
   /// The cut takes so much of the room that what it leaves along one axis is
   /// narrower than the narrowest room this calculator takes.
   notchLeavesNoRoom,
+
+  /// Two cuts in corners diagonally across from each other have reached far
+  /// enough to meet in the middle. Each is within its own bounds — a corner
+  /// facing nothing on either of its walls is bounded only by the room — and
+  /// together they take the same floor twice, which is an outline that crosses
+  /// itself rather than a room.
+  cutsOverlap,
 }
 
 /// The outline of a room: all the engine and the drawing ever need to know
@@ -84,6 +91,33 @@ abstract class RoomOutline {
   /// to say so. Every outline that turns back on itself is like that at some
   /// angle, and no convex one is at any.
   bool get takesDiagonal => true;
+
+  /// Whether the rows may run along the room's length, and whether they may run
+  /// across its width.
+  ///
+  /// True of every room but one, and for the same reason [takesDiagonal] is
+  /// usually true: a row has to be one unbroken run of floor, because that is
+  /// all [RowPlan] can hold — one start and one length apiece. A piece taken out
+  /// of a *corner* leaves that true whichever way the rows run, which is why no
+  /// room needed to say otherwise until one had a notch in the middle of a wall.
+  /// Such a notch parts every row that meets it into two, and it does so in
+  /// exactly one of the two directions: the rows that run across the notched
+  /// wall pass it one side at a time and stay whole.
+  ///
+  /// Two getters rather than one that takes a [Direction], so that this file
+  /// goes on knowing nothing about `models.dart` — which knows about this one.
+  bool get takesAlongLength => true;
+
+  bool get takesAcrossWidth => true;
+
+  /// Walls whose measurement is already written beside another wall, so that
+  /// the drawing says it once instead of twice.
+  ///
+  /// Empty for every room but one. A notch in the middle of a wall has two legs
+  /// and they are the same number by construction — one depth, typed once —
+  /// so the second is not another measurement but the first one repeated, and
+  /// on a small notch the two land on top of each other saying it.
+  Set<int> get repeatedWalls => const {};
 
   /// How far the room reaches across. The point a quarter turn is taken about,
   /// and the only reason [turned] is a method rather than a free function: the
@@ -257,6 +291,45 @@ class RoomShape extends RoomOutline {
 /// its walls: [nearLeft] is the corner the rows start from, and the rest follow
 /// round.
 enum RoomCorner { nearLeft, nearRight, farRight, farLeft }
+
+extension RoomCornerSides on RoomCorner {
+  /// The corner diagonally across the room from this one: the one sharing
+  /// neither of its walls.
+  ///
+  /// Here because a room cut at two opposite corners is named by one of them —
+  /// the user taps a corner and the other cut follows — and "the far side of
+  /// both axes" is the one relation between corners that two walls cannot
+  /// express.
+  RoomCorner get opposite {
+    switch (this) {
+      case RoomCorner.nearLeft:
+        return RoomCorner.farRight;
+      case RoomCorner.nearRight:
+        return RoomCorner.farLeft;
+      case RoomCorner.farRight:
+        return RoomCorner.nearLeft;
+      case RoomCorner.farLeft:
+        return RoomCorner.nearRight;
+    }
+  }
+
+  /// Which end of the room's length this corner sits at, and which end of its
+  /// width. Two cuts can only reach each other along an axis they stand at
+  /// opposite ends of, and these two are how that is asked.
+  bool get isRight =>
+      this == RoomCorner.nearRight || this == RoomCorner.farRight;
+
+  bool get isFar => this == RoomCorner.farLeft || this == RoomCorner.farRight;
+
+  /// Of this corner and the one across the room from it, the one on the left.
+  ///
+  /// A diagonal pair straddles the room, so exactly one of its two corners is
+  /// on the left — and that one is the pair's first cut everywhere: in the
+  /// boxes, in the review and in the outline. Which of the two the user tapped
+  /// says which pair it is and nothing more, so tapping the other end of a pair
+  /// already in place leaves the room exactly as it was.
+  RoomCorner get leftOfPair => isRight ? opposite : this;
+}
 
 /// A wall of the rectangle a room is measured as, named the way [RoomCorner]
 /// names its corners: [near] is the wall the rows run along and start against
@@ -454,6 +527,23 @@ class CutCornersRoomShape extends RoomOutline {
         return RoomProblem.notchLeavesNoRoom;
       }
     }
+    // Two cuts diagonally across from each other share no wall, so nothing
+    // above bounds them against each other: each is held off the far side of
+    // the room the way a lone cut is, and two lone cuts that size reach past
+    // one another. They only actually meet when they overlap along *both*
+    // axes — at opposite ends of one axis alone they pass by, which is what
+    // makes a Z a room rather than two pieces — so the bound is the pair of
+    // sums together, and it leaves the same arm between them that a wall's
+    // own pair has to leave.
+    for (final corner in [RoomCorner.nearLeft, RoomCorner.nearRight]) {
+      final here = cuts[corner];
+      final across = cuts[corner.opposite];
+      if (here == null || across == null) continue;
+      if (here.along + across.along > length - minArmMm &&
+          here.across + across.across > width - minArmMm) {
+        return RoomProblem.cutsOverlap;
+      }
+    }
     return null;
   }
 
@@ -632,6 +722,215 @@ class LRoomShape extends CutCornersRoomShape {
   static int maxNotchWidth(int width) => width - minArmMm;
 }
 
+/// A rectangle with a notch cut into the middle of one wall: the boxed-in riser
+/// on a kitchen wall, a chimney breast, a column standing against the plaster.
+///
+/// The one room here whose missing piece is not in a corner, and the difference
+/// is not cosmetic. Everything else in this file is monotone in both axes — at
+/// any height the floor is one unbroken run, and likewise across — because a
+/// piece pressed into a corner eats into one *end* of a row. A notch in the
+/// middle of a wall eats into the middle: the rows that run along that wall are
+/// parted in two, and a row in two is a thing nothing downstream can say.
+/// [RowPlan] holds one start and one length apiece.
+///
+/// So this room is laid in one direction and not the other, which is what
+/// [takesAlongLength] and [takesAcrossWidth] exist to say. Across the notched
+/// wall each row meets the notch from one side only: the rows against it start
+/// a notch's depth further along and run that much shorter, which is the same
+/// thing a corner cut does to the rows beside it and needs nothing new of the
+/// engine. Along it, nothing works.
+///
+/// Measured the way a [CutCornersRoomShape] pair is, turned inside out. A T
+/// cuts the two ends of a wall and leaves the middle; this cuts the middle and
+/// leaves the two ends — the same wall, the same two distances along it, the
+/// same depth. [offsetFirst] and [offsetSecond] are the floor left at each end,
+/// from the wall's two corners in [RoomWallCorners.corners] order, and the
+/// notch itself is what is left between them.
+class WallNotchRoomShape extends RoomOutline {
+  /// The bounding rectangle: the wall the rows run along, and the one they
+  /// start against, as they would be with nothing cut away.
+  final int length;
+  final int width;
+
+  /// The wall the notch is cut into.
+  final RoomWall wall;
+
+  /// How much floor is left at each end of that wall, measured from its two
+  /// corners in the order [RoomWallCorners.corners] lists them.
+  final int offsetFirst;
+  final int offsetSecond;
+
+  /// How far the notch reaches into the room.
+  final int depth;
+
+  const WallNotchRoomShape({
+    required this.length,
+    required this.width,
+    required this.wall,
+    required this.offsetFirst,
+    required this.offsetSecond,
+    required this.depth,
+  });
+
+  /// The wall the notch stands on, and the room's reach at right angles to it.
+  int get _along => wall.runsAlongLength ? length : width;
+
+  int get _across => wall.runsAlongLength ? width : length;
+
+  /// How wide the notch itself is: what the two offsets leave of its wall.
+  int get notchWidth => _along - offsetFirst - offsetSecond;
+
+  /// Never. The closed forms a rectangle goes down measure from two numbers.
+  @override
+  bool get isRectangular => false;
+
+  /// Every wall is square to an axis, so the rows can be worked out corner by
+  /// corner rather than sampled.
+  @override
+  bool get isRectilinear => true;
+
+  /// A 45° strip crosses this outline twice wherever it is laid.
+  @override
+  bool get takesDiagonal => false;
+
+  /// The rows run across the notched wall and never along it.
+  @override
+  bool get takesAlongLength => !wall.runsAlongLength;
+
+  @override
+  bool get takesAcrossWidth => wall.runsAlongLength;
+
+  /// The notch's far leg. Both legs are [depth] and always will be, so the
+  /// drawing writes it against the near one and leaves the other bare — see
+  /// [_ring] for where the four points of a notch sit in the walk.
+  @override
+  Set<int> get repeatedWalls => {(wall.index + 3) % corners().length};
+
+  /// Led by a letter that no other key starts with, as [CutCornersRoomShape]'s
+  /// is, so two kinds of room can never answer to the same string.
+  @override
+  String get key => 'N${wall.index}/$length/$width/$offsetFirst/$offsetSecond/$depth';
+
+  @override
+  RoomProblem? get problem {
+    if (notchWidth < MIN_NOTCH_MM || depth < MIN_NOTCH_MM) {
+      return RoomProblem.notchNotCut;
+    }
+    // Floor under the notch, and floor at each end of it. An end narrower than
+    // the smallest cut there is has stopped being an end: the notch has reached
+    // the corner, and a notch in a corner is the Г-shaped room, which the form
+    // offers already.
+    if (depth > _across - MIN_ROOM_MM ||
+        offsetFirst < MIN_NOTCH_MM ||
+        offsetSecond < MIN_NOTCH_MM) {
+      return RoomProblem.notchLeavesNoRoom;
+    }
+    return null;
+  }
+
+  /// The eight corners, starting at the one the rows start from and going round
+  /// the same way a rectangle does — so [inwardNormals] and [turned] see the
+  /// room they expect.
+  ///
+  /// Whole millimetres, because [wallLengths] is taken off the same walk: every
+  /// wall here is square to an axis, so every one of them is a typed number or
+  /// a difference of two.
+  List<Point<int>> _ring() {
+    final out = <Point<int>>[];
+    void corner(RoomCorner at) {
+      switch (at) {
+        case RoomCorner.nearLeft:
+          out.add(const Point(0, 0));
+          break;
+        case RoomCorner.nearRight:
+          out.add(Point(length, 0));
+          break;
+        case RoomCorner.farRight:
+          out.add(Point(length, width));
+          break;
+        case RoomCorner.farLeft:
+          out.add(Point(0, width));
+          break;
+      }
+    }
+
+    // Walked wall by wall, inserting the notch into the one it stands on. The
+    // two ends of the notch are named in walk order rather than in the order
+    // the form asks for them: the far and left walls are walked backwards, so
+    // the offset the walk meets first is the one measured from the other end.
+    final a = offsetFirst;
+    final b = offsetSecond;
+    corner(RoomCorner.nearLeft);
+    if (wall == RoomWall.near) {
+      out.addAll([Point(a, 0), Point(a, depth), Point(length - b, depth), Point(length - b, 0)]);
+    }
+    corner(RoomCorner.nearRight);
+    if (wall == RoomWall.right) {
+      out.addAll([
+        Point(length, a),
+        Point(length - depth, a),
+        Point(length - depth, width - b),
+        Point(length, width - b),
+      ]);
+    }
+    corner(RoomCorner.farRight);
+    if (wall == RoomWall.far) {
+      out.addAll([
+        Point(length - b, width),
+        Point(length - b, width - depth),
+        Point(a, width - depth),
+        Point(a, width),
+      ]);
+    }
+    corner(RoomCorner.farLeft);
+    if (wall == RoomWall.left) {
+      out.addAll([
+        Point(0, width - b),
+        Point(depth, width - b),
+        Point(depth, a),
+        Point(0, a),
+      ]);
+    }
+    return out;
+  }
+
+  @override
+  List<Point<double>> corners() =>
+      [for (final p in _ring()) Point(p.x.toDouble(), p.y.toDouble())];
+
+  @override
+  List<int> wallLengths() {
+    final ring = _ring();
+    return [
+      for (var i = 0; i < ring.length; i++)
+        if (ring[i].x == ring[(i + 1) % ring.length].x)
+          (ring[(i + 1) % ring.length].y - ring[i].y).abs()
+        else
+          (ring[(i + 1) % ring.length].x - ring[i].x).abs()
+    ];
+  }
+
+  /// The bounds the form shows the user, so that what is on screen is this
+  /// arithmetic and not a second guess at it.
+  ///
+  /// One offset at a time, against the wall and what the other one already
+  /// takes — the same shape of bound a pair of cuts on one wall has.
+  static int maxOffset(int along, int? other) =>
+      along - (other ?? MIN_NOTCH_MM) - MIN_NOTCH_MM;
+
+  /// The widest notch a wall [along] long can hold: what is left once both ends
+  /// of it keep the least a piece of wall may be.
+  static int maxSpan(int along) => along - MIN_NOTCH_MM * 2;
+
+  /// How far along the wall a notch [span] wide may start: far enough in to
+  /// leave a piece of wall behind it, and not so far that none is left in
+  /// front.
+  static int maxStart(int along, int? span) =>
+      along - (span ?? MIN_NOTCH_MM) - MIN_NOTCH_MM;
+
+  static int maxDepth(int across) => across - MIN_ROOM_MM;
+}
+
 /// [value] held between [least] and [most], and [least] itself where a room is
 /// too small for those two to be in that order.
 ///
@@ -757,6 +1056,44 @@ RowSpan? spanAt(List<Point<double>> polygon, double v) {
   return lo > hi ? null : RowSpan(lo, hi, loLean, hiLean);
 }
 
+/// One run of floor across part of a row's strip: how far it reaches, and the
+/// slice of the strip it reaches that far across.
+///
+/// [spansOver] drops the slice, because the row plan only ever wanted the
+/// reach. The cut list wants the slice as well: what the fitter has to be told
+/// about a row the floor steps sideways inside is how wide it is out past the
+/// step, and that is the height of the runs that get there.
+class RowStrip {
+  final RowSpan span;
+
+  /// The part of the row this run crosses, in the row frame.
+  final double vLo;
+  final double vHi;
+
+  const RowStrip(this.span, this.vLo, this.vHi);
+
+  double get width => vHi - vLo;
+}
+
+/// Every distinct run the floor makes across the strip from [vLo] to [vHi],
+/// each with the slice of the strip it runs across.
+///
+/// Exact rather than sampled, for the reason [spansOver] gives — which is this
+/// function, with the slices thrown away.
+List<RowStrip> stripsOver(List<Point<double>> polygon, double vLo, double vHi) {
+  final breaks = <double>[vLo, vHi];
+  for (final corner in polygon) {
+    if (corner.y > vLo && corner.y < vHi) breaks.add(corner.y);
+  }
+  breaks.sort();
+  final out = <RowStrip>[];
+  for (var i = 0; i + 1 < breaks.length; i++) {
+    final at = spanAt(polygon, (breaks[i] + breaks[i + 1]) / 2);
+    if (at != null) out.add(RowStrip(at, breaks[i], breaks[i + 1]));
+  }
+  return out;
+}
+
 /// Every distinct run the floor makes across the strip from [vLo] to [vHi].
 ///
 /// One of them for a strip the walls run straight through, and two where a
@@ -766,19 +1103,8 @@ RowSpan? spanAt(List<Point<double>> polygon, double v) {
 /// square to each other is constant in `v` between corners, so the strip is
 /// cut at every corner inside it and each piece measured down its middle —
 /// which catches every value the reach takes and no value it does not.
-List<RowSpan> spansOver(List<Point<double>> polygon, double vLo, double vHi) {
-  final breaks = <double>[vLo, vHi];
-  for (final corner in polygon) {
-    if (corner.y > vLo && corner.y < vHi) breaks.add(corner.y);
-  }
-  breaks.sort();
-  final out = <RowSpan>[];
-  for (var i = 0; i + 1 < breaks.length; i++) {
-    final at = spanAt(polygon, (breaks[i] + breaks[i + 1]) / 2);
-    if (at != null) out.add(at);
-  }
-  return out;
-}
+List<RowSpan> spansOver(List<Point<double>> polygon, double vLo, double vHi) =>
+    [for (final strip in stripsOver(polygon, vLo, vHi)) strip.span];
 
 /// The furthest the floor reaches anywhere in the strip from [vLo] to [vHi].
 ///

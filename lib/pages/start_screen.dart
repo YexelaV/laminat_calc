@@ -1,10 +1,12 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:floor_calculator/cubit/settings_cubit.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/router/app_router.dart';
 import 'package:floor_calculator/utils/languages.dart';
 import 'package:floor_calculator/widgets/app_background.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -54,7 +56,7 @@ class _StartScreenState extends State<StartScreen> {
                     GestureDetector(
                       onTap: () {
                         setState(() => _selectedCode = lang.code);
-                        MyApp.of(context)?.setLocale(Locale(lang.code));
+                        context.read<SettingsCubit>().setLocale(Locale(lang.code));
                       },
                       child: Container(
                         width: 85,

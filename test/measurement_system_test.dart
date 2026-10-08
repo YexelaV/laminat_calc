@@ -5,7 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/room_cubit.dart';
+import 'package:floor_calculator/cubit/settings_cubit.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/router/app_router.dart';
@@ -14,14 +15,20 @@ import 'package:floor_calculator/utils/units.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  late CalculateCubit cubit;
+  late SettingsCubit cubit;
 
   Future<void> pump(WidgetTester tester) async {
     final router = AppRouter();
-    cubit = CalculateCubit();
+    cubit = SettingsCubit();
     addTearDown(cubit.close);
-    await tester.pumpWidget(BlocProvider<CalculateCubit>.value(
-      value: cubit,
+    // The screen under test only needs the settings, but the Next button
+    // replaces it with the room form, which has a cubit of its own — so the
+    // test stands up the same providers `main.dart` does.
+    await tester.pumpWidget(MultiBlocProvider(
+      providers: [
+        BlocProvider<SettingsCubit>.value(value: cubit),
+        BlocProvider<RoomCubit>(create: (_) => RoomCubit()),
+      ],
       child: MaterialApp.router(
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,

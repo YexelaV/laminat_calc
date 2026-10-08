@@ -16,38 +16,14 @@
     "length_mm": "Długość (mm)",
     "width_mm": "Szerokość (mm)",
     "uneven_walls": "Ściany o różnej długości",
-    "wall_length": "Długość {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Szerokość {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Długość {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Szerokość {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Długość (góra)",
+    "wall_length_far": "Długość (dół)",
+    "wall_width_left": "Szerokość (lewa)",
+    "wall_width_right": "Szerokość (prawa)",
+    "wall_length_near_mm": "Długość (góra) mm",
+    "wall_length_far_mm": "Długość (dół) mm",
+    "wall_width_left_mm": "Szerokość (lewa) mm",
+    "wall_width_right_mm": "Szerokość (prawa) mm",
     "wall_diagonal": "Przekątna",
     "wall_diagonal_mm": "Przekątna (mm)",
     "walls_do_not_close": "Ściany się nie domykają",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Ścięty narożnik",
     "shape_chamfer_pair": "Dwa ścięcia",
     "shape_t": "W kształcie litery T",
-    "shoulder": "Ścięcie {number}",
-    "shoulder_mm": "Ścięcie {number} (mm)",
-    "chamfer_leg": "Ścięcie (45°)",
-    "chamfer_leg_mm": "Ścięcie pod 45° (mm)",
-    "notch": "Wcięcie {number}",
-    "notch_mm": "Wcięcie {number} (mm)",
-    "cut_depth": "Głębokość wcięć",
-    "cut_depth_mm": "Głębokość wcięć (mm)",
+    "shape_z": "W kształcie litery Z",
+    "shape_u": "W kształcie litery U",
+    "chamfer_leg": "Długość ścięcia",
+    "chamfer_leg_mm": "Długość ścięcia (mm)",
+    "chamfer_leg_left": "Ścięcie z lewej",
+    "chamfer_leg_left_mm": "Ścięcie z lewej (mm)",
+    "chamfer_leg_right": "Ścięcie z prawej",
+    "chamfer_leg_right_mm": "Ścięcie z prawej (mm)",
+    "chamfer_leg_near": "Ścięcie u góry",
+    "chamfer_leg_near_mm": "Ścięcie u góry (mm)",
+    "chamfer_leg_far": "Ścięcie u dołu",
+    "chamfer_leg_far_mm": "Ścięcie u dołu (mm)",
     "tap_wall_to_cut": "Dotknij ściany, aby przenieść wcięcia",
+    "tap_wall_notch": "Dotknij ściany z wcięciem",
+    "notch_depth": "Głębokość wcięcia",
+    "notch_depth_mm": "Głębokość wcięcia (mm)",
     "overall_length": "Długość całkowita",
     "overall_width": "Szerokość całkowita",
     "overall_length_mm": "Długość całkowita (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Szerokość wcięcia",
     "notch_length_mm": "Długość wcięcia (mm)",
     "notch_width_mm": "Szerokość wcięcia (mm)",
+    "notch_length_n": "Długość wcięcia {number}",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Długość wcięcia {number} (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Szerokość wcięcia {number}",
+    "symmetric_cut": "Symetrycznie",
+    "stub_length": "Długość występu",
+    "stub_length_mm": "Długość występu (mm)",
+    "stub_width": "Szerokość występu",
+    "stub_width_mm": "Szerokość występu (mm)",
+    "stub_length_n": "Długość występu {number}",
+    "stub_length_n_mm": "Długość występu {number} (mm)",
+    "stub_width_n": "Szerokość występu {number}",
+    "stub_width_n_mm": "Szerokość występu {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Szerokość wcięcia {number} (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "Wcięcie nie zostawia pomieszczenia",
+    "notches_overlap": "Wcięcia nachodzą na siebie",
     "row_steps_at_notch": "Rząd {number} przechodzi przez wycięty narożnik: panele na jego końcu wycina się wokół niego, kształt na rysunku",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Dotknij wyciętego narożnika",
-    "diagonal_not_for_l_shape": "Układanie po skosie nie jest jeszcze obsługiwane w pomieszczeniu w kształcie litery L",
+    "tap_corner_notched": "Dotknij narożnika, który jest wycięty",
+    "tap_corner_to_move": "Dotknij narożnika, aby przenieść wcięcia",
+    "tap_wall_stem": "Dotknij ściany z występem",
+    "diagonal_not_for_notch": "Układanie po skosie nie jest jeszcze obsługiwane w pomieszczeniu z wciętym narożnikiem",
+    "direction_across_notch_only": "Pomieszczenie z wcięciem w ścianie można układać tylko w poprzek tej ściany",
     "corner_top_left": "Lewy górny",
     "corner_top_right": "Prawy górny",
     "corner_bottom_right": "Prawy dolny",
@@ -95,12 +124,14 @@
     "wall_left": "Lewa ściana",
     "pieces_per_package": "Sztuk w paczce",
     "laying": "Układanie",
-    "laying_direction": "Kierunek układania",
     "along_length": "Wzdłuż długości",
     "along_width": "Wzdłuż szerokości",
     "diagonally": "Po skosie",
     "expansion_gap_mm": "Szczelina dylatacyjna (mm)",
     "joint_offset": "Przesunięcie spoin",
+    "laying_direction": "Kierunek układania",
+    "expansion_gap": "Szczelina dylatacyjna",
+    "min_piece_length": "Minimalna długość panela",
     "exact_offset": "dokładnie",
     "joint_offset_mm": "Przesunięcie spoin (mm)",
     "minimal_piece_length": "Minimalna długość panelu (mm)",
@@ -122,7 +153,7 @@
     "variant": "nr {number}",
     "cut_list": "Lista cięć",
     "row": "Rząd {number}",
-    "whole": "całe",
+    "whole": "{count, plural, one{cały} other{całe}}",
     "leftovers": "Pozostałości",
     "waste": "Odpady"
 }

@@ -15,9 +15,17 @@ import 'package:floor_calculator/widgets/app_background.dart';
 const double kFormGap = 12;
 const double kFormSectionGap = 20;
 
+/// The square the mark beside a section title is drawn in. A line of the title
+/// is 20, and anything taller would make the row taller than the section below.
+const double kTitleIcon = 20;
+
 class ParametersCard extends StatelessWidget {
   final String title;
-  final IconData icon;
+
+  /// What rides beside the title. A widget rather than an [IconData] because
+  /// the room's is not an icon from a set but the shape the user picked, drawn
+  /// the same way the tile below draws it.
+  final Widget icon;
 
   /// The boxes, in the order they are read and typed.
   final List<Widget> children;
@@ -29,6 +37,11 @@ class ParametersCard extends StatelessWidget {
   final bool canProceed;
 
   final VoidCallback onNext;
+
+  /// What the button says. "Next" on every screen that leads to another one,
+  /// and something of its own on the last, where the button does the thing
+  /// rather than going to it.
+  final String? nextLabel;
 
   /// The language and the unit system are answered once on the way in; the
   /// cog in the title row is the only way back to them.
@@ -42,6 +55,7 @@ class ParametersCard extends StatelessWidget {
     required this.canProceed,
     required this.onNext,
     required this.onSettings,
+    this.nextLabel,
   });
 
   @override
@@ -108,7 +122,7 @@ class ParametersCard extends StatelessWidget {
                             color: canProceed ? Colors.blue : Colors.grey,
                           ),
                           child: Text(
-                            AppStrings.of(context).next,
+                            nextLabel ?? AppStrings.of(context).next,
                             style: const TextStyle(color: Colors.white, fontSize: 18),
                           ),
                         ),
@@ -125,14 +139,14 @@ class ParametersCard extends StatelessWidget {
   }
 }
 
-/// The heading of a section, with its icon and whatever rides on the right of
+/// The heading of a section, with its mark and whatever rides on the right of
 /// the row.
-Widget sectionTitle(String title, IconData icon, {Widget? trailing}) {
+Widget sectionTitle(String title, Widget icon, {Widget? trailing}) {
   return Row(
     children: [
       Text(title, style: const TextStyle(fontSize: 20).copyWith(color: Colors.blue)),
       const SizedBox(width: 8),
-      Icon(icon, size: 20, color: Colors.blue),
+      SizedBox(width: kTitleIcon, height: kTitleIcon, child: icon),
       if (trailing != null) ...[const Spacer(), trailing],
     ],
   );

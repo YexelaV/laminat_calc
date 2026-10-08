@@ -5,26 +5,29 @@
 // costs nothing to a user who did not measure across, and that measurements
 // which close into no room stop at the Next button rather than at an empty
 // result screen.
+import 'dart:math' as math;
+import 'dart:math' show Point;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/room_cubit.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/room_kind.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/widgets/room_sketch.dart';
 
-late CalculateCubit cubit;
+late RoomCubit cubit;
 
 
 /// The one cubit the app runs on, fetched out of the tree the provider in
 /// `main.dart` put it in. The test used to reach for a global; now it asks
 /// the widget that owns it, which is also what every screen does.
-CalculateCubit cubitIn(WidgetTester tester) =>
-    BlocProvider.of<CalculateCubit>(tester.element(find.byType(MaterialApp)));
+RoomCubit cubitIn(WidgetTester tester) =>
+    BlocProvider.of<RoomCubit>(tester.element(find.byType(MaterialApp)));
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -233,15 +236,77 @@ void main() {
     expect(sketch().litDiagonal, isTrue);
   });
 
+  testWidgets('each wall box is named for the side of the drawing it lights up',
+      (tester) async {
+    // The boxes used to be "Length 1", "Width 1", "Length 2", "Width 2", which
+    // left the user matching four numbers to four walls by trying them. Now
+    // each says which side of the sketch it is, and the two have to agree —
+    // what follows is both halves of that: the label, and the wall it lights.
+    await pumpForm(tester);
+    await fill(tester, ['5010', '3000']);
+    await pickShape(tester, RoomKind.uneven);
+    await fill(tester, ['4980', '3025', '5840'], from: 2);
+
+    RoomSketch sketch() => tester.widget<RoomSketch>(find.byType(RoomSketch));
+    Future<Set<int>> litBy(String label) async {
+      await tester.tap(find.ancestor(
+          of: find.text(label), matching: find.byType(TextField)));
+      await tester.pumpAndSettle();
+      return sketch().litWalls;
+    }
+
+    // Corner `i` of the outline runs to corner `i + 1`, so wall 0 is the near
+    // one and the rest follow round: right, far, left.
+    expect(await litBy('Length (top) mm'), {0});
+    expect(await litBy('Width (right) mm'), {1});
+    expect(await litBy('Length (bottom) mm'), {2});
+    expect(await litBy('Width (left) mm'), {3});
+
+    // And the sketch really is drawn that way round, which is the half the
+    // labels now depend on and nothing used to check. Compared by where each
+    // wall sits rather than by a coordinate: the walls of this room lean, so
+    // the left one does not stand at a single x — it is simply the leftmost of
+    // the four, which is what calling it "left" claims.
+    final corners = cubit.state.shape!.corners();
+    Point<double> middleOf(int wall) {
+      final from = corners[wall];
+      final to = corners[(wall + 1) % corners.length];
+      return Point((from.x + to.x) / 2, (from.y + to.y) / 2);
+    }
+
+    final middles = [for (var i = 0; i < 4; i++) middleOf(i)];
+    expect(middles.map((m) => m.y).reduce(math.min), middles[0].y,
+        reason: 'wall 0 — "top" — is the highest of the four');
+    expect(middles.map((m) => m.y).reduce(math.max), middles[2].y,
+        reason: 'wall 2 — "bottom" — is the lowest');
+    expect(middles.map((m) => m.x).reduce(math.min), middles[3].x,
+        reason: 'wall 3 — "left" — is the leftmost');
+    expect(middles.map((m) => m.x).reduce(math.max), middles[1].x,
+        reason: 'wall 1 — "right" — is the rightmost');
+  });
+
   testWidgets('the sketch is on screen to say which wall is which', (tester) async {
     await pumpForm(tester);
     await fill(tester, ['5010', '3000']);
-    expect(find.byType(RoomSketch), findsNothing);
+
+    // A rectangle is drawn as soon as it has two sizes, and drawn without a
+    // diagonal: it has one, and nobody measured it. The number is the
+    // hypotenuse the form worked out so that the outline is an outline, and a
+    // drawing that hands it back dashed across the room is the calculator
+    // telling the user what they measured.
+    RoomSketch sketch() => tester.widget<RoomSketch>(find.byType(RoomSketch));
+    expect(find.byType(RoomSketch), findsOneWidget);
+    expect(sketch().withDiagonal, isFalse);
+
+    // Measured wall by wall it is the one measurement the four walls cannot
+    // carry, so it is asked for and it is drawn.
     await turnOnUnevenWalls(tester);
     expect(find.byType(RoomSketch), findsOneWidget);
+    expect(sketch().withDiagonal, isTrue);
     // Every measurement is written on the wall it belongs to.
     await fill(tester, ['4980', '3025', '5840'], from: 2);
     expect(find.byType(RoomSketch), findsOneWidget);
+    expect(sketch().withDiagonal, isTrue);
   });
 
   testWidgets('in feet and inches every wall keeps its own pair of boxes', (tester) async {

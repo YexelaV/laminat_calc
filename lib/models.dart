@@ -148,6 +148,43 @@ class Line extends Equatable {
   List<Object> get props => [number, planks, startOffsetMm];
 }
 
+/// A stretch of one row the floor does not reach the whole width of.
+///
+/// A row is one width over its whole length in every room but one with a piece
+/// cut out of it. There the floor steps sideways inside a row: it runs the full
+/// width of the row for most of its length and only [width] of it from [fromMm]
+/// to [toMm], because the cut has taken the rest. A plank lying wholly out
+/// there is ripped to [width]; the one plank the step falls inside is notched
+/// round the inside corner and keeps the row's own width.
+///
+/// Measured from the row's own start, like a plank's place in it, so that the
+/// cut list can walk the planks and the steps together without knowing where on
+/// the floor either of them sits.
+class RowStep extends Equatable {
+  /// Which row, by the number [Line.number] gives it.
+  final int row;
+
+  final int fromMm;
+  final int toMm;
+
+  /// What the floor leaves of the row there — always less than its full width.
+  final int width;
+
+  const RowStep({
+    required this.row,
+    required this.fromMm,
+    required this.toMm,
+    required this.width,
+  });
+
+  /// Whether a plank lying from [lo] to [hi] along the row is wholly inside the
+  /// step, and so ripped to [width] rather than notched.
+  bool holds(int lo, int hi) => lo >= fromMm && hi <= toMm;
+
+  @override
+  List<Object> get props => [row, fromMm, toMm, width];
+}
+
 class Result extends Equatable {
   final int totalPlanks;
   final List<Line> lines = [];
@@ -173,13 +210,15 @@ class Result extends Equatable {
   /// difference between meeting the walls and floating free of them.
   final int indentFromWall;
 
-  /// Rows the floor steps sideways inside, by their numbers.
+  /// The stretches of a row the floor does not reach the whole width of.
   ///
-  /// At most one, and only in a room with a corner cut away. The planks there
-  /// are cut round the inside corner rather than straight across, and their
-  /// lengths in the cut list are the longer side of that cut — the drawing is
-  /// the only place the step itself is shown, so the list has to point at it.
-  final List<int> steppedRows;
+  /// Only in a room with a corner cut away, and the reason the cut list cannot
+  /// say a row's width once in front of it: out past the step the row is
+  /// narrower, and the planks out there are ripped to that. The plank the step
+  /// itself falls inside is cut round the corner rather than straight across,
+  /// and its length in the list is the longer side of that cut — the drawing is
+  /// the only place the step is shown, so the list has to point at it.
+  final List<RowStep> rowSteps;
 
   Result(
     this.laminateLength,
@@ -192,7 +231,7 @@ class Result extends Equatable {
     required this.laminateWidth,
     required this.direction,
     required this.indentFromWall,
-    this.steppedRows = const [],
+    this.rowSteps = const [],
   }) {
     this.lines.addAll(lines);
     this.pieces.addAll(pieces);

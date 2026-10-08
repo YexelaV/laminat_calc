@@ -180,13 +180,27 @@ void main() {
   group('labels', () {
     List<String> textsOf(Scheme scheme) => scheme.labels.map((l) => l.text).toList();
 
+    /// The column down the side of the drawing: one label a row, in row order.
+    ///
+    /// Told from everything else by the trailing space. A plank's number and a
+    /// plank's length are both written with the space in front of them instead,
+    /// and a wall's measurement with no space at all.
+    List<String> rowLabelsOf(Scheme scheme) =>
+        textsOf(scheme).where((t) => t.endsWith(' ')).toList();
+
     test('millimetres', () {
       final texts = textsOf(schemeOf(laid(Direction.length)));
       // 7 rows of 190 mm overshoot the 1180 mm across the rows, leaving 40 mm
       // for the last row. That is under the 50 mm floor, so the shortfall is
       // shared: the first and the last row both become 115 mm.
-      expect(texts.where((t) => t == '115 ').length, 2);
-      expect(texts.where((t) => t == '190 ').length, 5);
+      //
+      // Each row says which row it is — the number the cut list calls it, so a
+      // fitter reading "row 7" off the list finds row 7 here without counting
+      // down from the top. The width follows it only where the row had to be
+      // ripped: the five laid at the full width of a plank have it on the pack,
+      // and a column repeating 190 five times buries the two that differ.
+      expect(rowLabelsOf(schemeOf(laid(Direction.length))),
+          ['1  115 ', '2 ', '3 ', '4 ', '5 ', '6 ', '7  115 ']);
       expect(texts.where((t) => t == ' 581').length, 3, reason: 'the end plank of every third row');
       // A plank left at full length carries no length label.
       expect(texts, isNot(contains(' 1200')));
@@ -195,8 +209,10 @@ void main() {
 
     test('feet and inches', () {
       final texts = textsOf(schemeOf(laid(Direction.length), system: MeasurementSystem.imperial));
-      expect(texts.where((t) => t == "4 1/2'' ").length, 2, reason: '115 mm row width');
-      expect(texts.where((t) => t == "7 1/2'' ").length, 5, reason: '190 mm row width');
+      expect(
+          rowLabelsOf(schemeOf(laid(Direction.length), system: MeasurementSystem.imperial)),
+          ["1  4 1/2'' ", '2 ', '3 ', '4 ', '5 ', '6 ', "7  4 1/2'' "],
+          reason: 'the two ripped rows carry 115 mm in inches; the rest nothing');
       expect(texts.where((t) => t == " 1'-10 7/8''").length, 3, reason: '581 mm end plank');
     });
 
@@ -430,6 +446,125 @@ void main() {
       expect(clipRect(2700, 2100, 3500, 2290), isEmpty);
     });
 
+    test('a notch in the middle of a wall takes away itself and no more', () {
+      // The other kind of inside corner, and the one that breaks the argument
+      // the clip is built on. A corner cut out of a room sits in a corner of
+      // the bounding box, so the quarter-plane it takes away reaches in from
+      // the outside. A notch in the middle of a wall has two inside corners
+      // facing each other, and their quarter-planes overlap: the left one takes
+      // everything right of x = 1500 and below y = 800, the right one
+      // everything left of x = 2500 and below y = 800. Between them that is the
+      // whole band below 800, floor and all — every plank to the left of the
+      // notch and every plank to the right came back empty.
+      //
+      // 4000 x 3000 with a 1000 by 790 notch in the middle of the near wall,
+      // inset by the usual 10.
+      final floor = LaidFloor([
+        const Offset(10, 10),
+        const Offset(1500, 10),
+        const Offset(1500, 800),
+        const Offset(2500, 800),
+        const Offset(2500, 10),
+        const Offset(3990, 10),
+        const Offset(3990, 2990),
+        const Offset(10, 2990),
+      ]);
+      expect(floor.reflex.length, 2);
+      expect((floor.reflex[0] + 1) % floor.corners.length, floor.reflex[1],
+          reason: 'the two inside corners of a notch are next to each other, '
+              'which is how the clip tells a notch from a cut-away corner');
+
+      List<Offset> clipRect(double x0, double y0, double x1, double y1) => clipToFloor(
+          [Offset(x0, y0), Offset(x1, y0), Offset(x1, y1), Offset(x0, y1)], floor);
+
+      // Left of the notch and below its depth: real floor, untouched.
+      expect(clipRect(100, 100, 1300, 290), [
+        const Offset(100, 100),
+        const Offset(1300, 100),
+        const Offset(1300, 290),
+        const Offset(100, 290),
+      ]);
+      // And the same to the right of it.
+      expect(clipRect(2700, 100, 3900, 290), [
+        const Offset(2700, 100),
+        const Offset(3900, 100),
+        const Offset(3900, 290),
+        const Offset(2700, 290),
+      ]);
+      // Clear of the notch altogether.
+      expect(clipRect(1000, 1000, 2200, 1190), [
+        const Offset(1000, 1000),
+        const Offset(2200, 1000),
+        const Offset(2200, 1190),
+        const Offset(1000, 1190),
+      ]);
+      // Wholly inside the notch: nothing left.
+      expect(clipRect(1700, 100, 2300, 290), isEmpty);
+
+      // Straddling one side of the notch: an L, with that inside corner put
+      // back — the same shape a cut-away corner has always produced.
+      expect(clipRect(1200, 600, 1800, 1000), [
+        const Offset(1200, 600),
+        const Offset(1500, 600),
+        const Offset(1500, 800),
+        const Offset(1800, 800),
+        const Offset(1800, 1000),
+        const Offset(1200, 1000),
+      ]);
+
+      // Straddling the whole notch: a bite out of one edge rather than a corner
+      // off an end, which is the shape no cut-away corner can make. Still one
+      // ring, and still a plank — the notch reaches its edge and does not pass
+      // through it.
+      expect(clipRect(1200, 600, 2800, 1000), [
+        const Offset(1200, 600),
+        const Offset(1500, 600),
+        const Offset(1500, 800),
+        const Offset(2500, 800),
+        const Offset(2500, 600),
+        const Offset(2800, 600),
+        const Offset(2800, 1000),
+        const Offset(1200, 1000),
+      ]);
+    });
+
+    test('a cut-away corner is never mistaken for a notch', () {
+      // The grouping above turns on two inside corners being next to each other
+      // in the ring. Every shape the form offers that has more than one cut has
+      // them at least a wall apart — a T's two sit either side of its stem, a
+      // Z's at opposite ends of the room — so none of them takes the new path
+      // and none of their drawings moves. Checked rather than assumed, because
+      // the day it stops being true the drawings go wrong quietly.
+      for (final cuts in [
+        {RoomCorner.nearLeft: const CornerSize(along: 900, across: 700)},
+        {
+          RoomCorner.nearLeft: const CornerSize(along: 900, across: 700),
+          RoomCorner.nearRight: const CornerSize(along: 1100, across: 700),
+        },
+        {
+          RoomCorner.nearLeft: const CornerSize(along: 900, across: 700),
+          RoomCorner.farRight: const CornerSize(along: 1100, across: 800),
+        },
+        {
+          for (final corner in RoomCorner.values)
+            corner: const CornerSize(along: 700, across: 500)
+        },
+      ]) {
+        final floor = LaidFloor([
+          for (final p in CutCornersRoomShape(
+                  length: 4000, width: 3000, cut: CornerCut.notch, cuts: cuts)
+              .floor(10))
+            Offset(p.x, p.y)
+        ]);
+        expect(floor.reflex.length, cuts.length);
+        final n = floor.corners.length;
+        for (final corner in floor.reflex) {
+          expect(floor.reflex.contains((corner + 1) % n), isFalse,
+              reason: '$cuts: inside corners next to each other');
+        }
+      }
+    });
+
     for (final direction in [Direction.length, Direction.width]) {
       test('$direction planks add up to the laid area', () {
         final scheme = schemeOf(laidCut(direction));
@@ -495,21 +630,30 @@ void main() {
         }
       });
 
-      test('$direction writes one row width per row, outside the floor', () {
-        // The regression test for the inside corner. Read off a wall's line
-        // rather than the wall itself, every row above the step would have
-        // its width written into the middle of the room.
+      test('$direction numbers every row in one column off the floor', () {
+        // The regression test for the inside corner, twice over. The rows that
+        // cross only the arm begin halfway along the drawing: labelled where
+        // each row starts, theirs stood among the planks of the rows below, and
+        // read off a wall's line rather than the wall itself they would be
+        // written into the middle of the room besides.
         final result = laidCut(direction);
         final scheme = schemeOf(result);
         final floor = LaidFloor(drawnFloor(result));
-        final widths = result.lines.map((l) => '${l.planks.first.width} ').toSet();
-        var written = 0;
-        for (final label in scheme.labels.where((l) => widths.contains(l.text))) {
-          written++;
-          expect(floor.insideDepth(label.centre), lessThan(1),
-              reason: 'the row width "${label.text}" is written on the floor');
+        // One label a row, found by the trailing space, in row order.
+        final labels =
+            scheme.labels.where((l) => l.text.endsWith(' ')).toList();
+        expect(labels.length, result.lines.length);
+        for (var i = 0; i < labels.length; i++) {
+          expect(labels[i].text, startsWith('${result.lines[i].number + 1} '));
+          expect(floor.insideDepth(labels[i].centre), lessThan(1),
+              reason: 'the label "${labels[i].text}" is written on the floor');
         }
-        expect(written, greaterThanOrEqualTo(result.lines.length));
+        // And all of them in a line, which is what makes it a column to read
+        // down rather than a number beside each row end. Down the left edge for
+        // either direction: rows are always drawn left to right and laying
+        // across the room turns the room, not the rows.
+        expect(labels.map((l) => l.centre.dx).toSet(), hasLength(1),
+            reason: 'the labels do not share one line');
       });
     }
 

@@ -1,4 +1,7 @@
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/laminate_cubit.dart';
+import 'package:floor_calculator/cubit/laying_cubit.dart';
+import 'package:floor_calculator/cubit/room_cubit.dart';
+import 'package:floor_calculator/cubit/settings_cubit.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:flutter/material.dart';
@@ -27,8 +30,6 @@ class MyApp extends StatefulWidget {
 
   @override
   MyAppState createState() => MyAppState();
-
-  static MyAppState? of(BuildContext context) => context.findAncestorStateOfType<MyAppState>();
 
   /// The saved language, or null when the app no longer offers it.
   ///
@@ -65,37 +66,58 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> {
   final _appRouter = AppRouter();
-  Locale? _locale;
-
-  @override
-  void initState() {
-    super.initState();
-    _locale = MyApp.savedLocale(widget.savedLocaleCode);
-  }
-
-  void setLocale(Locale locale) {
-    setState(() {
-      _locale = locale;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    // Above the router, so every screen it shows is inside it — and so are the
-    // sheets, which open into that router's own overlay. The form is collected
-    // across three routes that pass nothing to each other, so one instance has
-    // to outlive all of them; this is the widget whose lifetime matches the
-    // app's.
-    return BlocProvider<CalculateCubit>(
-      create: (_) => CalculateCubit(
-        system: MyApp.savedMeasurementSystem(widget.savedSystem),
+    // Above the router, so every screen it shows is inside them — and so are the
+    // sheets, which open into that router's own overlay.
+    //
+    // One cubit per part of the form rather than one for the whole of it, so
+    // that a screen can only reach what it collects. They are all up here
+    // together even so, and not owned by their screens: the screens are pushed
+    // on top of each other, a step back destroys the route along with its
+    // [State] and the text controllers in it, and the boxes are filled again
+    // from the cubit when the screen comes round a second time. Cubits that
+    // lived and died with their screens would turn every step back into a form
+    // to retype.
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SettingsCubit>(
+          create: (_) => SettingsCubit(
+            system: MyApp.savedMeasurementSystem(widget.savedSystem),
+            locale: MyApp.savedLocale(widget.savedLocaleCode),
+          ),
+        ),
+        BlocProvider<RoomCubit>(create: (_) => RoomCubit()),
+        BlocProvider<LaminateCubit>(create: (_) => LaminateCubit()),
+        BlocProvider<LayingCubit>(create: (_) => LayingCubit()),
+      ],
+      // The language is the one setting the whole app is rebuilt for, so the
+      // builder sits here and not inside a screen.
+      child: BlocBuilder<SettingsCubit, SettingsState>(
+        buildWhen: (was, now) => was.locale != now.locale,
+        builder: (context, settings) => _router(settings.locale),
       ),
-      child: _router(),
     );
   }
 
-  Widget _router() {
+  Widget _router(Locale? locale) {
     return MaterialApp.router(
+      // No bar tints itself when the form scrolls under it.
+      //
+      // Material 3 lifts an app bar the moment content passes beneath it and
+      // paints a surface tint over it to say so. Every bar in this app is
+      // transparent on purpose — the orange gradient behind the form is meant
+      // to run the whole height of the screen — and the tint put a grey band
+      // across the top of it with a seam where the bar ended. `elevation: 0`
+      // does not cover it: that is the *resting* elevation, and the one that
+      // did this is `scrolledUnderElevation`.
+      theme: ThemeData(
+        appBarTheme: const AppBarTheme(
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+        ),
+      ),
       // Language first, then the measurement system, each asked once and
       // remembered; a launch that has both answers goes straight to the form.
       routerDelegate: _appRouter.delegate(
@@ -116,11 +138,11 @@ class MyAppState extends State<MyApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      locale: _locale,
+      locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localeResolutionCallback: (deviceLocale, supportedLocales) {
-        if (_locale != null) {
-          return _locale;
+        if (locale != null) {
+          return locale;
         }
 
         final systemLocale = deviceLocale ?? WidgetsBinding.instance.platformDispatcher.locale;

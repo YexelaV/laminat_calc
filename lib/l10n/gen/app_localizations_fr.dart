@@ -60,24 +60,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get uneven_walls => 'Murs de longueurs différentes';
 
   @override
-  String wall_length(int number) {
-    return 'Longueur $number';
-  }
+  String get wall_length_near => 'Longueur (haut)';
 
   @override
-  String wall_width(int number) {
-    return 'Largeur $number';
-  }
+  String get wall_length_far => 'Longueur (bas)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Longueur $number (mm)';
-  }
+  String get wall_width_left => 'Largeur (gauche)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Largeur $number (mm)';
-  }
+  String get wall_width_right => 'Largeur (droite)';
+
+  @override
+  String get wall_length_near_mm => 'Longueur (haut) mm';
+
+  @override
+  String get wall_length_far_mm => 'Longueur (bas) mm';
+
+  @override
+  String get wall_width_left_mm => 'Largeur (gauche) mm';
+
+  @override
+  String get wall_width_right_mm => 'Largeur (droite) mm';
 
   @override
   String get wall_diagonal => 'Diagonale';
@@ -107,39 +111,52 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shape_t => 'En forme de T';
 
   @override
-  String shoulder(int number) {
-    return 'Coupe $number';
-  }
+  String get shape_z => 'En forme de Z';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Coupe $number (mm)';
-  }
+  String get shape_u => 'En forme de U';
 
   @override
-  String get chamfer_leg => 'Coupe (45°)';
+  String get chamfer_leg => 'Longueur de la coupe';
 
   @override
-  String get chamfer_leg_mm => 'Coupe à 45° (mm)';
+  String get chamfer_leg_mm => 'Longueur de la coupe (mm)';
 
   @override
-  String notch(int number) {
-    return 'Retrait $number';
-  }
+  String get chamfer_leg_left => 'Coupe à gauche';
 
   @override
-  String notch_mm(int number) {
-    return 'Retrait $number (mm)';
-  }
+  String get chamfer_leg_left_mm => 'Coupe à gauche (mm)';
 
   @override
-  String get cut_depth => 'Profondeur des retraits';
+  String get chamfer_leg_right => 'Coupe à droite';
 
   @override
-  String get cut_depth_mm => 'Profondeur des retraits (mm)';
+  String get chamfer_leg_right_mm => 'Coupe à droite (mm)';
+
+  @override
+  String get chamfer_leg_near => 'Coupe en haut';
+
+  @override
+  String get chamfer_leg_near_mm => 'Coupe en haut (mm)';
+
+  @override
+  String get chamfer_leg_far => 'Coupe en bas';
+
+  @override
+  String get chamfer_leg_far_mm => 'Coupe en bas (mm)';
 
   @override
   String get tap_wall_to_cut => 'Touchez un mur pour déplacer les retraits';
+
+  @override
+  String get tap_wall_notch => 'Touchez le mur où se trouve la découpe';
+
+  @override
+  String get notch_depth => 'Profondeur de la découpe';
+
+  @override
+  String get notch_depth_mm => 'Profondeur de la découpe (mm)';
 
   @override
   String get overall_length => 'Longueur totale';
@@ -166,7 +183,65 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notch_width_mm => 'Largeur de la découpe (mm)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Longueur de la découpe $number';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Longueur de la découpe $number (mm)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Largeur de la découpe $number';
+  }
+
+  @override
+  String get symmetric_cut => 'Symétrique';
+
+  @override
+  String get stub_length => 'Longueur de l’avancée';
+
+  @override
+  String get stub_length_mm => 'Longueur de l’avancée (mm)';
+
+  @override
+  String get stub_width => 'Largeur de l’avancée';
+
+  @override
+  String get stub_width_mm => 'Largeur de l’avancée (mm)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Longueur de l’avancée $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Longueur de l’avancée $number (mm)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Largeur de l’avancée $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Largeur de l’avancée $number (mm)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Largeur de la découpe $number (mm)';
+  }
+
+  @override
   String get notch_does_not_fit => 'La découpe ne laisse plus de pièce';
+
+  @override
+  String get notches_overlap => 'Les découpes se chevauchent';
 
   @override
   String row_steps_at_notch(int number) {
@@ -177,8 +252,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tap_corner_to_cut => 'Touchez le coin découpé';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'La pose en diagonale n\'est pas encore prise en charge dans une pièce en L';
+  String get tap_corner_notched => 'Touchez le coin qui est découpé';
+
+  @override
+  String get tap_corner_to_move => 'Touchez un coin pour déplacer les découpes';
+
+  @override
+  String get tap_wall_stem => 'Touchez le mur où se trouve l’avancée';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'La pose en diagonale n\'est pas encore prise en charge dans une pièce avec un angle découpé';
+
+  @override
+  String get direction_across_notch_only =>
+      'Une pièce avec une découpe dans un mur ne se pose que perpendiculairement à ce mur';
 
   @override
   String get corner_top_left => 'En haut à gauche';
@@ -211,9 +299,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get laying => 'Pose';
 
   @override
-  String get laying_direction => 'Sens de pose';
-
-  @override
   String get along_length => 'Dans la longueur';
 
   @override
@@ -227,6 +312,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get joint_offset => 'Décalage des joints';
+
+  @override
+  String get laying_direction => 'Sens de pose';
+
+  @override
+  String get expansion_gap => 'Joint de dilatation';
+
+  @override
+  String get min_piece_length => 'Longueur minimale de lame';
 
   @override
   String get exact_offset => 'exact';
@@ -305,7 +399,15 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get whole => 'entières';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'entières',
+      one: 'entière',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Chutes réutilisables';

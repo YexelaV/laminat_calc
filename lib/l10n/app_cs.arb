@@ -16,38 +16,14 @@
     "length_mm": "Délka (mm)",
     "width_mm": "Šířka (mm)",
     "uneven_walls": "Stěny různé délky",
-    "wall_length": "Délka {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Šířka {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Délka {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Šířka {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Délka (nahoře)",
+    "wall_length_far": "Délka (dole)",
+    "wall_width_left": "Šířka (vlevo)",
+    "wall_width_right": "Šířka (vpravo)",
+    "wall_length_near_mm": "Délka (nahoře) mm",
+    "wall_length_far_mm": "Délka (dole) mm",
+    "wall_width_left_mm": "Šířka (vlevo) mm",
+    "wall_width_right_mm": "Šířka (vpravo) mm",
     "wall_diagonal": "Úhlopříčka",
     "wall_diagonal_mm": "Úhlopříčka (mm)",
     "walls_do_not_close": "Stěny se neuzavírají",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Zkosený roh",
     "shape_chamfer_pair": "Dva zkosené rohy",
     "shape_t": "Ve tvaru T",
-    "shoulder": "Řez {number}",
-    "shoulder_mm": "Řez {number} (mm)",
-    "chamfer_leg": "Zkosení (45°)",
-    "chamfer_leg_mm": "Zkosení 45° (mm)",
-    "notch": "Výřez {number}",
-    "notch_mm": "Výřez {number} (mm)",
-    "cut_depth": "Hloubka výřezů",
-    "cut_depth_mm": "Hloubka výřezů (mm)",
+    "shape_z": "Ve tvaru Z",
+    "shape_u": "Ve tvaru U",
+    "chamfer_leg": "Délka zkosení",
+    "chamfer_leg_mm": "Délka zkosení (mm)",
+    "chamfer_leg_left": "Zkosení vlevo",
+    "chamfer_leg_left_mm": "Zkosení vlevo (mm)",
+    "chamfer_leg_right": "Zkosení vpravo",
+    "chamfer_leg_right_mm": "Zkosení vpravo (mm)",
+    "chamfer_leg_near": "Zkosení nahoře",
+    "chamfer_leg_near_mm": "Zkosení nahoře (mm)",
+    "chamfer_leg_far": "Zkosení dole",
+    "chamfer_leg_far_mm": "Zkosení dole (mm)",
     "tap_wall_to_cut": "Klepnutím na stěnu přesunete výřezy",
+    "tap_wall_notch": "Klepněte na stěnu s výřezem",
+    "notch_depth": "Hloubka výřezu",
+    "notch_depth_mm": "Hloubka výřezu (mm)",
     "overall_length": "Celková délka",
     "overall_width": "Celková šířka",
     "overall_length_mm": "Celková délka (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Šířka výřezu",
     "notch_length_mm": "Délka výřezu (mm)",
     "notch_width_mm": "Šířka výřezu (mm)",
+    "notch_length_n": "Délka výřezu {number}",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Délka výřezu {number} (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Šířka výřezu {number}",
+    "symmetric_cut": "Symetricky",
+    "stub_length": "Délka výstupku",
+    "stub_length_mm": "Délka výstupku (mm)",
+    "stub_width": "Šířka výstupku",
+    "stub_width_mm": "Šířka výstupku (mm)",
+    "stub_length_n": "Délka výstupku {number}",
+    "stub_length_n_mm": "Délka výstupku {number} (mm)",
+    "stub_width_n": "Šířka výstupku {number}",
+    "stub_width_n_mm": "Šířka výstupku {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Šířka výřezu {number} (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "Výřez nenechává žádnou plochu",
+    "notches_overlap": "Výřezy se překrývají",
     "row_steps_at_notch": "Řada {number} prochází rohem výřezu: krajní lamely se řežou do schodu, rozměr podle schématu",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Klepněte na roh, který je vyříznutý",
-    "diagonal_not_for_l_shape": "Diagonální pokládka v místnosti tvaru L zatím není podporována",
+    "tap_corner_notched": "Klepněte na roh, který je vyříznutý",
+    "tap_corner_to_move": "Klepnutím na roh přesunete výřezy",
+    "tap_wall_stem": "Klepněte na stěnu s výstupkem",
+    "diagonal_not_for_notch": "Diagonální pokládka v místnosti s vyříznutým rohem zatím není podporována",
+    "direction_across_notch_only": "Místnost s výřezem ve stěně lze pokládat jen napříč touto stěnou",
     "corner_top_left": "Vlevo nahoře",
     "corner_top_right": "Vpravo nahoře",
     "corner_bottom_right": "Vpravo dole",
@@ -95,12 +124,14 @@
     "wall_left": "Levá stěna",
     "pieces_per_package": "V balení (ks)",
     "laying": "Pokládka",
-    "laying_direction": "Směr pokládky",
     "along_length": "Po délce",
     "along_width": "Po šířce",
     "diagonally": "Diagonálně",
     "expansion_gap_mm": "Dilatační spára (mm)",
     "joint_offset": "Převazba spár",
+    "laying_direction": "Směr pokládky",
+    "expansion_gap": "Dilatační spára",
+    "min_piece_length": "Minimální délka lamely",
     "exact_offset": "přesně",
     "joint_offset_mm": "Posun řad (mm)",
     "minimal_piece_length": "Min. délka lamely (mm)",
@@ -111,7 +142,7 @@
     "incorrect_value": "Neplatná hodnota",
     "minimum": "Nejméně",
     "maximum": "Nejvýše",
-    "calculate": "Spočítat",
+    "calculate": "Vypočítat",
     "result": "Výsledek výpočtu",
     "packages_required": "Potřebná balení",
     "laying_variants": "Varianty pokládky",
@@ -122,7 +153,7 @@
     "variant": "č.{number}",
     "cut_list": "Seznam řezů",
     "row": "Řada {number}",
-    "whole": "celé",
+    "whole": "{count, plural, one{celá} other{celé}}",
     "leftovers": "Zbytky",
     "waste": "Odpad"
 }

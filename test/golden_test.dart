@@ -18,7 +18,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:floor_calculator/calculate.dart';
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/settings_cubit.dart';
 import 'package:floor_calculator/l10n/gen/app_localizations.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/room_shape.dart';
@@ -97,6 +97,38 @@ Result cutCornerResult({Direction direction = Direction.length}) {
   return results.first;
 }
 
+// A room with a corner out of each end of it, diagonally across from each
+// other: a hall cut out of the near left and a cupboard out of the far right.
+//
+// Its own golden because it is the first room with *two* inside corners, and
+// the drawing takes an inside corner away as a quarter-plane rather than
+// clipping against one wall at a time. One such corner was all `clipToFloor`
+// had ever been handed; two of them in one room is where a plank comes back as
+// something other than a plank or an L if the subtraction is wrong, and no
+// amount of area arithmetic says what that looks like.
+Result zRoomResult() {
+  final results = Calculation(
+    shape: CutCornersRoomShape(
+      length: 3000,
+      width: 1200,
+      cut: CornerCut.notch,
+      cuts: const {
+        RoomCorner.nearLeft: CornerSize(along: 700, across: 400),
+        RoomCorner.farRight: CornerSize(along: 1000, across: 400),
+      },
+    ),
+    laminateLength: 1200,
+    laminateWidth: 190,
+    planksInPack: 8,
+    indentFromWall: 10,
+    minimumLaminateLength: 300,
+    rowOffset: 300,
+    direction: Direction.length,
+  ).calculate();
+  expect(results, isNotEmpty, reason: 'the golden fixture must be layable');
+  return results.first;
+}
+
 // One variant per plural category so a single golden pins all of them.
 Result variantWithPlanks(int totalPlanks) => Result(
       1200,
@@ -113,15 +145,18 @@ Result variantWithPlanks(int totalPlanks) => Result(
       indentFromWall: 10,
     );
 
-/// The screen under its own cubit. A fresh one per image, so a golden cannot
-/// be changed by whatever the image before it typed.
+/// The screen under its own settings. A fresh cubit per image, so a golden
+/// cannot be changed by whatever the image before it typed.
+///
+/// Settings and nothing else: both screens here are handed a finished [Result]
+/// and read only the units the sizes on it are written in.
 Widget wrap(
   Widget child, {
   Locale locale = const Locale('ru'),
   MeasurementSystem system = MeasurementSystem.metric,
 }) =>
-    BlocProvider<CalculateCubit>(
-      create: (_) => CalculateCubit(system: system),
+    BlocProvider<SettingsCubit>(
+      create: (_) => SettingsCubit(system: system),
       child: MaterialApp(
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -220,6 +255,15 @@ void main() {
       await expectLater(
         find.byType(SchemeScreen),
         matchesGoldenFile('goldens/scheme_cut_corner_width.png'),
+      );
+    });
+
+    testWidgets('rows in a room cut at two corners across from each other',
+        (tester) async {
+      await pumpAt(tester, wrap(SchemeScreen(zRoomResult(), 1)), const Size(600, 400));
+      await expectLater(
+        find.byType(SchemeScreen),
+        matchesGoldenFile('goldens/scheme_z_room.png'),
       );
     });
 

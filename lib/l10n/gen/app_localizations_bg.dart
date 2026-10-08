@@ -60,24 +60,28 @@ class AppLocalizationsBg extends AppLocalizations {
   String get uneven_walls => 'Стени с различна дължина';
 
   @override
-  String wall_length(int number) {
-    return 'Дължина $number';
-  }
+  String get wall_length_near => 'Дължина (горе)';
 
   @override
-  String wall_width(int number) {
-    return 'Широчина $number';
-  }
+  String get wall_length_far => 'Дължина (долу)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Дължина $number (мм)';
-  }
+  String get wall_width_left => 'Широчина (ляво)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Широчина $number (мм)';
-  }
+  String get wall_width_right => 'Широчина (дясно)';
+
+  @override
+  String get wall_length_near_mm => 'Дължина (горе) мм';
+
+  @override
+  String get wall_length_far_mm => 'Дължина (долу) мм';
+
+  @override
+  String get wall_width_left_mm => 'Широчина (ляво) мм';
+
+  @override
+  String get wall_width_right_mm => 'Широчина (дясно) мм';
 
   @override
   String get wall_diagonal => 'Диагонал';
@@ -107,40 +111,53 @@ class AppLocalizationsBg extends AppLocalizations {
   String get shape_t => 'Т-образно';
 
   @override
-  String shoulder(int number) {
-    return 'Отрязване $number';
-  }
+  String get shape_z => 'Z-образно';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Отрязване $number (мм)';
-  }
+  String get shape_u => 'П-образно';
 
   @override
-  String get chamfer_leg => 'Отрязване (45°)';
+  String get chamfer_leg => 'Дължина на отрязването';
 
   @override
-  String get chamfer_leg_mm => 'Отрязване под 45° (мм)';
+  String get chamfer_leg_mm => 'Дължина на отрязването (мм)';
 
   @override
-  String notch(int number) {
-    return 'Изрез $number';
-  }
+  String get chamfer_leg_left => 'Отрязване отляво';
 
   @override
-  String notch_mm(int number) {
-    return 'Изрез $number (мм)';
-  }
+  String get chamfer_leg_left_mm => 'Отрязване отляво (мм)';
 
   @override
-  String get cut_depth => 'Дълбочина на изрезите';
+  String get chamfer_leg_right => 'Отрязване отдясно';
 
   @override
-  String get cut_depth_mm => 'Дълбочина на изрезите (мм)';
+  String get chamfer_leg_right_mm => 'Отрязване отдясно (мм)';
+
+  @override
+  String get chamfer_leg_near => 'Отрязване отгоре';
+
+  @override
+  String get chamfer_leg_near_mm => 'Отрязване отгоре (мм)';
+
+  @override
+  String get chamfer_leg_far => 'Отрязване отдолу';
+
+  @override
+  String get chamfer_leg_far_mm => 'Отрязване отдолу (мм)';
 
   @override
   String get tap_wall_to_cut =>
       'Докоснете стена, за да преместите изрязванията';
+
+  @override
+  String get tap_wall_notch => 'Докоснете стената с изреза';
+
+  @override
+  String get notch_depth => 'Дълбочина на изреза';
+
+  @override
+  String get notch_depth_mm => 'Дълбочина на изреза (мм)';
 
   @override
   String get overall_length => 'Обща дължина';
@@ -167,7 +184,65 @@ class AppLocalizationsBg extends AppLocalizations {
   String get notch_width_mm => 'Широчина на изреза (мм)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Дължина на изрез $number';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Дължина на изрез $number (мм)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Широчина на изрез $number';
+  }
+
+  @override
+  String get symmetric_cut => 'Симетрично';
+
+  @override
+  String get stub_length => 'Дължина на издатината';
+
+  @override
+  String get stub_length_mm => 'Дължина на издатината (мм)';
+
+  @override
+  String get stub_width => 'Широчина на издатината';
+
+  @override
+  String get stub_width_mm => 'Широчина на издатината (мм)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Дължина на издатината $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Дължина на издатината $number (мм)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Широчина на издатината $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Широчина на издатината $number (мм)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Широчина на изрез $number (мм)';
+  }
+
+  @override
   String get notch_does_not_fit => 'Изрезът не оставя помещение';
+
+  @override
+  String get notches_overlap => 'Изрезите се застъпват';
 
   @override
   String row_steps_at_notch(int number) {
@@ -178,8 +253,21 @@ class AppLocalizationsBg extends AppLocalizations {
   String get tap_corner_to_cut => 'Докоснете ъгъла, който е изрязан';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'Диагонално полагане в Г-образно помещение още не се поддържа';
+  String get tap_corner_notched => 'Докоснете ъгъла, който е изрязан';
+
+  @override
+  String get tap_corner_to_move => 'Докоснете ъгъл, за да преместите изрезите';
+
+  @override
+  String get tap_wall_stem => 'Докоснете стената с издатината';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'Диагонално полагане в помещение с изрез още не се поддържа';
+
+  @override
+  String get direction_across_notch_only =>
+      'Помещение с изрез в стена може да се полага само напречно на тази стена';
 
   @override
   String get corner_top_left => 'Горен ляв';
@@ -212,9 +300,6 @@ class AppLocalizationsBg extends AppLocalizations {
   String get laying => 'Полагане';
 
   @override
-  String get laying_direction => 'Посока на полагане';
-
-  @override
   String get along_length => 'По дължина';
 
   @override
@@ -228,6 +313,15 @@ class AppLocalizationsBg extends AppLocalizations {
 
   @override
   String get joint_offset => 'Разместване на фугите';
+
+  @override
+  String get laying_direction => 'Посока на полагане';
+
+  @override
+  String get expansion_gap => 'Фуга до стените';
+
+  @override
+  String get min_piece_length => 'Минимална дължина на дъска';
 
   @override
   String get exact_offset => 'точно';
@@ -306,7 +400,15 @@ class AppLocalizationsBg extends AppLocalizations {
   }
 
   @override
-  String get whole => 'цели';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'цели',
+      one: 'цяла',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Остатъци';

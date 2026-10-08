@@ -57,14 +57,13 @@ const _maxChangelog = 500;
 /// read by someone already persuaded. The order is
 /// test/store_screenshots_test.dart's, and the numbers in these names are what
 /// puts them in it — supply uploads in alphabetical order.
-const _screenshotCount = 5;
+const _screenshotCount = 4;
 
 const _screenshotNames = <String>[
   '01_room',
   '02_scheme',
   '03_cut_list',
   '04_laminate',
-  '05_laying',
 ];
 
 final List<String> _problems = <String>[];

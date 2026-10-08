@@ -13,7 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// How many times the user has looked at a finished floor and come back.
 ///
-/// On disk rather than in [CalculateCubit], which is built fresh on every
+/// On disk rather than in a cubit, every one of which is built fresh on each
 /// launch: what matters here is that somebody came back a second time, and a
 /// counter that forgets overnight cannot tell.
 const SCHEMES_SEEN_PREF_KEY = 'schemes_seen';

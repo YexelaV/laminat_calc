@@ -1,5 +1,5 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/settings_cubit.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/router/app_router.dart';
@@ -86,7 +86,7 @@ class _MeasurementSystemScreenState extends State<MeasurementSystemScreen> {
               TextButton(
                 onPressed: () async {
                   final router = context.router;
-                  context.read<CalculateCubit>().setMeasurementSystem(_selected);
+                  context.read<SettingsCubit>().setSystem(_selected);
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setString(SYSTEM_PREF_KEY, _selected.name);
                   if (!mounted) return;

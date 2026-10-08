@@ -1,10 +1,11 @@
 // Getting from one screen to the next, and back.
 //
-// The form is spread over three screens and the way forward is the Next button
-// on each. The way back is the arrow in the bar — on every screen that has
-// somewhere to go back to, and on no screen that does not: the room is reached
-// by replacing the screen that asked for the units, and an arrow there would
-// point at nothing.
+// The form is spread over two screens — the room, then the plank and the laying
+// together — followed by a review of what was typed, and the way forward is the
+// button at the foot of each. The way back is the arrow in the bar: on every
+// screen that has somewhere to go back to, and on no screen that does not. The
+// room is reached by replacing the screen that asked for the units, and an
+// arrow there would point at nothing.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -55,7 +56,8 @@ void main() {
     await tester.pumpAndSettle();
     await next(tester);
     expect(find.text('Laminate'), findsOneWidget);
-    expect(backArrows(), 1, reason: 'the laminate is pushed on top of the room');
+    expect(backArrows(), 1,
+        reason: 'the plank and the laying are pushed on top of the room');
 
     // And it goes where it says, with the room as it was left.
     await tester.tap(find.byType(BackButton));
@@ -64,10 +66,52 @@ void main() {
     expect(tester.widget<TextField>(find.byType(TextField).at(0)).controller!.text, '5000');
   });
 
+  testWidgets('a step back and forward again finds every answer where it was',
+      (tester) async {
+    // What decides where the cubits live. The screens are pushed on top of each
+    // other, so a step back destroys the route, its [State] and the text
+    // controllers in it — the boxes are filled again from the cubits when the
+    // screen comes round a second time. Four cubits, one per part of the form,
+    // but all of them above the router and none owned by its screen: cubits
+    // that lived and died with their screens would turn a step back into a form
+    // to retype, and the step back exists to fix one number.
+    tester.view.physicalSize = const Size(560, 2600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(const MyApp(savedLocaleCode: 'en', savedSystem: 'metric'));
+    await tester.pumpAndSettle();
+
+    String textAt(int i) =>
+        tester.widget<TextField>(find.byType(TextField).at(i)).controller!.text;
+
+    // The plank and the laying share a screen, so the six numbers below the
+    // room are typed in one run: plank length, plank width, pack, gap, shortest
+    // offcut.
+    await fill(tester, ['5000', '3000']);
+    await next(tester);
+    await fill(tester, ['1380', '190', '8', '10', '300']);
+    expect(find.text('Laying'), findsOneWidget);
+
+    // Back to the room, one number changed, and forward again.
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Room'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).at(0), '5200');
+    await tester.pumpAndSettle();
+
+    await next(tester);
+    expect(find.text('Laminate'), findsOneWidget);
+    expect([textAt(0), textAt(1), textAt(2)], ['1380', '190', '8'],
+        reason: 'the plank was typed once');
+    expect([textAt(3), textAt(4)], ['10', '300'],
+        reason: 'and so was the gap and the shortest offcut');
+  });
+
   testWidgets('a floor looked at and come back from is counted', (tester) async {
     // The whole walk, which nothing else in the suite makes: no test has ever
-    // pressed Next on the laying screen, so neither the push to the variants
-    // nor the way back off a scheme was covered outside the screenshot run.
+    // pressed Next at the foot of the laying section, so neither the push to
+    // the variants nor the way back off a scheme was covered outside the
+    // screenshot run.
     //
     // What is being counted is the moment the app has finally done the whole of
     // what it is for — see utils/app_review.dart, which asks for a rating on
@@ -81,10 +125,16 @@ void main() {
 
     await fill(tester, ['5000', '3000']);
     await next(tester);
-    await fill(tester, ['1200', '190', '8']);
+    await fill(tester, ['1200', '190', '8', '10', '300']);
     await next(tester);
-    await fill(tester, ['10', '300']);
-    await next(tester);
+
+    // The review, where nothing is typed and the button does the arithmetic
+    // rather than going to the screen that does.
+    expect(find.text('Calculate'), findsOneWidget);
+    await tester.ensureVisible(find.text('Calculate'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Calculate'));
+    await tester.pumpAndSettle();
 
     final prefs = await SharedPreferences.getInstance();
     expect(find.text('Variant 1'), findsNothing,

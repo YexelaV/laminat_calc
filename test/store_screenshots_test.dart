@@ -38,7 +38,7 @@ const _locales = ['ru', 'en', 'de', 'es', 'fr', 'it', 'pl', 'pt', 'tr', 'cs', 's
 /// language and the unit screens are gone from the listing altogether: both are
 /// settings, both are answered once and never again, and between them they were
 /// the whole of what a browsing user used to see.
-const _shots = ['room', 'scheme', 'cut_list', 'laminate', 'laying'];
+const _shots = ['room', 'scheme', 'cut_list', 'laminate'];
 
 // Registered as 'Roboto', which is the family every unstyled Text in the app
 // resolves to. One face has to cover every alphabet shipped at once: the
@@ -251,22 +251,26 @@ void main() {
 
       await tapNext();
 
-      // The laminate: plank, plank, pack, copied off the side of the carton.
-      // A plain picture, and late in the listing for it — but it is the second
-      // of the three things a user has to type, and a listing that skips it
+      // The plank off the carton and the laying under it, which are one screen
+      // now. A plain picture, and late in the listing for it — but it is the
+      // whole of what a user types after the room, and a listing that skips it
       // reads as though the room were the whole of the input.
-      await fill(['1200', '190', '8']);
+      await fill(['1200', '190', '8', '10', '300']);
+      await tester.pumpAndSettle();
       await capture('laminate');
       await tapNext();
 
-      // Expansion gap, then the shortest offcut worth laying.
-      await fill(['10', '300']);
-      await tester.pumpAndSettle();
-      await capture('laying');
+      // The review is walked through rather than shot: it says back what the
+      // two shots before it already showed being typed.
 
-      // The variant list is walked through rather than shot: it is a list of
-      // numbers that mean nothing until the scheme behind them is seen.
-      await tapNext();
+      // The variant list is walked through for the same reason: it is a list
+      // of numbers that mean nothing until the scheme behind them is seen.
+      await tester.ensureVisible(find.text(
+          AppStrings.of(tester.element(find.byType(Scaffold))).calculate));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(
+          AppStrings.of(tester.element(find.byType(Scaffold))).calculate));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.byType(TextButton).first);
       await tester.pumpAndSettle();

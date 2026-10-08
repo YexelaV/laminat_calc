@@ -16,38 +16,14 @@
     "length_mm": "Lunghezza (mm)",
     "width_mm": "Larghezza (mm)",
     "uneven_walls": "Pareti di lunghezze diverse",
-    "wall_length": "Lunghezza {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Larghezza {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Lunghezza {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Larghezza {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Lunghezza (alto)",
+    "wall_length_far": "Lunghezza (basso)",
+    "wall_width_left": "Larghezza (sinistra)",
+    "wall_width_right": "Larghezza (destra)",
+    "wall_length_near_mm": "Lunghezza (alto) mm",
+    "wall_length_far_mm": "Lunghezza (basso) mm",
+    "wall_width_left_mm": "Larghezza (sinistra) mm",
+    "wall_width_right_mm": "Larghezza (destra) mm",
     "wall_diagonal": "Diagonale",
     "wall_diagonal_mm": "Diagonale (mm)",
     "walls_do_not_close": "Le pareti non si chiudono",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Angolo smussato",
     "shape_chamfer_pair": "Due angoli smussati",
     "shape_t": "A forma di T",
-    "shoulder": "Taglio {number}",
-    "shoulder_mm": "Taglio {number} (mm)",
-    "chamfer_leg": "Smusso (45°)",
-    "chamfer_leg_mm": "Smusso a 45° (mm)",
-    "notch": "Rientro {number}",
-    "notch_mm": "Rientro {number} (mm)",
-    "cut_depth": "Profondità dei rientri",
-    "cut_depth_mm": "Profondità dei rientri (mm)",
+    "shape_z": "A forma di Z",
+    "shape_u": "A forma di U",
+    "chamfer_leg": "Lunghezza dello smusso",
+    "chamfer_leg_mm": "Lunghezza dello smusso (mm)",
+    "chamfer_leg_left": "Smusso a sinistra",
+    "chamfer_leg_left_mm": "Smusso a sinistra (mm)",
+    "chamfer_leg_right": "Smusso a destra",
+    "chamfer_leg_right_mm": "Smusso a destra (mm)",
+    "chamfer_leg_near": "Smusso in alto",
+    "chamfer_leg_near_mm": "Smusso in alto (mm)",
+    "chamfer_leg_far": "Smusso in basso",
+    "chamfer_leg_far_mm": "Smusso in basso (mm)",
     "tap_wall_to_cut": "Tocca una parete per spostare i rientri",
+    "tap_wall_notch": "Tocca la parete con il rientro",
+    "notch_depth": "Profondità del rientro",
+    "notch_depth_mm": "Profondità del rientro (mm)",
     "overall_length": "Lunghezza totale",
     "overall_width": "Larghezza totale",
     "overall_length_mm": "Lunghezza totale (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Larghezza del rientro",
     "notch_length_mm": "Lunghezza del rientro (mm)",
     "notch_width_mm": "Larghezza del rientro (mm)",
+    "notch_length_n": "Lunghezza del rientro {number}",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Lunghezza del rientro {number} (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Larghezza del rientro {number}",
+    "symmetric_cut": "Simmetrico",
+    "stub_length": "Lunghezza della sporgenza",
+    "stub_length_mm": "Lunghezza della sporgenza (mm)",
+    "stub_width": "Larghezza della sporgenza",
+    "stub_width_mm": "Larghezza della sporgenza (mm)",
+    "stub_length_n": "Lunghezza della sporgenza {number}",
+    "stub_length_n_mm": "Lunghezza della sporgenza {number} (mm)",
+    "stub_width_n": "Larghezza della sporgenza {number}",
+    "stub_width_n_mm": "Larghezza della sporgenza {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Larghezza del rientro {number} (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "Il rientro non lascia stanza",
+    "notches_overlap": "I rientri si sovrappongono",
     "row_steps_at_notch": "La fila {number} attraversa l'angolo tagliato: le doghe alla sua estremità vanno intagliate attorno, vedi il disegno",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Tocca l'angolo tagliato",
-    "diagonal_not_for_l_shape": "La posa in diagonale non è ancora supportata in una stanza a forma di L",
+    "tap_corner_notched": "Tocca l’angolo che è rientrato",
+    "tap_corner_to_move": "Tocca un angolo per spostare i rientri",
+    "tap_wall_stem": "Tocca la parete con la sporgenza",
+    "diagonal_not_for_notch": "La posa in diagonale non è ancora supportata in una stanza con un angolo rientrante",
+    "direction_across_notch_only": "Una stanza con un rientro in una parete si posa solo perpendicolarmente a quella parete",
     "corner_top_left": "In alto a sinistra",
     "corner_top_right": "In alto a destra",
     "corner_bottom_right": "In basso a destra",
@@ -95,12 +124,14 @@
     "wall_left": "Parete sinistra",
     "pieces_per_package": "Pezzi per confezione",
     "laying": "Posa",
-    "laying_direction": "Senso di posa",
     "along_length": "Lungo la lunghezza",
     "along_width": "Lungo la larghezza",
     "diagonally": "In diagonale",
     "expansion_gap_mm": "Giunto di dilatazione (mm)",
     "joint_offset": "Sfalsamento giunzioni",
+    "laying_direction": "Senso di posa",
+    "expansion_gap": "Fuga perimetrale",
+    "min_piece_length": "Lunghezza minima doga",
     "exact_offset": "esatto",
     "joint_offset_mm": "Sfalsamento giunzioni (mm)",
     "minimal_piece_length": "Lunghezza minima doga (mm)",
@@ -122,7 +153,7 @@
     "variant": "N. {number}",
     "cut_list": "Lista di taglio",
     "row": "Fila {number}",
-    "whole": "intere",
+    "whole": "{count, plural, one{intera} other{intere}}",
     "leftovers": "Sfridi riutilizzabili",
     "waste": "Scarto"
 }

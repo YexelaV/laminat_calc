@@ -16,38 +16,14 @@
     "length_mm": "Uzunluk (mm)",
     "width_mm": "Genişlik (mm)",
     "uneven_walls": "Farklı uzunlukta duvarlar",
-    "wall_length": "Uzunluk {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Genişlik {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Uzunluk {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Genişlik {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Uzunluk (üst)",
+    "wall_length_far": "Uzunluk (alt)",
+    "wall_width_left": "Genişlik (sol)",
+    "wall_width_right": "Genişlik (sağ)",
+    "wall_length_near_mm": "Uzunluk (üst) mm",
+    "wall_length_far_mm": "Uzunluk (alt) mm",
+    "wall_width_left_mm": "Genişlik (sol) mm",
+    "wall_width_right_mm": "Genişlik (sağ) mm",
     "wall_diagonal": "Köşegen",
     "wall_diagonal_mm": "Köşegen (mm)",
     "walls_do_not_close": "Duvarlar kapanmıyor",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Pahlı köşe",
     "shape_chamfer_pair": "İki pahlı köşe",
     "shape_t": "T biçiminde",
-    "shoulder": "Kesim {number}",
-    "shoulder_mm": "Kesim {number} (mm)",
-    "chamfer_leg": "Pah (45°)",
-    "chamfer_leg_mm": "45° pah (mm)",
-    "notch": "Girinti {number}",
-    "notch_mm": "Girinti {number} (mm)",
-    "cut_depth": "Girintilerin derinliği",
-    "cut_depth_mm": "Girintilerin derinliği (mm)",
+    "shape_z": "Z biçiminde",
+    "shape_u": "U biçiminde",
+    "chamfer_leg": "Pah uzunluğu",
+    "chamfer_leg_mm": "Pah uzunluğu (mm)",
+    "chamfer_leg_left": "Soldaki pah",
+    "chamfer_leg_left_mm": "Soldaki pah (mm)",
+    "chamfer_leg_right": "Sağdaki pah",
+    "chamfer_leg_right_mm": "Sağdaki pah (mm)",
+    "chamfer_leg_near": "Üstteki pah",
+    "chamfer_leg_near_mm": "Üstteki pah (mm)",
+    "chamfer_leg_far": "Alttaki pah",
+    "chamfer_leg_far_mm": "Alttaki pah (mm)",
     "tap_wall_to_cut": "Girintileri taşımak için bir duvara dokunun",
+    "tap_wall_notch": "Girintinin bulunduğu duvara dokunun",
+    "notch_depth": "Girinti derinliği",
+    "notch_depth_mm": "Girinti derinliği (mm)",
     "overall_length": "Toplam uzunluk",
     "overall_width": "Toplam genişlik",
     "overall_length_mm": "Toplam uzunluk (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Girinti genişliği",
     "notch_length_mm": "Girinti uzunluğu (mm)",
     "notch_width_mm": "Girinti genişliği (mm)",
+    "notch_length_n": "Girinti {number} uzunluğu",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Girinti {number} uzunluğu (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Girinti {number} genişliği",
+    "symmetric_cut": "Simetrik",
+    "stub_length": "Çıkıntı uzunluğu",
+    "stub_length_mm": "Çıkıntı uzunluğu (mm)",
+    "stub_width": "Çıkıntı genişliği",
+    "stub_width_mm": "Çıkıntı genişliği (mm)",
+    "stub_length_n": "Çıkıntı uzunluğu {number}",
+    "stub_length_n_mm": "Çıkıntı uzunluğu {number} (mm)",
+    "stub_width_n": "Çıkıntı genişliği {number}",
+    "stub_width_n_mm": "Çıkıntı genişliği {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Girinti {number} genişliği (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "Girinti odadan yer bırakmıyor",
+    "notches_overlap": "Girintiler üst üste biniyor",
     "row_steps_at_notch": "{number}. sıra kesilen köşeden geçiyor: ucundaki paneller köşenin etrafından kesilir, şekli çizimde",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Kesilen köşeye dokunun",
-    "diagonal_not_for_l_shape": "L şeklinde odada çapraz döşeme henüz desteklenmiyor",
+    "tap_corner_notched": "Girintili köşeye dokunun",
+    "tap_corner_to_move": "Girintileri taşımak için bir köşeye dokunun",
+    "tap_wall_stem": "Çıkıntının bulunduğu duvara dokunun",
+    "diagonal_not_for_notch": "Köşesi girintili odada çapraz döşeme henüz desteklenmiyor",
+    "direction_across_notch_only": "Duvarında girinti olan bir oda yalnızca o duvara dik olarak döşenebilir",
     "corner_top_left": "Sol üst",
     "corner_top_right": "Sağ üst",
     "corner_bottom_right": "Sağ alt",
@@ -95,12 +124,14 @@
     "wall_left": "Sol duvar",
     "pieces_per_package": "Paketteki adet",
     "laying": "Döşeme",
-    "laying_direction": "Döşeme yönü",
     "along_length": "Uzunluk boyunca",
     "along_width": "Genişlik boyunca",
     "diagonally": "Çapraz",
     "expansion_gap_mm": "Genleşme boşluğu (mm)",
     "joint_offset": "Ek yeri kaydırması",
+    "laying_direction": "Döşeme yönü",
+    "expansion_gap": "Genleşme boşluğu",
+    "min_piece_length": "Asgari lamel uzunluğu",
     "exact_offset": "tam",
     "joint_offset_mm": "Ek yeri kaydırması (mm)",
     "minimal_piece_length": "Minimum parça uzunluğu (mm)",
@@ -122,7 +153,7 @@
     "variant": "No. {number}",
     "cut_list": "Kesim listesi",
     "row": "Sıra {number}",
-    "whole": "tam",
+    "whole": "{count, plural, one{tam} other{tam}}",
     "leftovers": "Artan parçalar",
     "waste": "Fire"
 }

@@ -18,48 +18,54 @@ class _$AppRouter extends RootStackRouter {
   @override
   final Map<String, PageFactory> pagesMap = {
     StartRoute.name: (routeData) {
-      final args = routeData.argsAs<StartRouteArgs>(orElse: () => const StartRouteArgs());
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: StartScreen(key: args.key),
+        child: const StartScreen(),
       );
     },
     MeasurementSystemRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: MeasurementSystemScreen(),
+        child: const MeasurementSystemScreen(),
       );
     },
     RoomParametersRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: RoomParametersScreen(),
+        child: const RoomParametersScreen(),
       );
     },
-    LaminateParametersRoute.name: (routeData) {
+    LaminateAndLayingRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: LaminateParametersScreen(),
+        child: const LaminateAndLayingScreen(),
       );
     },
-    LayingParametersRoute.name: (routeData) {
+    ReviewRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: LayingParametersScreen(),
+        child: const ReviewScreen(),
       );
     },
     ResultRoute.name: (routeData) {
       final args = routeData.argsAs<ResultRouteArgs>();
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: ResultScreen(args.result),
+        child: ResultScreen(
+          args.result,
+          key: args.key,
+        ),
       );
     },
     SchemeRoute.name: (routeData) {
       final args = routeData.argsAs<SchemeRouteArgs>();
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: SchemeScreen(args.result, args.number),
+        child: SchemeScreen(
+          args.result,
+          args.number,
+          key: args.key,
+        ),
       );
     },
   };
@@ -79,12 +85,12 @@ class _$AppRouter extends RootStackRouter {
           path: '/room-parameters-screen',
         ),
         RouteConfig(
-          LaminateParametersRoute.name,
-          path: '/laminate-parameters-screen',
+          LaminateAndLayingRoute.name,
+          path: '/laminate-and-laying-screen',
         ),
         RouteConfig(
-          LayingParametersRoute.name,
-          path: '/laying-parameters-screen',
+          ReviewRoute.name,
+          path: '/review-screen',
         ),
         RouteConfig(
           ResultRoute.name,
@@ -99,26 +105,14 @@ class _$AppRouter extends RootStackRouter {
 
 /// generated route for
 /// [StartScreen]
-class StartRoute extends PageRouteInfo<StartRouteArgs> {
-  StartRoute({Key? key})
+class StartRoute extends PageRouteInfo<void> {
+  const StartRoute()
       : super(
           StartRoute.name,
           path: '/',
-          args: StartRouteArgs(key: key),
         );
 
   static const String name = 'StartRoute';
-}
-
-class StartRouteArgs {
-  const StartRouteArgs({this.key});
-
-  final Key? key;
-
-  @override
-  String toString() {
-    return 'StartRouteArgs{key: $key}';
-  }
 }
 
 /// generated route for
@@ -146,74 +140,98 @@ class RoomParametersRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [LaminateParametersScreen]
-class LaminateParametersRoute extends PageRouteInfo<void> {
-  const LaminateParametersRoute()
+/// [LaminateAndLayingScreen]
+class LaminateAndLayingRoute extends PageRouteInfo<void> {
+  const LaminateAndLayingRoute()
       : super(
-          LaminateParametersRoute.name,
-          path: '/laminate-parameters-screen',
+          LaminateAndLayingRoute.name,
+          path: '/laminate-and-laying-screen',
         );
 
-  static const String name = 'LaminateParametersRoute';
+  static const String name = 'LaminateAndLayingRoute';
 }
 
 /// generated route for
-/// [LayingParametersScreen]
-class LayingParametersRoute extends PageRouteInfo<void> {
-  const LayingParametersRoute()
+/// [ReviewScreen]
+class ReviewRoute extends PageRouteInfo<void> {
+  const ReviewRoute()
       : super(
-          LayingParametersRoute.name,
-          path: '/laying-parameters-screen',
+          ReviewRoute.name,
+          path: '/review-screen',
         );
 
-  static const String name = 'LayingParametersRoute';
+  static const String name = 'ReviewRoute';
 }
 
 /// generated route for
 /// [ResultScreen]
 class ResultRoute extends PageRouteInfo<ResultRouteArgs> {
-  ResultRoute({required List<Result> result})
-      : super(
+  ResultRoute({
+    required List<Result> result,
+    Key? key,
+  }) : super(
           ResultRoute.name,
           path: '/result-screen',
-          args: ResultRouteArgs(result: result),
+          args: ResultRouteArgs(
+            result: result,
+            key: key,
+          ),
         );
 
   static const String name = 'ResultRoute';
 }
 
 class ResultRouteArgs {
-  const ResultRouteArgs({required this.result});
+  const ResultRouteArgs({
+    required this.result,
+    this.key,
+  });
 
   final List<Result> result;
 
+  final Key? key;
+
   @override
   String toString() {
-    return 'ResultRouteArgs{result: $result}';
+    return 'ResultRouteArgs{result: $result, key: $key}';
   }
 }
 
 /// generated route for
 /// [SchemeScreen]
 class SchemeRoute extends PageRouteInfo<SchemeRouteArgs> {
-  SchemeRoute({required Result result, required int number})
-      : super(
+  SchemeRoute({
+    required Result result,
+    required int number,
+    Key? key,
+  }) : super(
           SchemeRoute.name,
           path: '/scheme-screen',
-          args: SchemeRouteArgs(result: result, number: number),
+          args: SchemeRouteArgs(
+            result: result,
+            number: number,
+            key: key,
+          ),
         );
 
   static const String name = 'SchemeRoute';
 }
 
 class SchemeRouteArgs {
-  const SchemeRouteArgs({required this.result, required this.number});
+  const SchemeRouteArgs({
+    required this.result,
+    required this.number,
+    this.key,
+  });
 
   final Result result;
+
   final int number;
+
+  final Key? key;
 
   @override
   String toString() {
-    return 'SchemeRouteArgs{result: $result, number: $number}';
+    return 'SchemeRouteArgs{result: $result, number: $number, key: $key}';
   }
 }

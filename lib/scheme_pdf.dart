@@ -11,6 +11,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import 'models.dart';
 import 'scheme_geometry.dart';
+import 'utils/cut_list.dart';
 import 'utils/units.dart';
 
 // A printed page cannot be zoomed. Text smaller than this is not worth the ink,
@@ -58,15 +59,19 @@ class PdfFonts {
 /// The scheme's sheet is turned to match the drawing. A page cannot be panned,
 /// so the scheme is fitted to it, and fitting a tall drawing to a wide sheet
 /// would print it at half the size for no reason.
+String _plainMark(int number) => '$number';
+
 pw.Document schemePdf(
   Result result,
   MeasurementSystem system,
   PdfFonts fonts, {
-  List<String> cutList = const [],
+  List<CutLine> cutList = const [],
+  String Function(int)? rowMark,
 }) {
   // The bounds barely move with the text floor, so measure with no floor, fix
   // the scale, then build the scheme the page actually gets.
-  final measured = buildScheme(result, system: system, minTextMm: 0);
+  final measured = buildScheme(result,
+      system: system, minTextMm: 0, rowMark: rowMark ?? _plainMark);
   final format = measured.bounds.width >= measured.bounds.height
       ? PdfPageFormat.a4.landscape
       : PdfPageFormat.a4.portrait;
@@ -74,7 +79,10 @@ pw.Document schemePdf(
     format.availableWidth / measured.bounds.width,
     format.availableHeight / measured.bounds.height,
   );
-  final scheme = buildScheme(result, system: system, minTextMm: _minTextPt / scale);
+  final scheme = buildScheme(result,
+      system: system,
+      minTextMm: _minTextPt / scale,
+      rowMark: rowMark ?? _plainMark);
 
   final pdf = pw.Document();
   pdf.addPage(pw.Page(
@@ -95,11 +103,13 @@ pw.Document schemePdf(
   // A line the font cannot print would come out as a row of empty boxes, so the
   // report is left off the page whole rather than in part — it is still shared
   // as text from the cut list sheet.
-  if (cutList.isNotEmpty && cutList.every(fonts.canPrint)) {
+  if (cutList.isNotEmpty && cutList.every((line) => fonts.canPrint(line.text))) {
+    final plain = pw.TextStyle(font: fonts.plain, fontSize: 10);
+    final bold = pw.TextStyle(font: fonts.bold, fontSize: 10);
     pdf.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       build: (context) => [
-        pw.Text(cutList.first, style: pw.TextStyle(font: fonts.bold, fontSize: 14)),
+        pw.Text(cutList.first.text, style: pw.TextStyle(font: fonts.bold, fontSize: 14)),
         pw.SizedBox(height: 12),
         for (final line in cutList.skip(1))
           if (line.isEmpty)
@@ -107,7 +117,15 @@ pw.Document schemePdf(
           else
             pw.Padding(
               padding: const pw.EdgeInsets.only(bottom: 3),
-              child: pw.Text(line, style: pw.TextStyle(font: fonts.plain, fontSize: 10)),
+              // The sizes in bold, as on screen. Two fonts rather than one
+              // emboldened, because a PDF has no synthetic weight: the bold
+              // face is a second embedded font and the text has to ask for it.
+              child: pw.RichText(
+                text: pw.TextSpan(children: [
+                  for (final span in line.spans)
+                    pw.TextSpan(text: span.text, style: span.bold ? bold : plain),
+                ]),
+              ),
             ),
       ],
     ));

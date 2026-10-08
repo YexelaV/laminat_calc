@@ -18,7 +18,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/laying_cubit.dart';
+import 'package:floor_calculator/cubit/room_cubit.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/pages/room_parameters_screen.dart';
@@ -27,10 +28,10 @@ import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/widgets/room_sketch.dart';
 
-late CalculateCubit cubit;
+late RoomCubit cubit;
 
-CalculateCubit cubitIn(WidgetTester tester) =>
-    BlocProvider.of<CalculateCubit>(tester.element(find.byType(MaterialApp)));
+RoomCubit cubitIn(WidgetTester tester) =>
+    BlocProvider.of<RoomCubit>(tester.element(find.byType(MaterialApp)));
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -57,10 +58,75 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// A T is measured by the stem it leaves until it is told otherwise. The
+  /// tests below that are about the two cuts themselves ask for them back.
+  Future<void> cutByCut(WidgetTester tester) async {
+    await tester.tap(find.byKey(const ValueKey('symmetric-cut')));
+    await tester.pumpAndSettle();
+  }
+
   bool nextEnabled(WidgetTester tester) =>
       tester.widget<TextButton>(find.widgetWithText(TextButton, 'Next')).onPressed != null;
 
   CutCornersRoomShape shapeOf() => cubit.state.shape! as CutCornersRoomShape;
+
+  /// Which way the rows may run, read off the radios the laying section draws.
+  ///
+  /// The direction was a [SegmentedButton] and is a row of radios now; what the
+  /// tests ask of it has not changed — which choices are live, and which one is
+  /// filled in.
+  bool directionEnabled(WidgetTester tester, Direction direction) =>
+      tester
+          .widget<Radio<Direction>>(find.byWidgetPredicate(
+              (w) => w is Radio<Direction> && w.value == direction))
+          .enabled ??
+      true;
+
+  Direction? directionChosen(WidgetTester tester) => tester
+      .widget<RadioGroup<Direction>>(find.byType(RadioGroup<Direction>))
+      .groupValue;
+
+  /// Each shape's own measurements, after the overall 4000 by 3000 — a cut
+  /// each, in the order the boxes ask for them.
+  const cutsFor = <RoomKind, List<String>>{
+    RoomKind.rectangle: [],
+    RoomKind.uneven: ['4000', '3000', '5000'],
+    RoomKind.chamfer: ['900'],
+    RoomKind.chamferPair: ['800', '1000'],
+    RoomKind.lShaped: ['1500', '1000'],
+    // Measured by the stem it leaves, which is how the T asks until it is told
+    // otherwise: how far it runs along the wall, and how far it stands out.
+    RoomKind.tShaped: ['1600', '700'],
+    RoomKind.zShaped: ['1500', '1200', '1000', '900'],
+    // The notch itself: how far it runs along the wall, and how deep.
+    RoomKind.uShaped: ['1000', '700'],
+  };
+
+  /// Back to the room form from wherever the walk below has got to. The room
+  /// screen is the one screen with nowhere to go back to, so the arrow running
+  /// out is how the walk knows it has arrived.
+  Future<void> backToRoom(WidgetTester tester) async {
+    while (find.byType(BackButton).evaluate().isNotEmpty) {
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+    }
+  }
+
+  /// A whole room typed in, through the laminate, as far as the direction
+  /// buttons on the laying screen. Starts wherever the form is and ends on the
+  /// laying screen.
+  Future<void> walkToLaying(WidgetTester tester, RoomKind kind) async {
+    await backToRoom(tester);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, kind);
+    await fill(tester, cutsFor[kind]!, from: 2);
+    expect(nextEnabled(tester), isTrue, reason: '$kind: the room must be valid');
+    await tester.tap(find.widgetWithText(TextButton, 'Next'));
+    await tester.pumpAndSettle();
+    await fill(tester, ['1200', '190', '8']);
+    await tester.tap(find.widgetWithText(TextButton, 'Next'));
+    await tester.pumpAndSettle();
+  }
 
   testWidgets('every shape is on screen at once, and picking one is one tap',
       (tester) async {
@@ -148,19 +214,57 @@ void main() {
     expect(shapeOf().takesDiagonal, isTrue,
         reason: 'it is convex, so a 45° strip crosses it once');
 
-    // Turning the diagonal on and then picking a notched shape has to turn it
-    // back off, or the row plan, the validators and the drawing are left
-    // holding a direction the room cannot be laid in.
-    cubit.setDirection(Direction.diagonal);
+    // Picking a notched shape does not reach across the form and rewrite the
+    // direction, which is an answer given on a screen two pushes away. It used
+    // to, while one cubit held the whole form and could; what it bought was
+    // that the row plan, the validators and the drawing were never left holding
+    // a direction the room cannot be laid in.
+    //
+    // They still are not, and now by construction rather than by repair: the
+    // laying screen reads the direction *through* the room, so a notched one
+    // can only ever be laid along or across. See `LayingInputs.direction`, and
+    // the laying-screen test that holds 45° out of reach in all three notched
+    // rooms. All this screen owes is the room itself.
+    final laying = BlocProvider.of<LayingCubit>(
+        tester.element(find.byType(MaterialApp)));
+    laying.setDirection(Direction.diagonal);
     await tester.pumpAndSettle();
     await pickShape(tester, RoomKind.tShaped);
-    expect(cubit.state.direction, isNot(Direction.diagonal));
     expect(cubit.state.shape!.takesDiagonal, isFalse);
+    expect(laying.state.direction, Direction.diagonal,
+        reason: 'the answer is kept, so unnotching the room gives it back');
 
-    // And back to a chamfer leaves the direction alone: the user who had it
-    // turned off turns it back on, which is the quieter of the two surprises.
     await pickShape(tester, RoomKind.chamfer);
-    expect(cubit.state.direction, Direction.length);
+    expect(cubit.state.shape!.takesDiagonal, isTrue,
+        reason: 'and a convex room has it back without being asked twice');
+  });
+
+  testWidgets('45° is offered in every room that can take it, and in no other',
+      (tester) async {
+    // Which rooms those are is the outline's answer, not the tile's. The screen
+    // used to ask whether the room was specifically an L — true while the L was
+    // the only shape with a square cut, and still being asked after the T and
+    // the Z arrived. In those two the segment stayed live, and pressing it took
+    // the user to a calculation that came back with no variants and no reason
+    // given, while the same press in an L was refused on the spot with words.
+    //
+    // Every shape is walked, so the next one added cannot quietly land on the
+    // wrong side of this.
+    await pumpForm(tester);
+    for (final kind in RoomKind.values) {
+      await walkToLaying(tester, kind);
+      final notched = kind.cutKind == CornerCut.notch;
+      expect(directionEnabled(tester, Direction.diagonal), !notched, reason: '$kind');
+      // A greyed button on a phone has no tooltip to explain itself, so it says
+      // why on the screen or not at all — and says it once. The room with a
+      // notch in a wall takes one straight direction and so no diagonal either,
+      // and the line that says the first has already said the second.
+      expect(find.textContaining('Diagonal laying is not supported'),
+          notched && !kind.isWallNotch ? findsOneWidget : findsNothing,
+          reason: '$kind');
+      expect(find.textContaining('only be laid across that wall'),
+          kind.isWallNotch ? findsOneWidget : findsNothing, reason: '$kind');
+    }
   });
 
   testWidgets('a T stands on a wall, and the wall is picked on the sketch',
@@ -168,12 +272,13 @@ void main() {
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
     await pickShape(tester, RoomKind.tShaped);
+    await cutByCut(tester);
 
-    // Two shoulders and a depth on top of the overall size: five boxes.
-    expect(find.byType(TextField), findsNWidgets(5));
+    // Two shoulders and a depth each on top of the overall size: six boxes.
+    expect(find.byType(TextField), findsNWidgets(6));
     expect(cubit.state.cutWall, RoomWall.near);
 
-    await fill(tester, ['900', '1100', '800'], from: 2);
+    await fill(tester, ['900', '1100', '800', '600'], from: 2);
     final shape = shapeOf();
     expect(shape.cut, CornerCut.notch);
     expect(shape.cuts.keys.toSet(), {RoomCorner.nearLeft, RoomCorner.nearRight});
@@ -182,8 +287,9 @@ void main() {
     expect(shape.cuts[RoomCorner.nearRight]!.along, 1100,
         reason: 'the two shoulders are their own numbers — a stem is rarely centred');
     expect(shape.cuts[RoomCorner.nearLeft]!.across, 800);
-    expect(shape.cuts[RoomCorner.nearRight]!.across, 800,
-        reason: 'one depth: both cuts stop at the same shoulder line');
+    expect(shape.cuts[RoomCorner.nearRight]!.across, 600,
+        reason: 'a depth each: a riser and a cupboard on one wall are not the '
+            'same depth, and the form used to make the user pick which to get wrong');
     expect(shape.corners().length, 8);
     expect(reflexCorners(shape.corners()).length, 2);
     expect(shape.problem, isNull);
@@ -200,18 +306,89 @@ void main() {
       final shoulders = wall.runsAlongLength
           ? moved.cuts.values.map((c) => c.along)
           : moved.cuts.values.map((c) => c.across);
+      final depths = wall.runsAlongLength
+          ? moved.cuts.values.map((c) => c.across)
+          : moved.cuts.values.map((c) => c.along);
       expect(shoulders.toSet(), {900, 1100}, reason: '$wall');
+      expect(depths.toSet(), {800, 600},
+          reason: 'the depths turn with the wall too: $wall');
       expect(moved.problem, isNull, reason: '$wall');
     }
 
     expect(nextEnabled(tester), isTrue);
   });
 
+  testWidgets('a T is measured by the stem it leaves until it is told otherwise',
+      (tester) async {
+    // A room with an alcove comes off a tape as the alcove: the stem is a thing
+    // in the room and the two cuts either side of it are what is not. Asked for
+    // that way the T is two numbers rather than four, and the cuts are worked
+    // out — which is also the symmetry most of these rooms actually have, a
+    // chimney breast or a doorway recess being centred on its wall.
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, RoomKind.tShaped);
+    expect(cubit.state.symmetricCut, isTrue, reason: 'on until it is turned off');
+    expect(find.byType(TextField), findsNWidgets(4),
+        reason: 'the overall size and the stem, and nothing else');
+    expect(find.text('Stem length (mm)'), findsOneWidget);
+    expect(find.text('Stem width (mm)'), findsOneWidget);
+
+    await fill(tester, ['1600', '700'], from: 2);
+    final shape = shapeOf();
+    expect(shape.cuts.keys.toSet(), {RoomCorner.nearLeft, RoomCorner.nearRight});
+    // 4000 less the 1600 the stem takes, halved.
+    expect(shape.cuts.values.map((c) => c.along).toSet(), {1200});
+    expect(shape.cuts.values.map((c) => c.across).toSet(), {700});
+    expect(shape.problem, isNull);
+    expect(nextEnabled(tester), isTrue);
+
+    // The stem turns with the wall, and so do the two words for it: what runs
+    // along a side wall is the room's width.
+    await tester.tap(find.byKey(const ValueKey('cut-wall-left')));
+    await tester.pumpAndSettle();
+    expect(find.text('Stem width (mm)'), findsOneWidget);
+    expect(find.text('Stem length (mm)'), findsOneWidget);
+    final turned = shapeOf();
+    expect(turned.cuts.keys.toSet(), {RoomCorner.nearLeft, RoomCorner.farLeft});
+    // 3000 across now, less the same 1600.
+    expect(turned.cuts.values.map((c) => c.across).toSet(), {700});
+    expect(turned.cuts.values.map((c) => c.along).toSet(), {700});
+
+    // And turning it off hands back the four boxes with what was in them.
+    await cutByCut(tester);
+    expect(find.byType(TextField), findsNWidgets(6));
+    expect(cubit.state.midSpan, 1600,
+        reason: 'the stem is kept, so turning the symmetry back on finds it');
+  });
+
+  testWidgets('a T left with one depth is the symmetrical T it always was',
+      (tester) async {
+    // The second depth is a box of its own, so a user who had a symmetrical T
+    // has a box they did not have before. Until they fill it the sketch must
+    // still draw the room they typed rather than nothing — which is what the
+    // fallback in the shape is for, and why a half-filled form is still a room.
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, RoomKind.tShaped);
+    await cutByCut(tester);
+    await fill(tester, ['900', '1100', '800'], from: 2);
+
+    final shape = shapeOf();
+    expect(shape.cuts[RoomCorner.nearLeft]!.across, 800);
+    expect(shape.cuts[RoomCorner.nearRight]!.across, 800,
+        reason: 'the second depth left blank is the first one again');
+    expect(shape.problem, isNull);
+    expect(nextEnabled(tester), isFalse,
+        reason: 'a box nobody has typed into is a measurement nobody has taken');
+  });
+
   testWidgets('two cuts may not eat the wall they share', (tester) async {
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
     await pickShape(tester, RoomKind.tShaped);
-    await fill(tester, ['1200', '1200', '800'], from: 2);
+    await cutByCut(tester);
+    await fill(tester, ['1200', '1200', '800', '800'], from: 2);
     expect(nextEnabled(tester), isTrue);
 
     // 4000 less the 500 mm that is the smallest room there is leaves 3500 for
@@ -245,6 +422,354 @@ void main() {
     expect(shape.corners().length, 6);
     expect(isConvexPolygon(shape.corners()), isTrue);
     expect(shape.takesDiagonal, isTrue);
+  });
+
+  testWidgets('a Z is two cuts across the room, picked by either of them',
+      (tester) async {
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, RoomKind.zShaped);
+
+    // Two cuts measured in their own right — a length and a width each — on top
+    // of the overall size: six boxes. No shoulders, because the two share no
+    // wall to be measured off.
+    expect(find.byType(TextField), findsNWidgets(6));
+    await fill(tester, ['1500', '1200', '1000', '900'], from: 2);
+
+    final shape = shapeOf();
+    expect(shape.cut, CornerCut.notch);
+    // The corner the sketch points at, and the one across the room from it.
+    expect(shape.cuts.keys.toSet(), {RoomCorner.farRight, RoomCorner.nearLeft});
+    // Cut 1 is the left-hand one on the drawing and cut 2 the right-hand one.
+    // The sketch points at the far right here, so the first pair of boxes
+    // describes the cut across the room from it: the numbering follows the
+    // drawing and not which of the two was tapped.
+    expect(shape.cuts[RoomCorner.nearLeft]!.along, 1500);
+    expect(shape.cuts[RoomCorner.nearLeft]!.across, 1000);
+    expect(shape.cuts[RoomCorner.farRight]!.along, 1200);
+    expect(shape.cuts[RoomCorner.farRight]!.across, 900);
+    expect(shape.corners().length, 8);
+    expect(reflexCorners(shape.corners()).length, 2);
+    expect(shape.problem, isNull);
+    expect(shape.takesDiagonal, isFalse,
+        reason: 'a 45° strip crosses an outline that turns back on itself twice');
+    expect(nextEnabled(tester), isTrue);
+
+    // Tapping a corner moves the whole pair: the tapped corner is cut and the
+    // other follows across the room. Four taps, two rooms — which is what a
+    // diagonal pair is.
+    //
+    // And through all four, cut 1 stays the left one and keeps its numbers. The
+    // pair straddles the room, so one of its two corners is always on the left;
+    // the boxes are read down the screen beside the drawing, and a "cut 1" that
+    // changed sides when the pair was moved would have the user typing into the
+    // box for the other end of the floor.
+    for (final corner in RoomCorner.values) {
+      await tester.tap(find.byKey(ValueKey('cut-corner-${corner.name}')));
+      await tester.pumpAndSettle();
+      final moved = shapeOf();
+      expect(moved.cuts.keys.toSet(), {corner, corner.opposite}, reason: '$corner');
+      final left = corner.leftOfPair;
+      expect(left.isRight, isFalse, reason: '$corner');
+      expect(moved.cuts[left]!.along, 1500, reason: '$corner');
+      expect(moved.cuts[left]!.across, 1000, reason: '$corner');
+      expect(moved.cuts[left.opposite]!.along, 1200, reason: '$corner');
+      expect(moved.cuts[left.opposite]!.across, 900, reason: '$corner');
+      expect(moved.problem, isNull, reason: '$corner');
+    }
+
+    // So the two taps that name one pair name one room. Tapping the far end of
+    // a pair already in place used to swap its two cuts over; now it is the
+    // no-op it looks like.
+    await tester.tap(find.byKey(const ValueKey('cut-corner-nearLeft')));
+    await tester.pumpAndSettle();
+    final fromLeft = shapeOf().corners();
+    await tester.tap(find.byKey(const ValueKey('cut-corner-farRight')));
+    await tester.pumpAndSettle();
+    expect(shapeOf().corners(), fromLeft);
+  });
+
+  testWidgets('the caption says what tapping the sketch will do, shape by shape',
+      (tester) async {
+    // What the tap does is not the same in all six: a lone cut names the corner
+    // it is in, a pair across the room is named by either of its two, a pair on
+    // a wall is named by the wall. One line for all of them told two thirds of
+    // the users to do something the drawing would not let them.
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+    const captions = {
+      RoomKind.chamfer: 'Tap the corner that is cut away',
+      RoomKind.lShaped: 'Tap the corner that is notched',
+      RoomKind.zShaped: 'Tap a corner to move the notches',
+      RoomKind.chamferPair: 'Tap a wall to move the cuts',
+      RoomKind.tShaped: 'Tap the wall the stem stands on',
+      RoomKind.uShaped: 'Tap the wall the notch is in',
+    };
+    for (final entry in captions.entries) {
+      await pickShape(tester, entry.key);
+      expect(find.text(entry.value), findsOneWidget, reason: '${entry.key}');
+      // And no other shape's line is on the card beside it.
+      for (final other in captions.values) {
+        if (other == entry.value) continue;
+        expect(find.text(other), findsNothing, reason: '${entry.key} also says "$other"');
+      }
+    }
+    // A rectangle has nothing to tap and says nothing.
+    await pickShape(tester, RoomKind.rectangle);
+    for (final line in captions.values) {
+      expect(find.text(line), findsNothing);
+    }
+  });
+
+  testWidgets('a chamfer pair is named by which leg is which on the drawing',
+      (tester) async {
+    // "Cut 1" and "Cut 2" named nothing a user could point at: the wall the
+    // pair stands on is chosen by tapping, so turning it onto another wall left
+    // the numbers naming the legs the other way round without saying so.
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, RoomKind.chamferPair);
+    // Measured, because a leg nobody has typed lights no wall: the sketch draws
+    // it as a guess and has no number to point at.
+    await fill(tester, ['800', '500'], from: 2);
+
+    Future<Set<int>> litBy(String label) async {
+      await tester.tap(
+          find.ancestor(of: find.text(label), matching: find.byType(TextField)));
+      await tester.pumpAndSettle();
+      return tester.widget<RoomSketch>(find.byType(RoomSketch)).litWalls;
+    }
+
+    // On the near wall the pair runs left to right.
+    expect(await litBy('Left cut (mm)'), isNotEmpty);
+    expect(await litBy('Right cut (mm)'), isNotEmpty);
+    expect(find.text('Top cut (mm)'), findsNothing);
+
+    // Turned onto a side wall, where left and right mean nothing, the same two
+    // boxes say which end of it they are instead.
+    await tester.tap(find.byKey(const ValueKey('cut-wall-left')));
+    await tester.pumpAndSettle();
+    expect(find.text('Left cut (mm)'), findsNothing);
+    expect(await litBy('Top cut (mm)'), isNotEmpty);
+    expect(await litBy('Bottom cut (mm)'), isNotEmpty);
+
+    // The lone chamfer has one leg and so says only what it is.
+    await pickShape(tester, RoomKind.chamfer);
+    expect(find.text('Cut length (mm)'), findsOneWidget);
+  });
+
+  testWidgets('a T and a Z ask for the same two measurements by the same names',
+      (tester) async {
+    // A cut has a reach along the wall and a depth into the room whether its
+    // pair stands on one wall or straddles the room, and the screen used to
+    // have two sets of words for them — "Notch 1" against "Notch 1 length",
+    // "Notch 1 depth" against "Notch 1 width" — which left the user working out
+    // whether the two shapes were being asked different questions.
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+
+    const asked = [
+      'Notch 1 length (mm)',
+      'Notch 2 length (mm)',
+      'Notch 1 width (mm)',
+      'Notch 2 width (mm)',
+    ];
+    for (final kind in [RoomKind.tShaped, RoomKind.zShaped]) {
+      await pickShape(tester, kind);
+      if (kind == RoomKind.tShaped) await cutByCut(tester);
+      for (final label in asked) {
+        expect(find.text(label), findsOneWidget, reason: '$kind: $label');
+      }
+    }
+  });
+
+  testWidgets('a notch called a length is the measurement drawn along the room',
+      (tester) async {
+    // The pair's reach runs along the wall it stands on, and that wall turns.
+    // Called "length" whatever the wall, it named the room's length on the near
+    // and far walls and its width on the other two — a box saying "length" next
+    // to a number drawn up and down the page.
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, RoomKind.tShaped);
+    await cutByCut(tester);
+    await fill(tester, ['900', '1100', '800', '600'], from: 2);
+
+    Future<void> cursorInto(String label) async {
+      await tester.tap(
+          find.ancestor(of: find.text(label), matching: find.byType(TextField)));
+      await tester.pumpAndSettle();
+    }
+
+    /// Which way the walls this box lights up run on the drawing.
+    Future<Set<bool>> drawnAcross(String label) async {
+      await cursorInto(label);
+      final corners = cubit.state.shape!.corners();
+      final lit = tester.widget<RoomSketch>(find.byType(RoomSketch)).litWalls;
+      expect(lit, isNotEmpty, reason: '"$label" lights no wall');
+      return {
+        for (final wall in lit)
+          (corners[wall].x - corners[(wall + 1) % corners.length].x).abs() < 0.5
+      };
+    }
+
+    for (final wall in RoomWall.values) {
+      await tester.tap(find.byKey(ValueKey('cut-wall-${wall.name}')));
+      await tester.pumpAndSettle();
+      for (var i = 1; i <= 2; i++) {
+        expect(await drawnAcross('Notch $i length (mm)'), {false},
+            reason: '$wall: notch $i\'s length is drawn across the page');
+        expect(await drawnAcross('Notch $i width (mm)'), {true},
+            reason: '$wall: notch $i\'s width is drawn up and down it');
+      }
+    }
+  });
+
+  testWidgets('two cuts across the room may not reach each other', (tester) async {
+    // Neither box bounds the other, because either one of them may be the deep
+    // one — 4000 less the smallest room there is leaves 3500 for a cut, and both
+    // cuts are allowed all of it as long as the other one gets out of the way
+    // along the *other* axis. They only actually meet when both pairs of numbers
+    // overlap at once, and that is the only thing refused.
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, RoomKind.zShaped);
+
+    await fill(tester, ['3400', '3400', '1000', '1000'], from: 2);
+    expect(cubit.state.shape!.problem, isNull,
+        reason: 'past each other along the length, clear of each other across it');
+    expect(nextEnabled(tester), isTrue);
+
+    await fill(tester, ['1800', '1800', '1300', '1300'], from: 2);
+    expect(cubit.state.shape!.problem, RoomProblem.cutsOverlap);
+    expect(find.text('The notches overlap each other'), findsOneWidget);
+    expect(nextEnabled(tester), isFalse);
+
+    // 3000 less the 500 mm that is the smallest room there is leaves 2500 across
+    // for the two of them, and 1300 beside 1100 is inside it again.
+    await fill(tester, ['1100'], from: 5);
+    expect(cubit.state.shape!.problem, isNull);
+    expect(nextEnabled(tester), isTrue);
+  });
+
+  testWidgets('a notch in a wall is the notch itself, until it is told otherwise',
+      (tester) async {
+    // The same reading a T gets: the riser is a thing in the room and the wall
+    // beside it is what is left, so that is what the tape measures. Two boxes
+    // rather than three, and the notch is centred.
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, RoomKind.uShaped);
+    expect(cubit.state.symmetricCut, isTrue);
+    expect(find.byType(TextField), findsNWidgets(4));
+    expect(find.text('Notch length (mm)'), findsOneWidget);
+    expect(find.text('Notch width (mm)'), findsOneWidget);
+
+    await fill(tester, ['1000', '700'], from: 2);
+    final notch = cubit.state.shape! as WallNotchRoomShape;
+    expect(notch.notchWidth, 1000, reason: 'the notch is what was typed');
+    expect(notch.offsetFirst, 1500, reason: '4000 less the notch, halved');
+    expect(notch.offsetSecond, 1500);
+    expect(notch.depth, 700);
+    expect(notch.problem, isNull);
+    expect(nextEnabled(tester), isTrue);
+
+    // And the two words turn with the wall, as they do everywhere else: what
+    // runs along a side wall is the room's width.
+    await tester.tap(find.byKey(const ValueKey('cut-wall-left')));
+    await tester.pumpAndSettle();
+    expect(find.text('Notch width (mm)'), findsOneWidget);
+    expect(find.text('Notch length (mm)'), findsOneWidget);
+    final turned = cubit.state.shape! as WallNotchRoomShape;
+    expect(turned.notchWidth, 1000);
+    expect(turned.offsetFirst, 1000, reason: '3000 across now, less the notch, halved');
+  });
+
+  testWidgets('a notch off the middle of its wall is measured by its two legs',
+      (tester) async {
+    // The П is a crossbar and two legs, and off centre the legs are what a tape
+    // reads: one is longer than the other and that is the whole of what makes
+    // the notch off centre. The notch between them is what is left.
+    //
+    // One width for the pair and not one each, which is the shape itself
+    // talking: both legs stand on the one crossbar, so how far they come out is
+    // how deep the notch is, and there is only one of it.
+    await pumpForm(tester);
+    await fill(tester, ['4000', '3000']);
+    await pickShape(tester, RoomKind.uShaped);
+    await cutByCut(tester);
+
+    expect(find.byType(TextField), findsNWidgets(5));
+    expect(find.text('Stem length 1 (mm)'), findsOneWidget);
+    expect(find.text('Stem length 2 (mm)'), findsOneWidget);
+    expect(find.text('Stem width (mm)'), findsOneWidget);
+    expect(find.text('Stem width 1 (mm)'), findsNothing,
+        reason: 'two legs on one crossbar come out the same far');
+
+    WallNotchRoomShape shapeOf() => cubit.state.shape! as WallNotchRoomShape;
+    await fill(tester, ['1200', '1800', '700'], from: 2);
+    expect(shapeOf().wall, RoomWall.near);
+    expect(shapeOf().offsetFirst, 1200);
+    expect(shapeOf().offsetSecond, 1800);
+    expect(shapeOf().notchWidth, 1000, reason: '4000 less the two legs');
+    expect(shapeOf().depth, 700);
+    expect(shapeOf().corners().length, 8);
+    expect(reflexCorners(shapeOf().corners()).length, 2);
+    expect(shapeOf().problem, isNull);
+    expect(nextEnabled(tester), isTrue);
+    expect(find.text('Tap the wall the notch is in'), findsOneWidget);
+
+    // The legs follow the wall round, and so do the words for them: what runs
+    // along a side wall is the room's width.
+    await tester.tap(find.byKey(const ValueKey('cut-wall-left')));
+    await tester.pumpAndSettle();
+    expect(find.text('Stem width 1 (mm)'), findsOneWidget);
+    expect(find.text('Stem length (mm)'), findsOneWidget);
+    expect(cubit.state.cutWall, RoomWall.left);
+    expect(shapeOf().offsetFirst, 1200);
+    expect(shapeOf().notchWidth, 0, reason: '3000 of width does not hold 1200 and 1800');
+    expect(shapeOf().problem, isNotNull);
+  });
+
+  testWidgets('a notch in a wall is laid across it and no other way',
+      (tester) async {
+    // The one room offered in a single direction. A row running along the
+    // notched wall is parted in two by the notch, and a row in two is a thing
+    // the engine has no way to say — so that direction is out of reach rather
+    // than wrong, and which one it is follows the wall the notch is in.
+    await pumpForm(tester);
+    for (final wall in [RoomWall.near, RoomWall.left]) {
+      await backToRoom(tester);
+      await fill(tester, ['4000', '3000']);
+      await pickShape(tester, RoomKind.uShaped);
+      if (cubit.state.cutWall != wall) {
+        await tester.tap(find.byKey(ValueKey('cut-wall-${wall.name}')));
+        await tester.pumpAndSettle();
+      }
+      // The notch itself and its depth: the room asks that way round by default.
+      await fill(tester, ['1000', '600'], from: 2);
+      expect(nextEnabled(tester), isTrue, reason: '$wall');
+      await tester.tap(find.widgetWithText(TextButton, 'Next'));
+      await tester.pumpAndSettle();
+      await fill(tester, ['1200', '190', '8']);
+      await tester.tap(find.widgetWithText(TextButton, 'Next'));
+      await tester.pumpAndSettle();
+
+      // Across the notched wall, never along it, and never at 45°.
+      expect(directionEnabled(tester, Direction.length), !wall.runsAlongLength,
+          reason: '$wall');
+      expect(directionEnabled(tester, Direction.width), wall.runsAlongLength,
+          reason: '$wall');
+      expect(directionEnabled(tester, Direction.diagonal), isFalse, reason: '$wall');
+      expect(directionChosen(tester),
+          wall.runsAlongLength ? Direction.width : Direction.length,
+          reason: '$wall: the one direction there is, already chosen');
+      expect(find.textContaining('only be laid across that wall'), findsOneWidget,
+          reason: '$wall: a greyed button says why');
+      expect(find.textContaining('Diagonal laying is not supported'), findsNothing,
+          reason: '$wall: and says it once — the line above has already ruled '
+              'out the diagonal along with everything but the one direction');
+    }
   });
 
   testWidgets('a wall a cut shortened is a question mark until the cut is typed',

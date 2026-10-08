@@ -16,38 +16,14 @@
     "length_mm": "Längd (mm)",
     "width_mm": "Bredd (mm)",
     "uneven_walls": "Väggar av olika längd",
-    "wall_length": "Längd {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Bredd {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Längd {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Bredd {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Längd (upptill)",
+    "wall_length_far": "Längd (nedtill)",
+    "wall_width_left": "Bredd (vänster)",
+    "wall_width_right": "Bredd (höger)",
+    "wall_length_near_mm": "Längd (upptill) mm",
+    "wall_length_far_mm": "Längd (nedtill) mm",
+    "wall_width_left_mm": "Bredd (vänster) mm",
+    "wall_width_right_mm": "Bredd (höger) mm",
     "wall_diagonal": "Diagonal",
     "wall_diagonal_mm": "Diagonal (mm)",
     "walls_do_not_close": "Väggarna går inte ihop",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Avfasat hörn",
     "shape_chamfer_pair": "Två avfasade hörn",
     "shape_t": "T-format",
-    "shoulder": "Snitt {number}",
-    "shoulder_mm": "Snitt {number} (mm)",
-    "chamfer_leg": "Avfasning (45°)",
-    "chamfer_leg_mm": "45°-avfasning (mm)",
-    "notch": "Urtag {number}",
-    "notch_mm": "Urtag {number} (mm)",
-    "cut_depth": "Urtagens djup",
-    "cut_depth_mm": "Urtagens djup (mm)",
+    "shape_z": "Z-format",
+    "shape_u": "U-format",
+    "chamfer_leg": "Avfasningens längd",
+    "chamfer_leg_mm": "Avfasningens längd (mm)",
+    "chamfer_leg_left": "Avfasning vänster",
+    "chamfer_leg_left_mm": "Avfasning vänster (mm)",
+    "chamfer_leg_right": "Avfasning höger",
+    "chamfer_leg_right_mm": "Avfasning höger (mm)",
+    "chamfer_leg_near": "Avfasning upptill",
+    "chamfer_leg_near_mm": "Avfasning upptill (mm)",
+    "chamfer_leg_far": "Avfasning nedtill",
+    "chamfer_leg_far_mm": "Avfasning nedtill (mm)",
     "tap_wall_to_cut": "Tryck på en vägg för att flytta urtagen",
+    "tap_wall_notch": "Tryck på väggen med urtaget",
+    "notch_depth": "Urtagets djup",
+    "notch_depth_mm": "Urtagets djup (mm)",
     "overall_length": "Total längd",
     "overall_width": "Total bredd",
     "overall_length_mm": "Total längd (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Urtagets bredd",
     "notch_length_mm": "Urtagets längd (mm)",
     "notch_width_mm": "Urtagets bredd (mm)",
+    "notch_length_n": "Längd för urtag {number}",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Längd för urtag {number} (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Bredd för urtag {number}",
+    "symmetric_cut": "Symmetriskt",
+    "stub_length": "Utsprångets längd",
+    "stub_length_mm": "Utsprångets längd (mm)",
+    "stub_width": "Utsprångets bredd",
+    "stub_width_mm": "Utsprångets bredd (mm)",
+    "stub_length_n": "Utsprångets längd {number}",
+    "stub_length_n_mm": "Utsprångets längd {number} (mm)",
+    "stub_width_n": "Utsprångets bredd {number}",
+    "stub_width_n_mm": "Utsprångets bredd {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Bredd för urtag {number} (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "Urtaget lämnar inget rum",
+    "notches_overlap": "Urtagen överlappar varandra",
     "row_steps_at_notch": "Rad {number} går förbi urtagets hörn: plankorna i dess ände sågas runt hörnet, mått enligt ritningen",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Tryck på hörnet som är urtaget",
-    "diagonal_not_for_l_shape": "Diagonal läggning stöds ännu inte i ett L-format rum",
+    "tap_corner_notched": "Tryck på hörnet som är urtaget",
+    "tap_corner_to_move": "Tryck på ett hörn för att flytta urtagen",
+    "tap_wall_stem": "Tryck på väggen där utsprånget sitter",
+    "diagonal_not_for_notch": "Diagonal läggning stöds ännu inte i ett rum med ett urtaget hörn",
+    "direction_across_notch_only": "Ett rum med ett urtag i en vägg kan bara läggas tvärs den väggen",
     "corner_top_left": "Övre vänstra",
     "corner_top_right": "Övre högra",
     "corner_bottom_right": "Nedre högra",
@@ -95,12 +124,14 @@
     "wall_left": "Vänster vägg",
     "pieces_per_package": "Per paket (st)",
     "laying": "Läggning",
-    "laying_direction": "Läggningsriktning",
     "along_length": "Längs längden",
     "along_width": "Längs bredden",
     "diagonally": "Diagonalt",
     "expansion_gap_mm": "Expansionsfog (mm)",
     "joint_offset": "Skarvförskjutning",
+    "laying_direction": "Läggningsriktning",
+    "expansion_gap": "Rörelsefog",
+    "min_piece_length": "Minsta planklängd",
     "exact_offset": "exakt",
     "joint_offset_mm": "Radförskjutning (mm)",
     "minimal_piece_length": "Minsta plankelängd (mm)",
@@ -122,7 +153,7 @@
     "variant": "#{number}",
     "cut_list": "Kaplista",
     "row": "Rad {number}",
-    "whole": "hela",
+    "whole": "{count, plural, one{hel} other{hela}}",
     "leftovers": "Rester",
     "waste": "Spill"
 }

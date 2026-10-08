@@ -60,24 +60,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String get uneven_walls => 'Wände unterschiedlicher Länge';
 
   @override
-  String wall_length(int number) {
-    return 'Länge $number';
-  }
+  String get wall_length_near => 'Länge (oben)';
 
   @override
-  String wall_width(int number) {
-    return 'Breite $number';
-  }
+  String get wall_length_far => 'Länge (unten)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Länge $number (mm)';
-  }
+  String get wall_width_left => 'Breite (links)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Breite $number (mm)';
-  }
+  String get wall_width_right => 'Breite (rechts)';
+
+  @override
+  String get wall_length_near_mm => 'Länge (oben) mm';
+
+  @override
+  String get wall_length_far_mm => 'Länge (unten) mm';
+
+  @override
+  String get wall_width_left_mm => 'Breite (links) mm';
+
+  @override
+  String get wall_width_right_mm => 'Breite (rechts) mm';
 
   @override
   String get wall_diagonal => 'Diagonale';
@@ -107,40 +111,53 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shape_t => 'T-förmig';
 
   @override
-  String shoulder(int number) {
-    return 'Schnitt $number';
-  }
+  String get shape_z => 'Z-förmig';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Schnitt $number (mm)';
-  }
+  String get shape_u => 'U-förmig';
 
   @override
-  String get chamfer_leg => 'Abschrägung (45°)';
+  String get chamfer_leg => 'Länge der Abschrägung';
 
   @override
-  String get chamfer_leg_mm => '45°-Abschrägung (mm)';
+  String get chamfer_leg_mm => 'Länge der Abschrägung (mm)';
 
   @override
-  String notch(int number) {
-    return 'Aussparung $number';
-  }
+  String get chamfer_leg_left => 'Abschrägung links';
 
   @override
-  String notch_mm(int number) {
-    return 'Aussparung $number (mm)';
-  }
+  String get chamfer_leg_left_mm => 'Abschrägung links (mm)';
 
   @override
-  String get cut_depth => 'Tiefe der Aussparungen';
+  String get chamfer_leg_right => 'Abschrägung rechts';
 
   @override
-  String get cut_depth_mm => 'Tiefe der Aussparungen (mm)';
+  String get chamfer_leg_right_mm => 'Abschrägung rechts (mm)';
+
+  @override
+  String get chamfer_leg_near => 'Abschrägung oben';
+
+  @override
+  String get chamfer_leg_near_mm => 'Abschrägung oben (mm)';
+
+  @override
+  String get chamfer_leg_far => 'Abschrägung unten';
+
+  @override
+  String get chamfer_leg_far_mm => 'Abschrägung unten (mm)';
 
   @override
   String get tap_wall_to_cut =>
       'Auf eine Wand tippen, um die Aussparungen zu versetzen';
+
+  @override
+  String get tap_wall_notch => 'Tippen Sie auf die Wand mit der Aussparung';
+
+  @override
+  String get notch_depth => 'Tiefe der Aussparung';
+
+  @override
+  String get notch_depth_mm => 'Tiefe der Aussparung (mm)';
 
   @override
   String get overall_length => 'Gesamtlänge';
@@ -167,7 +184,65 @@ class AppLocalizationsDe extends AppLocalizations {
   String get notch_width_mm => 'Breite der Aussparung (mm)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Länge der Aussparung $number';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Länge der Aussparung $number (mm)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Breite der Aussparung $number';
+  }
+
+  @override
+  String get symmetric_cut => 'Symmetrisch';
+
+  @override
+  String get stub_length => 'Länge des Vorsprungs';
+
+  @override
+  String get stub_length_mm => 'Länge des Vorsprungs (mm)';
+
+  @override
+  String get stub_width => 'Breite des Vorsprungs';
+
+  @override
+  String get stub_width_mm => 'Breite des Vorsprungs (mm)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Länge des Vorsprungs $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Länge des Vorsprungs $number (mm)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Breite des Vorsprungs $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Breite des Vorsprungs $number (mm)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Breite der Aussparung $number (mm)';
+  }
+
+  @override
   String get notch_does_not_fit => 'Die Aussparung lässt keinen Raum übrig';
+
+  @override
+  String get notches_overlap => 'Die Aussparungen überschneiden sich';
 
   @override
   String row_steps_at_notch(int number) {
@@ -178,8 +253,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tap_corner_to_cut => 'Tippen Sie auf die ausgesparte Ecke';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'Diagonale Verlegung wird in einem L-förmigen Raum noch nicht unterstützt';
+  String get tap_corner_notched => 'Tippen Sie auf die ausgesparte Ecke';
+
+  @override
+  String get tap_corner_to_move =>
+      'Tippen Sie auf eine Ecke, um die Aussparungen zu versetzen';
+
+  @override
+  String get tap_wall_stem => 'Tippen Sie auf die Wand mit dem Vorsprung';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'Diagonale Verlegung wird in einem Raum mit ausgesparter Ecke noch nicht unterstützt';
+
+  @override
+  String get direction_across_notch_only =>
+      'Ein Raum mit einer Aussparung in der Wand lässt sich nur quer zu dieser Wand verlegen';
 
   @override
   String get corner_top_left => 'Oben links';
@@ -212,9 +301,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get laying => 'Verlegung';
 
   @override
-  String get laying_direction => 'Verlegerichtung';
-
-  @override
   String get along_length => 'Längs';
 
   @override
@@ -228,6 +314,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get joint_offset => 'Fugenversatz';
+
+  @override
+  String get laying_direction => 'Verlegerichtung';
+
+  @override
+  String get expansion_gap => 'Dehnungsfuge';
+
+  @override
+  String get min_piece_length => 'Mindestlänge der Diele';
 
   @override
   String get exact_offset => 'genau';
@@ -306,7 +401,15 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get whole => 'ganz';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ganz',
+      one: 'ganz',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Reststücke';

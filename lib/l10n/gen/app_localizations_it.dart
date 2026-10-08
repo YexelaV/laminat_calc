@@ -60,24 +60,28 @@ class AppLocalizationsIt extends AppLocalizations {
   String get uneven_walls => 'Pareti di lunghezze diverse';
 
   @override
-  String wall_length(int number) {
-    return 'Lunghezza $number';
-  }
+  String get wall_length_near => 'Lunghezza (alto)';
 
   @override
-  String wall_width(int number) {
-    return 'Larghezza $number';
-  }
+  String get wall_length_far => 'Lunghezza (basso)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Lunghezza $number (mm)';
-  }
+  String get wall_width_left => 'Larghezza (sinistra)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Larghezza $number (mm)';
-  }
+  String get wall_width_right => 'Larghezza (destra)';
+
+  @override
+  String get wall_length_near_mm => 'Lunghezza (alto) mm';
+
+  @override
+  String get wall_length_far_mm => 'Lunghezza (basso) mm';
+
+  @override
+  String get wall_width_left_mm => 'Larghezza (sinistra) mm';
+
+  @override
+  String get wall_width_right_mm => 'Larghezza (destra) mm';
 
   @override
   String get wall_diagonal => 'Diagonale';
@@ -107,39 +111,52 @@ class AppLocalizationsIt extends AppLocalizations {
   String get shape_t => 'A forma di T';
 
   @override
-  String shoulder(int number) {
-    return 'Taglio $number';
-  }
+  String get shape_z => 'A forma di Z';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Taglio $number (mm)';
-  }
+  String get shape_u => 'A forma di U';
 
   @override
-  String get chamfer_leg => 'Smusso (45°)';
+  String get chamfer_leg => 'Lunghezza dello smusso';
 
   @override
-  String get chamfer_leg_mm => 'Smusso a 45° (mm)';
+  String get chamfer_leg_mm => 'Lunghezza dello smusso (mm)';
 
   @override
-  String notch(int number) {
-    return 'Rientro $number';
-  }
+  String get chamfer_leg_left => 'Smusso a sinistra';
 
   @override
-  String notch_mm(int number) {
-    return 'Rientro $number (mm)';
-  }
+  String get chamfer_leg_left_mm => 'Smusso a sinistra (mm)';
 
   @override
-  String get cut_depth => 'Profondità dei rientri';
+  String get chamfer_leg_right => 'Smusso a destra';
 
   @override
-  String get cut_depth_mm => 'Profondità dei rientri (mm)';
+  String get chamfer_leg_right_mm => 'Smusso a destra (mm)';
+
+  @override
+  String get chamfer_leg_near => 'Smusso in alto';
+
+  @override
+  String get chamfer_leg_near_mm => 'Smusso in alto (mm)';
+
+  @override
+  String get chamfer_leg_far => 'Smusso in basso';
+
+  @override
+  String get chamfer_leg_far_mm => 'Smusso in basso (mm)';
 
   @override
   String get tap_wall_to_cut => 'Tocca una parete per spostare i rientri';
+
+  @override
+  String get tap_wall_notch => 'Tocca la parete con il rientro';
+
+  @override
+  String get notch_depth => 'Profondità del rientro';
+
+  @override
+  String get notch_depth_mm => 'Profondità del rientro (mm)';
 
   @override
   String get overall_length => 'Lunghezza totale';
@@ -166,7 +183,65 @@ class AppLocalizationsIt extends AppLocalizations {
   String get notch_width_mm => 'Larghezza del rientro (mm)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Lunghezza del rientro $number';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Lunghezza del rientro $number (mm)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Larghezza del rientro $number';
+  }
+
+  @override
+  String get symmetric_cut => 'Simmetrico';
+
+  @override
+  String get stub_length => 'Lunghezza della sporgenza';
+
+  @override
+  String get stub_length_mm => 'Lunghezza della sporgenza (mm)';
+
+  @override
+  String get stub_width => 'Larghezza della sporgenza';
+
+  @override
+  String get stub_width_mm => 'Larghezza della sporgenza (mm)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Lunghezza della sporgenza $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Lunghezza della sporgenza $number (mm)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Larghezza della sporgenza $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Larghezza della sporgenza $number (mm)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Larghezza del rientro $number (mm)';
+  }
+
+  @override
   String get notch_does_not_fit => 'Il rientro non lascia stanza';
+
+  @override
+  String get notches_overlap => 'I rientri si sovrappongono';
 
   @override
   String row_steps_at_notch(int number) {
@@ -177,8 +252,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tap_corner_to_cut => 'Tocca l\'angolo tagliato';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'La posa in diagonale non è ancora supportata in una stanza a forma di L';
+  String get tap_corner_notched => 'Tocca l’angolo che è rientrato';
+
+  @override
+  String get tap_corner_to_move => 'Tocca un angolo per spostare i rientri';
+
+  @override
+  String get tap_wall_stem => 'Tocca la parete con la sporgenza';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'La posa in diagonale non è ancora supportata in una stanza con un angolo rientrante';
+
+  @override
+  String get direction_across_notch_only =>
+      'Una stanza con un rientro in una parete si posa solo perpendicolarmente a quella parete';
 
   @override
   String get corner_top_left => 'In alto a sinistra';
@@ -211,9 +299,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get laying => 'Posa';
 
   @override
-  String get laying_direction => 'Senso di posa';
-
-  @override
   String get along_length => 'Lungo la lunghezza';
 
   @override
@@ -227,6 +312,15 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get joint_offset => 'Sfalsamento giunzioni';
+
+  @override
+  String get laying_direction => 'Senso di posa';
+
+  @override
+  String get expansion_gap => 'Fuga perimetrale';
+
+  @override
+  String get min_piece_length => 'Lunghezza minima doga';
 
   @override
   String get exact_offset => 'esatto';
@@ -305,7 +399,15 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get whole => 'intere';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'intere',
+      one: 'intera',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Sfridi riutilizzabili';

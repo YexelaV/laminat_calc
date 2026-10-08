@@ -16,38 +16,14 @@
     "length_mm": "Longitud (mm)",
     "width_mm": "Ancho (mm)",
     "uneven_walls": "Paredes de distinta longitud",
-    "wall_length": "Longitud {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Ancho {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Longitud {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Ancho {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Longitud (arriba)",
+    "wall_length_far": "Longitud (abajo)",
+    "wall_width_left": "Ancho (izquierda)",
+    "wall_width_right": "Ancho (derecha)",
+    "wall_length_near_mm": "Longitud (arriba) mm",
+    "wall_length_far_mm": "Longitud (abajo) mm",
+    "wall_width_left_mm": "Ancho (izquierda) mm",
+    "wall_width_right_mm": "Ancho (derecha) mm",
     "wall_diagonal": "Diagonal",
     "wall_diagonal_mm": "Diagonal (mm)",
     "walls_do_not_close": "Las paredes no cierran",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Esquina cortada",
     "shape_chamfer_pair": "Dos esquinas cortadas",
     "shape_t": "En forma de T",
-    "shoulder": "Corte {number}",
-    "shoulder_mm": "Corte {number} (mm)",
-    "chamfer_leg": "Corte (45°)",
-    "chamfer_leg_mm": "Corte a 45° (mm)",
-    "notch": "Hueco {number}",
-    "notch_mm": "Hueco {number} (mm)",
-    "cut_depth": "Profundidad de los huecos",
-    "cut_depth_mm": "Profundidad de los huecos (mm)",
+    "shape_z": "En forma de Z",
+    "shape_u": "En forma de U",
+    "chamfer_leg": "Longitud del corte",
+    "chamfer_leg_mm": "Longitud del corte (mm)",
+    "chamfer_leg_left": "Corte a la izquierda",
+    "chamfer_leg_left_mm": "Corte a la izquierda (mm)",
+    "chamfer_leg_right": "Corte a la derecha",
+    "chamfer_leg_right_mm": "Corte a la derecha (mm)",
+    "chamfer_leg_near": "Corte arriba",
+    "chamfer_leg_near_mm": "Corte arriba (mm)",
+    "chamfer_leg_far": "Corte abajo",
+    "chamfer_leg_far_mm": "Corte abajo (mm)",
     "tap_wall_to_cut": "Toca una pared para mover los huecos",
+    "tap_wall_notch": "Toque la pared con el hueco",
+    "notch_depth": "Profundidad del hueco",
+    "notch_depth_mm": "Profundidad del hueco (mm)",
     "overall_length": "Longitud total",
     "overall_width": "Ancho total",
     "overall_length_mm": "Longitud total (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Ancho del hueco",
     "notch_length_mm": "Longitud del hueco (mm)",
     "notch_width_mm": "Ancho del hueco (mm)",
+    "notch_length_n": "Longitud del hueco {number}",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Longitud del hueco {number} (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Ancho del hueco {number}",
+    "symmetric_cut": "Simétrico",
+    "stub_length": "Longitud del saliente",
+    "stub_length_mm": "Longitud del saliente (mm)",
+    "stub_width": "Anchura del saliente",
+    "stub_width_mm": "Anchura del saliente (mm)",
+    "stub_length_n": "Longitud del saliente {number}",
+    "stub_length_n_mm": "Longitud del saliente {number} (mm)",
+    "stub_width_n": "Anchura del saliente {number}",
+    "stub_width_n_mm": "Anchura del saliente {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Ancho del hueco {number} (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "El hueco no deja habitación",
+    "notches_overlap": "Los huecos se solapan",
     "row_steps_at_notch": "La fila {number} cruza la esquina recortada: las lamas de su extremo se recortan alrededor, consulte el dibujo",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Toque la esquina recortada",
-    "diagonal_not_for_l_shape": "La colocación en diagonal aún no se admite en una habitación en forma de L",
+    "tap_corner_notched": "Toque la esquina que está recortada",
+    "tap_corner_to_move": "Toque una esquina para mover los huecos",
+    "tap_wall_stem": "Toque la pared donde está el saliente",
+    "diagonal_not_for_notch": "La colocación en diagonal aún no se admite en una habitación con una esquina recortada",
+    "direction_across_notch_only": "Una habitación con un hueco en la pared solo se puede colocar en perpendicular a esa pared",
     "corner_top_left": "Superior izquierda",
     "corner_top_right": "Superior derecha",
     "corner_bottom_right": "Inferior derecha",
@@ -95,12 +124,14 @@
     "wall_left": "Pared izquierda",
     "pieces_per_package": "Piezas por paquete",
     "laying": "Instalación",
-    "laying_direction": "Dirección de instalación",
     "along_length": "A lo largo",
     "along_width": "A lo ancho",
     "diagonally": "En diagonal",
     "expansion_gap_mm": "Junta de dilatación (mm)",
     "joint_offset": "Desfase de juntas",
+    "laying_direction": "Dirección de colocación",
+    "expansion_gap": "Junta de dilatación",
+    "min_piece_length": "Longitud mínima de lama",
     "exact_offset": "exacto",
     "joint_offset_mm": "Desfase de juntas (mm)",
     "minimal_piece_length": "Longitud mínima del panel (mm)",
@@ -122,7 +153,7 @@
     "variant": "N.º {number}",
     "cut_list": "Lista de cortes",
     "row": "Fila {number}",
-    "whole": "enteras",
+    "whole": "{count, plural, one{entera} other{enteras}}",
     "leftovers": "Sobrantes",
     "waste": "Desperdicio"
 }

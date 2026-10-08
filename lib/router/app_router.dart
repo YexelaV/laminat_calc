@@ -1,9 +1,9 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:floor_calculator/models.dart';
-import 'package:floor_calculator/pages/laminate_parameters_screen.dart';
-import 'package:floor_calculator/pages/laying_parameters_screen.dart';
+import 'package:floor_calculator/pages/laminate_and_laying_screen.dart';
 import 'package:floor_calculator/pages/measurement_system_screen.dart';
 import 'package:floor_calculator/pages/result_screen.dart';
+import 'package:floor_calculator/pages/review_screen.dart';
 import 'package:floor_calculator/pages/room_parameters_screen.dart';
 import 'package:floor_calculator/pages/scheme_screen.dart';
 import 'package:floor_calculator/pages/start_screen.dart';
@@ -17,8 +17,8 @@ part 'app_router.gr.dart';
     AutoRoute(page: StartScreen, initial: true),
     AutoRoute(page: MeasurementSystemScreen),
     AutoRoute(page: RoomParametersScreen),
-    AutoRoute(page: LaminateParametersScreen),
-    AutoRoute(page: LayingParametersScreen),
+    AutoRoute(page: LaminateAndLayingScreen),
+    AutoRoute(page: ReviewScreen),
     AutoRoute(page: ResultScreen),
     AutoRoute(page: SchemeScreen),
   ],

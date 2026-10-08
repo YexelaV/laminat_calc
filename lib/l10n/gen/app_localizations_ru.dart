@@ -60,24 +60,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get uneven_walls => 'Стены разной длины';
 
   @override
-  String wall_length(int number) {
-    return 'Длина $number';
-  }
+  String get wall_length_near => 'Длина (верх)';
 
   @override
-  String wall_width(int number) {
-    return 'Ширина $number';
-  }
+  String get wall_length_far => 'Длина (низ)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Длина $number (мм)';
-  }
+  String get wall_width_left => 'Ширина (слева)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Ширина $number (мм)';
-  }
+  String get wall_width_right => 'Ширина (справа)';
+
+  @override
+  String get wall_length_near_mm => 'Длина (верх) мм';
+
+  @override
+  String get wall_length_far_mm => 'Длина (низ) мм';
+
+  @override
+  String get wall_width_left_mm => 'Ширина (слева) мм';
+
+  @override
+  String get wall_width_right_mm => 'Ширина (справа) мм';
 
   @override
   String get wall_diagonal => 'Диагональ';
@@ -107,39 +111,52 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shape_t => 'Т-образное';
 
   @override
-  String shoulder(int number) {
-    return 'Срез $number';
-  }
+  String get shape_z => 'Z-образное';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Срез $number (мм)';
-  }
+  String get shape_u => 'П-образное';
 
   @override
-  String get chamfer_leg => 'Срез (45°)';
+  String get chamfer_leg => 'Длина среза';
 
   @override
-  String get chamfer_leg_mm => 'Срез под 45° (мм)';
+  String get chamfer_leg_mm => 'Длина среза (мм)';
 
   @override
-  String notch(int number) {
-    return 'Вырез $number';
-  }
+  String get chamfer_leg_left => 'Срез слева';
 
   @override
-  String notch_mm(int number) {
-    return 'Вырез $number (мм)';
-  }
+  String get chamfer_leg_left_mm => 'Срез слева (мм)';
 
   @override
-  String get cut_depth => 'Глубина вырезов';
+  String get chamfer_leg_right => 'Срез справа';
 
   @override
-  String get cut_depth_mm => 'Глубина вырезов (мм)';
+  String get chamfer_leg_right_mm => 'Срез справа (мм)';
+
+  @override
+  String get chamfer_leg_near => 'Срез сверху';
+
+  @override
+  String get chamfer_leg_near_mm => 'Срез сверху (мм)';
+
+  @override
+  String get chamfer_leg_far => 'Срез снизу';
+
+  @override
+  String get chamfer_leg_far_mm => 'Срез снизу (мм)';
 
   @override
   String get tap_wall_to_cut => 'Коснитесь стены, чтобы перенести вырезы';
+
+  @override
+  String get tap_wall_notch => 'Коснитесь стены, в которой вырез';
+
+  @override
+  String get notch_depth => 'Глубина выреза';
+
+  @override
+  String get notch_depth_mm => 'Глубина выреза (мм)';
 
   @override
   String get overall_length => 'Общая длина';
@@ -166,7 +183,65 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notch_width_mm => 'Ширина выреза (мм)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Длина выреза $number';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Длина выреза $number (мм)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Ширина выреза $number';
+  }
+
+  @override
+  String get symmetric_cut => 'Симметрично';
+
+  @override
+  String get stub_length => 'Длина выступа';
+
+  @override
+  String get stub_length_mm => 'Длина выступа (мм)';
+
+  @override
+  String get stub_width => 'Ширина выступа';
+
+  @override
+  String get stub_width_mm => 'Ширина выступа (мм)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Длина выступа $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Длина выступа $number (мм)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Ширина выступа $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Ширина выступа $number (мм)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Ширина выреза $number (мм)';
+  }
+
+  @override
   String get notch_does_not_fit => 'Вырез не оставляет помещения';
+
+  @override
+  String get notches_overlap => 'Вырезы перекрывают друг друга';
 
   @override
   String row_steps_at_notch(int number) {
@@ -177,8 +252,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tap_corner_to_cut => 'Нажмите на угол, который срезан';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'Диагональная укладка в Г-образном помещении пока не поддерживается';
+  String get tap_corner_notched => 'Нажмите на угол, который вырезан';
+
+  @override
+  String get tap_corner_to_move => 'Нажмите на угол, чтобы перенести вырезы';
+
+  @override
+  String get tap_wall_stem => 'Нажмите на стену с выступом';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'Диагональная укладка в помещении с вырезом пока не поддерживается';
+
+  @override
+  String get direction_across_notch_only =>
+      'В помещении с вырезом в стене укладка возможна только поперёк этой стены';
 
   @override
   String get corner_top_left => 'Верхний левый';
@@ -211,9 +299,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get laying => 'Укладка';
 
   @override
-  String get laying_direction => 'Направление укладки';
-
-  @override
   String get along_length => 'По длине';
 
   @override
@@ -227,6 +312,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get joint_offset => 'Смещение стыков';
+
+  @override
+  String get laying_direction => 'Направление укладки';
+
+  @override
+  String get expansion_gap => 'Отступ от стен';
+
+  @override
+  String get min_piece_length => 'Минимальная длина панели';
 
   @override
   String get exact_offset => 'точно';
@@ -307,7 +401,15 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get whole => 'целые';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'целые',
+      one: 'целая',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Остатки';

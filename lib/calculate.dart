@@ -338,6 +338,11 @@ class Calculation {
     // reached anyway, and it ends in the same "no laying variants" the user
     // already knows rather than in a floor laid across a void.
     if (direction == Direction.diagonal && !shape.takesDiagonal) return [];
+    // And the same for a straight direction a room cannot take: a notch in the
+    // middle of a wall parts every row that runs along that wall in two, which
+    // is the same sentence the engine has no way to say.
+    if (direction == Direction.length && !shape.takesAlongLength) return [];
+    if (direction == Direction.width && !shape.takesAcrossWidth) return [];
     final plan = planFor(
       shape: shape,
       indentFromWall: indentFromWall,
@@ -366,10 +371,7 @@ class Calculation {
           laminateWidth: laminateWidth,
           direction: direction,
           indentFromWall: indentFromWall,
-          steppedRows: [
-            for (var i = 0; i < plan.numberOfRows; i++)
-              if (plan.stepped[i]) i
-          ],
+          rowSteps: plan.steps,
         ));
       }
     }

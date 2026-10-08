@@ -60,24 +60,28 @@ class AppLocalizationsPl extends AppLocalizations {
   String get uneven_walls => 'Ściany o różnej długości';
 
   @override
-  String wall_length(int number) {
-    return 'Długość $number';
-  }
+  String get wall_length_near => 'Długość (góra)';
 
   @override
-  String wall_width(int number) {
-    return 'Szerokość $number';
-  }
+  String get wall_length_far => 'Długość (dół)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Długość $number (mm)';
-  }
+  String get wall_width_left => 'Szerokość (lewa)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Szerokość $number (mm)';
-  }
+  String get wall_width_right => 'Szerokość (prawa)';
+
+  @override
+  String get wall_length_near_mm => 'Długość (góra) mm';
+
+  @override
+  String get wall_length_far_mm => 'Długość (dół) mm';
+
+  @override
+  String get wall_width_left_mm => 'Szerokość (lewa) mm';
+
+  @override
+  String get wall_width_right_mm => 'Szerokość (prawa) mm';
 
   @override
   String get wall_diagonal => 'Przekątna';
@@ -107,39 +111,52 @@ class AppLocalizationsPl extends AppLocalizations {
   String get shape_t => 'W kształcie litery T';
 
   @override
-  String shoulder(int number) {
-    return 'Ścięcie $number';
-  }
+  String get shape_z => 'W kształcie litery Z';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Ścięcie $number (mm)';
-  }
+  String get shape_u => 'W kształcie litery U';
 
   @override
-  String get chamfer_leg => 'Ścięcie (45°)';
+  String get chamfer_leg => 'Długość ścięcia';
 
   @override
-  String get chamfer_leg_mm => 'Ścięcie pod 45° (mm)';
+  String get chamfer_leg_mm => 'Długość ścięcia (mm)';
 
   @override
-  String notch(int number) {
-    return 'Wcięcie $number';
-  }
+  String get chamfer_leg_left => 'Ścięcie z lewej';
 
   @override
-  String notch_mm(int number) {
-    return 'Wcięcie $number (mm)';
-  }
+  String get chamfer_leg_left_mm => 'Ścięcie z lewej (mm)';
 
   @override
-  String get cut_depth => 'Głębokość wcięć';
+  String get chamfer_leg_right => 'Ścięcie z prawej';
 
   @override
-  String get cut_depth_mm => 'Głębokość wcięć (mm)';
+  String get chamfer_leg_right_mm => 'Ścięcie z prawej (mm)';
+
+  @override
+  String get chamfer_leg_near => 'Ścięcie u góry';
+
+  @override
+  String get chamfer_leg_near_mm => 'Ścięcie u góry (mm)';
+
+  @override
+  String get chamfer_leg_far => 'Ścięcie u dołu';
+
+  @override
+  String get chamfer_leg_far_mm => 'Ścięcie u dołu (mm)';
 
   @override
   String get tap_wall_to_cut => 'Dotknij ściany, aby przenieść wcięcia';
+
+  @override
+  String get tap_wall_notch => 'Dotknij ściany z wcięciem';
+
+  @override
+  String get notch_depth => 'Głębokość wcięcia';
+
+  @override
+  String get notch_depth_mm => 'Głębokość wcięcia (mm)';
 
   @override
   String get overall_length => 'Długość całkowita';
@@ -166,7 +183,65 @@ class AppLocalizationsPl extends AppLocalizations {
   String get notch_width_mm => 'Szerokość wcięcia (mm)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Długość wcięcia $number';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Długość wcięcia $number (mm)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Szerokość wcięcia $number';
+  }
+
+  @override
+  String get symmetric_cut => 'Symetrycznie';
+
+  @override
+  String get stub_length => 'Długość występu';
+
+  @override
+  String get stub_length_mm => 'Długość występu (mm)';
+
+  @override
+  String get stub_width => 'Szerokość występu';
+
+  @override
+  String get stub_width_mm => 'Szerokość występu (mm)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Długość występu $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Długość występu $number (mm)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Szerokość występu $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Szerokość występu $number (mm)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Szerokość wcięcia $number (mm)';
+  }
+
+  @override
   String get notch_does_not_fit => 'Wcięcie nie zostawia pomieszczenia';
+
+  @override
+  String get notches_overlap => 'Wcięcia nachodzą na siebie';
 
   @override
   String row_steps_at_notch(int number) {
@@ -177,8 +252,21 @@ class AppLocalizationsPl extends AppLocalizations {
   String get tap_corner_to_cut => 'Dotknij wyciętego narożnika';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'Układanie po skosie nie jest jeszcze obsługiwane w pomieszczeniu w kształcie litery L';
+  String get tap_corner_notched => 'Dotknij narożnika, który jest wycięty';
+
+  @override
+  String get tap_corner_to_move => 'Dotknij narożnika, aby przenieść wcięcia';
+
+  @override
+  String get tap_wall_stem => 'Dotknij ściany z występem';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'Układanie po skosie nie jest jeszcze obsługiwane w pomieszczeniu z wciętym narożnikiem';
+
+  @override
+  String get direction_across_notch_only =>
+      'Pomieszczenie z wcięciem w ścianie można układać tylko w poprzek tej ściany';
 
   @override
   String get corner_top_left => 'Lewy górny';
@@ -211,9 +299,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get laying => 'Układanie';
 
   @override
-  String get laying_direction => 'Kierunek układania';
-
-  @override
   String get along_length => 'Wzdłuż długości';
 
   @override
@@ -227,6 +312,15 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get joint_offset => 'Przesunięcie spoin';
+
+  @override
+  String get laying_direction => 'Kierunek układania';
+
+  @override
+  String get expansion_gap => 'Szczelina dylatacyjna';
+
+  @override
+  String get min_piece_length => 'Minimalna długość panela';
 
   @override
   String get exact_offset => 'dokładnie';
@@ -307,7 +401,15 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get whole => 'całe';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'całe',
+      one: 'cały',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Pozostałości';

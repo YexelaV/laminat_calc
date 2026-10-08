@@ -16,38 +16,14 @@
     "length_mm": "Longueur (mm)",
     "width_mm": "Largeur (mm)",
     "uneven_walls": "Murs de longueurs différentes",
-    "wall_length": "Longueur {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Largeur {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Longueur {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Largeur {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Longueur (haut)",
+    "wall_length_far": "Longueur (bas)",
+    "wall_width_left": "Largeur (gauche)",
+    "wall_width_right": "Largeur (droite)",
+    "wall_length_near_mm": "Longueur (haut) mm",
+    "wall_length_far_mm": "Longueur (bas) mm",
+    "wall_width_left_mm": "Largeur (gauche) mm",
+    "wall_width_right_mm": "Largeur (droite) mm",
     "wall_diagonal": "Diagonale",
     "wall_diagonal_mm": "Diagonale (mm)",
     "walls_do_not_close": "Les murs ne se referment pas",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Angle coupé",
     "shape_chamfer_pair": "Deux angles coupés",
     "shape_t": "En forme de T",
-    "shoulder": "Coupe {number}",
-    "shoulder_mm": "Coupe {number} (mm)",
-    "chamfer_leg": "Coupe (45°)",
-    "chamfer_leg_mm": "Coupe à 45° (mm)",
-    "notch": "Retrait {number}",
-    "notch_mm": "Retrait {number} (mm)",
-    "cut_depth": "Profondeur des retraits",
-    "cut_depth_mm": "Profondeur des retraits (mm)",
+    "shape_z": "En forme de Z",
+    "shape_u": "En forme de U",
+    "chamfer_leg": "Longueur de la coupe",
+    "chamfer_leg_mm": "Longueur de la coupe (mm)",
+    "chamfer_leg_left": "Coupe à gauche",
+    "chamfer_leg_left_mm": "Coupe à gauche (mm)",
+    "chamfer_leg_right": "Coupe à droite",
+    "chamfer_leg_right_mm": "Coupe à droite (mm)",
+    "chamfer_leg_near": "Coupe en haut",
+    "chamfer_leg_near_mm": "Coupe en haut (mm)",
+    "chamfer_leg_far": "Coupe en bas",
+    "chamfer_leg_far_mm": "Coupe en bas (mm)",
     "tap_wall_to_cut": "Touchez un mur pour déplacer les retraits",
+    "tap_wall_notch": "Touchez le mur où se trouve la découpe",
+    "notch_depth": "Profondeur de la découpe",
+    "notch_depth_mm": "Profondeur de la découpe (mm)",
     "overall_length": "Longueur totale",
     "overall_width": "Largeur totale",
     "overall_length_mm": "Longueur totale (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Largeur de la découpe",
     "notch_length_mm": "Longueur de la découpe (mm)",
     "notch_width_mm": "Largeur de la découpe (mm)",
+    "notch_length_n": "Longueur de la découpe {number}",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Longueur de la découpe {number} (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Largeur de la découpe {number}",
+    "symmetric_cut": "Symétrique",
+    "stub_length": "Longueur de l’avancée",
+    "stub_length_mm": "Longueur de l’avancée (mm)",
+    "stub_width": "Largeur de l’avancée",
+    "stub_width_mm": "Largeur de l’avancée (mm)",
+    "stub_length_n": "Longueur de l’avancée {number}",
+    "stub_length_n_mm": "Longueur de l’avancée {number} (mm)",
+    "stub_width_n": "Largeur de l’avancée {number}",
+    "stub_width_n_mm": "Largeur de l’avancée {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Largeur de la découpe {number} (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "La découpe ne laisse plus de pièce",
+    "notches_overlap": "Les découpes se chevauchent",
     "row_steps_at_notch": "La rangée {number} traverse le coin découpé : les lames de son extrémité sont entaillées autour, voir le dessin",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Touchez le coin découpé",
-    "diagonal_not_for_l_shape": "La pose en diagonale n'est pas encore prise en charge dans une pièce en L",
+    "tap_corner_notched": "Touchez le coin qui est découpé",
+    "tap_corner_to_move": "Touchez un coin pour déplacer les découpes",
+    "tap_wall_stem": "Touchez le mur où se trouve l’avancée",
+    "diagonal_not_for_notch": "La pose en diagonale n'est pas encore prise en charge dans une pièce avec un angle découpé",
+    "direction_across_notch_only": "Une pièce avec une découpe dans un mur ne se pose que perpendiculairement à ce mur",
     "corner_top_left": "En haut à gauche",
     "corner_top_right": "En haut à droite",
     "corner_bottom_right": "En bas à droite",
@@ -95,12 +124,14 @@
     "wall_left": "Mur de gauche",
     "pieces_per_package": "Pièces par paquet",
     "laying": "Pose",
-    "laying_direction": "Sens de pose",
     "along_length": "Dans la longueur",
     "along_width": "Dans la largeur",
     "diagonally": "En diagonale",
     "expansion_gap_mm": "Joint de dilatation (mm)",
     "joint_offset": "Décalage des joints",
+    "laying_direction": "Sens de pose",
+    "expansion_gap": "Joint de dilatation",
+    "min_piece_length": "Longueur minimale de lame",
     "exact_offset": "exact",
     "joint_offset_mm": "Décalage des joints (mm)",
     "minimal_piece_length": "Longueur minimale de lame (mm)",
@@ -122,7 +153,7 @@
     "variant": "N° {number}",
     "cut_list": "Liste de coupe",
     "row": "Rangée {number}",
-    "whole": "entières",
+    "whole": "{count, plural, one{entière} other{entières}}",
     "leftovers": "Chutes réutilisables",
     "waste": "Déchets"
 }

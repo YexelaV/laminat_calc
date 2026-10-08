@@ -16,38 +16,14 @@
     "length_mm": "Comprimento (mm)",
     "width_mm": "Largura (mm)",
     "uneven_walls": "Paredes de comprimentos diferentes",
-    "wall_length": "Comprimento {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Largura {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Comprimento {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Largura {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Comprimento (cima)",
+    "wall_length_far": "Comprimento (baixo)",
+    "wall_width_left": "Largura (esquerda)",
+    "wall_width_right": "Largura (direita)",
+    "wall_length_near_mm": "Comprimento (cima) mm",
+    "wall_length_far_mm": "Comprimento (baixo) mm",
+    "wall_width_left_mm": "Largura (esquerda) mm",
+    "wall_width_right_mm": "Largura (direita) mm",
     "wall_diagonal": "Diagonal",
     "wall_diagonal_mm": "Diagonal (mm)",
     "walls_do_not_close": "As paredes não fecham",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Canto cortado",
     "shape_chamfer_pair": "Dois cantos cortados",
     "shape_t": "Em forma de T",
-    "shoulder": "Corte {number}",
-    "shoulder_mm": "Corte {number} (mm)",
-    "chamfer_leg": "Corte (45°)",
-    "chamfer_leg_mm": "Corte a 45° (mm)",
-    "notch": "Recorte {number}",
-    "notch_mm": "Recorte {number} (mm)",
-    "cut_depth": "Profundidade dos recortes",
-    "cut_depth_mm": "Profundidade dos recortes (mm)",
+    "shape_z": "Em forma de Z",
+    "shape_u": "Em forma de U",
+    "chamfer_leg": "Comprimento do corte",
+    "chamfer_leg_mm": "Comprimento do corte (mm)",
+    "chamfer_leg_left": "Corte à esquerda",
+    "chamfer_leg_left_mm": "Corte à esquerda (mm)",
+    "chamfer_leg_right": "Corte à direita",
+    "chamfer_leg_right_mm": "Corte à direita (mm)",
+    "chamfer_leg_near": "Corte em cima",
+    "chamfer_leg_near_mm": "Corte em cima (mm)",
+    "chamfer_leg_far": "Corte em baixo",
+    "chamfer_leg_far_mm": "Corte em baixo (mm)",
     "tap_wall_to_cut": "Toque numa parede para mover os recortes",
+    "tap_wall_notch": "Toque na parede com o recorte",
+    "notch_depth": "Profundidade do recorte",
+    "notch_depth_mm": "Profundidade do recorte (mm)",
     "overall_length": "Comprimento total",
     "overall_width": "Largura total",
     "overall_length_mm": "Comprimento total (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Largura do recorte",
     "notch_length_mm": "Comprimento do recorte (mm)",
     "notch_width_mm": "Largura do recorte (mm)",
+    "notch_length_n": "Comprimento do recorte {number}",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Comprimento do recorte {number} (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Largura do recorte {number}",
+    "symmetric_cut": "Simétrico",
+    "stub_length": "Comprimento da saliência",
+    "stub_length_mm": "Comprimento da saliência (mm)",
+    "stub_width": "Largura da saliência",
+    "stub_width_mm": "Largura da saliência (mm)",
+    "stub_length_n": "Comprimento da saliência {number}",
+    "stub_length_n_mm": "Comprimento da saliência {number} (mm)",
+    "stub_width_n": "Largura da saliência {number}",
+    "stub_width_n_mm": "Largura da saliência {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Largura do recorte {number} (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "O recorte não deixa divisão",
+    "notches_overlap": "Os recortes sobrepõem-se",
     "row_steps_at_notch": "A fileira {number} atravessa o canto recortado: as réguas na ponta são recortadas em volta, veja o desenho",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Toque no canto recortado",
-    "diagonal_not_for_l_shape": "A colocação na diagonal ainda não é suportada numa divisão em forma de L",
+    "tap_corner_notched": "Toque no canto que está recortado",
+    "tap_corner_to_move": "Toque num canto para mover os recortes",
+    "tap_wall_stem": "Toque na parede onde está a saliência",
+    "diagonal_not_for_notch": "A colocação na diagonal ainda não é suportada numa divisão com um canto recortado",
+    "direction_across_notch_only": "Uma divisão com um recorte numa parede só pode ser assente perpendicularmente a essa parede",
     "corner_top_left": "Superior esquerdo",
     "corner_top_right": "Superior direito",
     "corner_bottom_right": "Inferior direito",
@@ -95,12 +124,14 @@
     "wall_left": "Parede esquerda",
     "pieces_per_package": "Peças por pacote",
     "laying": "Instalação",
-    "laying_direction": "Direção de instalação",
     "along_length": "No comprimento",
     "along_width": "Na largura",
     "diagonally": "Na diagonal",
     "expansion_gap_mm": "Junta de dilatação (mm)",
     "joint_offset": "Defasagem das juntas",
+    "laying_direction": "Sentido de assentamento",
+    "expansion_gap": "Junta de dilatação",
+    "min_piece_length": "Comprimento mínimo da régua",
     "exact_offset": "exato",
     "joint_offset_mm": "Defasagem das juntas (mm)",
     "minimal_piece_length": "Comprimento mínimo da régua (mm)",
@@ -122,7 +153,7 @@
     "variant": "N.º {number}",
     "cut_list": "Lista de cortes",
     "row": "Fileira {number}",
-    "whole": "inteiras",
+    "whole": "{count, plural, one{inteira} other{inteiras}}",
     "leftovers": "Sobras",
     "waste": "Descarte"
 }

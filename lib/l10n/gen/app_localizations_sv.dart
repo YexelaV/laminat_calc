@@ -60,24 +60,28 @@ class AppLocalizationsSv extends AppLocalizations {
   String get uneven_walls => 'Väggar av olika längd';
 
   @override
-  String wall_length(int number) {
-    return 'Längd $number';
-  }
+  String get wall_length_near => 'Längd (upptill)';
 
   @override
-  String wall_width(int number) {
-    return 'Bredd $number';
-  }
+  String get wall_length_far => 'Längd (nedtill)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Längd $number (mm)';
-  }
+  String get wall_width_left => 'Bredd (vänster)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Bredd $number (mm)';
-  }
+  String get wall_width_right => 'Bredd (höger)';
+
+  @override
+  String get wall_length_near_mm => 'Längd (upptill) mm';
+
+  @override
+  String get wall_length_far_mm => 'Längd (nedtill) mm';
+
+  @override
+  String get wall_width_left_mm => 'Bredd (vänster) mm';
+
+  @override
+  String get wall_width_right_mm => 'Bredd (höger) mm';
 
   @override
   String get wall_diagonal => 'Diagonal';
@@ -107,39 +111,52 @@ class AppLocalizationsSv extends AppLocalizations {
   String get shape_t => 'T-format';
 
   @override
-  String shoulder(int number) {
-    return 'Snitt $number';
-  }
+  String get shape_z => 'Z-format';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Snitt $number (mm)';
-  }
+  String get shape_u => 'U-format';
 
   @override
-  String get chamfer_leg => 'Avfasning (45°)';
+  String get chamfer_leg => 'Avfasningens längd';
 
   @override
-  String get chamfer_leg_mm => '45°-avfasning (mm)';
+  String get chamfer_leg_mm => 'Avfasningens längd (mm)';
 
   @override
-  String notch(int number) {
-    return 'Urtag $number';
-  }
+  String get chamfer_leg_left => 'Avfasning vänster';
 
   @override
-  String notch_mm(int number) {
-    return 'Urtag $number (mm)';
-  }
+  String get chamfer_leg_left_mm => 'Avfasning vänster (mm)';
 
   @override
-  String get cut_depth => 'Urtagens djup';
+  String get chamfer_leg_right => 'Avfasning höger';
 
   @override
-  String get cut_depth_mm => 'Urtagens djup (mm)';
+  String get chamfer_leg_right_mm => 'Avfasning höger (mm)';
+
+  @override
+  String get chamfer_leg_near => 'Avfasning upptill';
+
+  @override
+  String get chamfer_leg_near_mm => 'Avfasning upptill (mm)';
+
+  @override
+  String get chamfer_leg_far => 'Avfasning nedtill';
+
+  @override
+  String get chamfer_leg_far_mm => 'Avfasning nedtill (mm)';
 
   @override
   String get tap_wall_to_cut => 'Tryck på en vägg för att flytta urtagen';
+
+  @override
+  String get tap_wall_notch => 'Tryck på väggen med urtaget';
+
+  @override
+  String get notch_depth => 'Urtagets djup';
+
+  @override
+  String get notch_depth_mm => 'Urtagets djup (mm)';
 
   @override
   String get overall_length => 'Total längd';
@@ -166,7 +183,65 @@ class AppLocalizationsSv extends AppLocalizations {
   String get notch_width_mm => 'Urtagets bredd (mm)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Längd för urtag $number';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Längd för urtag $number (mm)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Bredd för urtag $number';
+  }
+
+  @override
+  String get symmetric_cut => 'Symmetriskt';
+
+  @override
+  String get stub_length => 'Utsprångets längd';
+
+  @override
+  String get stub_length_mm => 'Utsprångets längd (mm)';
+
+  @override
+  String get stub_width => 'Utsprångets bredd';
+
+  @override
+  String get stub_width_mm => 'Utsprångets bredd (mm)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Utsprångets längd $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Utsprångets längd $number (mm)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Utsprångets bredd $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Utsprångets bredd $number (mm)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Bredd för urtag $number (mm)';
+  }
+
+  @override
   String get notch_does_not_fit => 'Urtaget lämnar inget rum';
+
+  @override
+  String get notches_overlap => 'Urtagen överlappar varandra';
 
   @override
   String row_steps_at_notch(int number) {
@@ -177,8 +252,21 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tap_corner_to_cut => 'Tryck på hörnet som är urtaget';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'Diagonal läggning stöds ännu inte i ett L-format rum';
+  String get tap_corner_notched => 'Tryck på hörnet som är urtaget';
+
+  @override
+  String get tap_corner_to_move => 'Tryck på ett hörn för att flytta urtagen';
+
+  @override
+  String get tap_wall_stem => 'Tryck på väggen där utsprånget sitter';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'Diagonal läggning stöds ännu inte i ett rum med ett urtaget hörn';
+
+  @override
+  String get direction_across_notch_only =>
+      'Ett rum med ett urtag i en vägg kan bara läggas tvärs den väggen';
 
   @override
   String get corner_top_left => 'Övre vänstra';
@@ -211,9 +299,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get laying => 'Läggning';
 
   @override
-  String get laying_direction => 'Läggningsriktning';
-
-  @override
   String get along_length => 'Längs längden';
 
   @override
@@ -227,6 +312,15 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get joint_offset => 'Skarvförskjutning';
+
+  @override
+  String get laying_direction => 'Läggningsriktning';
+
+  @override
+  String get expansion_gap => 'Rörelsefog';
+
+  @override
+  String get min_piece_length => 'Minsta planklängd';
 
   @override
   String get exact_offset => 'exakt';
@@ -305,7 +399,15 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String get whole => 'hela';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'hela',
+      one: 'hel',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Rester';

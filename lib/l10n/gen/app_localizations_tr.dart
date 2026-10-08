@@ -60,24 +60,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get uneven_walls => 'Farklı uzunlukta duvarlar';
 
   @override
-  String wall_length(int number) {
-    return 'Uzunluk $number';
-  }
+  String get wall_length_near => 'Uzunluk (üst)';
 
   @override
-  String wall_width(int number) {
-    return 'Genişlik $number';
-  }
+  String get wall_length_far => 'Uzunluk (alt)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Uzunluk $number (mm)';
-  }
+  String get wall_width_left => 'Genişlik (sol)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Genişlik $number (mm)';
-  }
+  String get wall_width_right => 'Genişlik (sağ)';
+
+  @override
+  String get wall_length_near_mm => 'Uzunluk (üst) mm';
+
+  @override
+  String get wall_length_far_mm => 'Uzunluk (alt) mm';
+
+  @override
+  String get wall_width_left_mm => 'Genişlik (sol) mm';
+
+  @override
+  String get wall_width_right_mm => 'Genişlik (sağ) mm';
 
   @override
   String get wall_diagonal => 'Köşegen';
@@ -107,39 +111,52 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shape_t => 'T biçiminde';
 
   @override
-  String shoulder(int number) {
-    return 'Kesim $number';
-  }
+  String get shape_z => 'Z biçiminde';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Kesim $number (mm)';
-  }
+  String get shape_u => 'U biçiminde';
 
   @override
-  String get chamfer_leg => 'Pah (45°)';
+  String get chamfer_leg => 'Pah uzunluğu';
 
   @override
-  String get chamfer_leg_mm => '45° pah (mm)';
+  String get chamfer_leg_mm => 'Pah uzunluğu (mm)';
 
   @override
-  String notch(int number) {
-    return 'Girinti $number';
-  }
+  String get chamfer_leg_left => 'Soldaki pah';
 
   @override
-  String notch_mm(int number) {
-    return 'Girinti $number (mm)';
-  }
+  String get chamfer_leg_left_mm => 'Soldaki pah (mm)';
 
   @override
-  String get cut_depth => 'Girintilerin derinliği';
+  String get chamfer_leg_right => 'Sağdaki pah';
 
   @override
-  String get cut_depth_mm => 'Girintilerin derinliği (mm)';
+  String get chamfer_leg_right_mm => 'Sağdaki pah (mm)';
+
+  @override
+  String get chamfer_leg_near => 'Üstteki pah';
+
+  @override
+  String get chamfer_leg_near_mm => 'Üstteki pah (mm)';
+
+  @override
+  String get chamfer_leg_far => 'Alttaki pah';
+
+  @override
+  String get chamfer_leg_far_mm => 'Alttaki pah (mm)';
 
   @override
   String get tap_wall_to_cut => 'Girintileri taşımak için bir duvara dokunun';
+
+  @override
+  String get tap_wall_notch => 'Girintinin bulunduğu duvara dokunun';
+
+  @override
+  String get notch_depth => 'Girinti derinliği';
+
+  @override
+  String get notch_depth_mm => 'Girinti derinliği (mm)';
 
   @override
   String get overall_length => 'Toplam uzunluk';
@@ -166,7 +183,65 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notch_width_mm => 'Girinti genişliği (mm)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Girinti $number uzunluğu';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Girinti $number uzunluğu (mm)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Girinti $number genişliği';
+  }
+
+  @override
+  String get symmetric_cut => 'Simetrik';
+
+  @override
+  String get stub_length => 'Çıkıntı uzunluğu';
+
+  @override
+  String get stub_length_mm => 'Çıkıntı uzunluğu (mm)';
+
+  @override
+  String get stub_width => 'Çıkıntı genişliği';
+
+  @override
+  String get stub_width_mm => 'Çıkıntı genişliği (mm)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Çıkıntı uzunluğu $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Çıkıntı uzunluğu $number (mm)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Çıkıntı genişliği $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Çıkıntı genişliği $number (mm)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Girinti $number genişliği (mm)';
+  }
+
+  @override
   String get notch_does_not_fit => 'Girinti odadan yer bırakmıyor';
+
+  @override
+  String get notches_overlap => 'Girintiler üst üste biniyor';
 
   @override
   String row_steps_at_notch(int number) {
@@ -177,8 +252,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tap_corner_to_cut => 'Kesilen köşeye dokunun';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'L şeklinde odada çapraz döşeme henüz desteklenmiyor';
+  String get tap_corner_notched => 'Girintili köşeye dokunun';
+
+  @override
+  String get tap_corner_to_move =>
+      'Girintileri taşımak için bir köşeye dokunun';
+
+  @override
+  String get tap_wall_stem => 'Çıkıntının bulunduğu duvara dokunun';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'Köşesi girintili odada çapraz döşeme henüz desteklenmiyor';
+
+  @override
+  String get direction_across_notch_only =>
+      'Duvarında girinti olan bir oda yalnızca o duvara dik olarak döşenebilir';
 
   @override
   String get corner_top_left => 'Sol üst';
@@ -211,9 +300,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get laying => 'Döşeme';
 
   @override
-  String get laying_direction => 'Döşeme yönü';
-
-  @override
   String get along_length => 'Uzunluk boyunca';
 
   @override
@@ -227,6 +313,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get joint_offset => 'Ek yeri kaydırması';
+
+  @override
+  String get laying_direction => 'Döşeme yönü';
+
+  @override
+  String get expansion_gap => 'Genleşme boşluğu';
+
+  @override
+  String get min_piece_length => 'Asgari lamel uzunluğu';
 
   @override
   String get exact_offset => 'tam';
@@ -305,7 +400,15 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get whole => 'tam';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'tam',
+      one: 'tam',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Artan parçalar';

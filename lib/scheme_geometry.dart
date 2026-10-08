@@ -109,6 +109,13 @@ Rect boundsOf(List<Offset> polygon) {
   return rect;
 }
 
+/// How a row's number is written beside it when the caller says nothing.
+///
+/// The bare number. A caller with the user's own language hands over the number
+/// sign with it — "№3" rather than "3" — and should, because beside it stands
+/// the row's width, which is a number too.
+String _plainRowMark(int number) => '$number';
+
 /// Turn a finished calculation into something drawable.
 ///
 /// [minTextMm] is the smallest text worth writing, in millimetres of room —
@@ -120,6 +127,7 @@ Scheme buildScheme(
   Result result, {
   required MeasurementSystem system,
   required double minTextMm,
+  String Function(int) rowMark = _plainRowMark,
 }) {
   final planks = <PlankShape>[];
   final labels = <SchemeLabel>[];
@@ -225,22 +233,50 @@ Scheme buildScheme(
     }
   }
 
-  // How wide to rip each row, written just outside the wall that row begins
-  // against. Rows parallel to a wall all begin against the same one and the
-  // numbers line up down its side; rows at 45° change walls at the corner, and
-  // following them there is what keeps the labels off the floor instead of
-  // trailing away from it.
-  final rowLabels = result.lines.map((l) => '${sizeLabel(l.planks.first.width, system)} ').toList();
+  // Which row this is and, when it has to be ripped, how wide, written just
+  // outside the wall the rows begin against.
+  //
+  // The number is the one the cut list calls the row, so that a fitter reading
+  // "row 7" off the list can find row 7 on the drawing without counting down
+  // from the top — which on a floor of thirty rows is where a mis-set board
+  // starts. Said as "№7" and not as "7", because the number standing beside it
+  // may be the width and two bare numbers side by side are a puzzle.
+  //
+  // A row still the full width of a plank is left as a number alone: it is not
+  // ripped, so there is nothing to write, and a column repeating the same
+  // measurement down thirty rows buries the two or three rows where it differs.
+  final rowLabels = [
+    for (final line in result.lines)
+      line.planks.first.width == result.laminateWidth
+          ? '${rowMark(line.number + 1)} '
+          : '${rowMark(line.number + 1)}  ${sizeLabel(line.planks.first.width, system)} '
+  ];
   final gutterHeight =
       result.lines.map((l) => l.planks.first.width * _textFill).fold<double>(0, math.max);
   final gutter =
       rowLabels.fold<double>(0, (widest, text) => math.max(widest, _textWidth(text, gutterHeight)));
+  // Every label at the same end of the drawing, in one column.
+  //
+  // The anchor used to be the row's own first plank. For a rectangle that is
+  // one place for all of them; for a room with an arm it is not — the rows that
+  // cross only the arm begin halfway along the drawing, and their labels stood
+  // there, in among the planks of the rows below and written against the inside
+  // corner's wall, which turned them a quarter turn as well. The column is read
+  // down, not along, so the column is what has to be straight: `u = 0` is the
+  // near end of the rows whether a row reaches it or not.
+  //
+  // Rows at 45° keep their own starts. They begin against two different walls
+  // and change over at the corner, and following them there is what keeps the
+  // labels off the floor instead of trailing away from it.
+  final straight = result.direction != Direction.diagonal;
+  final along = place(1, 0) - place(0, 0);
+  final backwards = -along / along.distance;
   v = 0.0;
   for (var i = 0; i < result.lines.length; i++) {
     final line = result.lines[i];
     final width = line.planks.first.width.toDouble();
-    final start = place(line.startOffsetMm.toDouble(), v + width / 2);
-    final outward = floor.outward(start);
+    final start = place(straight ? 0 : line.startOffsetMm.toDouble(), v + width / 2);
+    final outward = straight ? backwards : floor.outward(start);
     labels.add(SchemeLabel(
       rowLabels[i],
       start + outward * (gutter / 2 + indent),
@@ -480,12 +516,37 @@ double _reservedOutside(List<SchemeLabel> labels, LaidFloor floor, int wall) {
 /// arithmetic says it should have.
 List<Offset> clipToFloor(List<Offset> polygon, LaidFloor floor) {
   var out = polygon;
-  final skip = <int>{};
+  final n = floor.corners.length;
+
+  // Which inside corners are one of a pair and which stand alone.
+  //
+  // A notch in the middle of a wall has two of them with a single wall between
+  // — the bottom of the notch — so they are neighbours in the ring. A corner
+  // cut out of the room has one, with a wall of the room on either side. That
+  // is the whole of the difference, and it is read off the outline rather than
+  // asked of the shape, because this is handed a polygon and nothing else.
+  final inside = floor.reflex.toSet();
+  final notches = <int>[];
+  final corners = <int>[];
   for (final corner in floor.reflex) {
-    skip.add((corner + floor.corners.length - 1) % floor.corners.length);
+    if (inside.contains((corner + 1) % n)) {
+      notches.add(corner);
+    } else if (!inside.contains((corner + n - 1) % n)) {
+      corners.add(corner);
+    }
+  }
+
+  final skip = <int>{};
+  for (final corner in corners) {
+    skip.add((corner + n - 1) % n);
     skip.add(corner);
   }
-  for (var i = 0; i < floor.corners.length; i++) {
+  for (final notch in notches) {
+    skip.add((notch + n - 1) % n);
+    skip.add(notch);
+    skip.add((notch + 1) % n);
+  }
+  for (var i = 0; i < n; i++) {
     if (skip.contains(i)) continue;
     final corner = floor.corners[i];
     final normal = floor.normals[i];
@@ -493,10 +554,21 @@ List<Offset> clipToFloor(List<Offset> polygon, LaidFloor floor) {
         out, (p) => (p.dx - corner.dx) * normal.dx + (p.dy - corner.dy) * normal.dy);
     if (out.isEmpty) return out;
   }
-  for (final corner in floor.reflex) {
-    final before = (corner + floor.corners.length - 1) % floor.corners.length;
+  for (final corner in corners) {
+    final before = (corner + n - 1) % n;
     out = _withoutCorner(
         out, floor.corners[corner], floor.normals[before], floor.normals[corner]);
+    if (out.isEmpty) return out;
+  }
+  for (final notch in notches) {
+    out = _withoutNotch(
+      out,
+      floor.corners[notch],
+      floor.corners[(notch + 1) % n],
+      floor.normals[(notch + n - 1) % n],
+      floor.normals[notch],
+      floor.normals[(notch + 1) % n],
+    );
     if (out.isEmpty) return out;
   }
   return out;
@@ -641,6 +713,177 @@ List<Offset> _withoutCorner(
     final next = (i + 1) % points.length;
     if (onWall[i] >= 0 && onWall[next] >= 0 && onWall[i] != onWall[next]) out.add(apex);
   }
+  return out;
+}
+
+/// [polygon] with the slot a notch cuts into the middle of a wall taken away.
+///
+/// The notch's two inside corners are [first] and [second]; its three walls run
+/// off them with inward normals [normalIn] arriving at [first], [normalAcross]
+/// between the two, and [normalOut] leaving [second]. What goes is everything
+/// beyond all three at once.
+///
+/// [_withoutCorner]'s argument one wall further on, and it has to be: two
+/// quarter-planes do not add up to a slot, and they do not come close. The one
+/// beyond [first] takes everything to one side of it and below the notch; the
+/// one beyond [second] takes everything to the *other* side and below. Between
+/// them that is the whole band the notch is cut into, floor and all — which is
+/// to say every plank to the left of a notch and every plank to its right came
+/// back empty.
+///
+/// One polygon out. Where a cut-away corner bites an end off a plank, a notch
+/// can bite the middle of one edge and leave a plank with a bay in it — six
+/// points instead of four, eight instead of six — and that is still one ring.
+/// It stops being one the moment the slot passes clean through a plank rather
+/// than reaching its edge, and the only rooms this is ever handed are laid
+/// across the notched wall, where it cannot: see [RoomOutline.takesAlongLength].
+/// The assertion at the end is that precondition, stated where it is relied on.
+List<Offset> _withoutNotch(List<Offset> polygon, Offset first, Offset second,
+    Offset normalIn, Offset normalAcross, Offset normalOut) {
+  final normals = [normalIn, normalAcross, normalOut];
+  // A point on each wall. The first two meet at [first] and the last two at
+  // [second], so two of the three share a point.
+  final through = [first, first, second];
+  // The corner between wall `w` and wall `w + 1`.
+  final apexes = [first, second];
+
+  double depth(Offset p, int wall) =>
+      (p.dx - through[wall].dx) * normals[wall].dx +
+      (p.dy - through[wall].dy) * normals[wall].dy;
+  double leads(Offset from, Offset to, int wall) =>
+      (to.dx - from.dx) * normals[wall].dx + (to.dy - from.dy) * normals[wall].dy;
+
+  bool keeps(int i) {
+    final corner = polygon[i];
+    final deep = [for (var w = 0; w < 3; w++) depth(corner, w)];
+    if (deep.any((d) => d > 0)) return true;
+    if (deep.every((d) => d < 0)) return false;
+    // On one of the three walls, with none of the room on the other side of it
+    // just here. Such a corner belongs to the piece only if an edge leads off
+    // it back into the room; otherwise it is the tip of a sliver the cut left
+    // behind — see [_withoutCorner], where the same thing is said at length.
+    for (final to in [
+      polygon[(i + polygon.length - 1) % polygon.length],
+      polygon[(i + 1) % polygon.length],
+    ]) {
+      for (var w = 0; w < 3; w++) {
+        if (deep[w] == 0 && leads(corner, to, w) > 0) return true;
+      }
+    }
+    return false;
+  }
+
+  final points = <Offset>[];
+  // Which of the three walls each point was cut on, or -1 for a corner of
+  // [polygon] that the cut did not touch.
+  final onWall = <int>[];
+  void add(Offset point, int wall) {
+    if (points.isNotEmpty) {
+      final last = points.last;
+      if ((last.dx - point.dx).abs() < _crumbMm && (last.dy - point.dy).abs() < _crumbMm) {
+        return;
+      }
+    }
+    points.add(point);
+    onWall.add(wall);
+  }
+
+  for (var i = 0; i < polygon.length; i++) {
+    final previous = polygon[(i + polygon.length - 1) % polygon.length];
+    final current = polygon[i];
+    // Where this edge meets each of the three walls, in the order it meets them.
+    final crossings = <double>[];
+    final walls = <int>[];
+    for (var wall = 0; wall < 3; wall++) {
+      final before = depth(previous, wall);
+      final now = depth(current, wall);
+      if (!((before > 0 && now < 0) || (before < 0 && now > 0))) continue;
+      final t = before / (before - now);
+      final at = Offset(
+        previous.dx + (current.dx - previous.dx) * t,
+        previous.dy + (current.dy - previous.dy) * t,
+      );
+      // Past the slot each wall's line runs on through the floor, and crossing
+      // it there cuts nothing.
+      var clear = false;
+      for (var other = 0; other < 3; other++) {
+        if (other != wall && depth(at, other) > 0) clear = true;
+      }
+      if (clear) continue;
+      crossings.add(t);
+      walls.add(wall);
+    }
+    // At most three, so the plainest sort there is.
+    for (var a = 0; a < crossings.length; a++) {
+      for (var b = a + 1; b < crossings.length; b++) {
+        if (crossings[b] >= crossings[a]) continue;
+        final t = crossings[a];
+        crossings[a] = crossings[b];
+        crossings[b] = t;
+        final w = walls[a];
+        walls[a] = walls[b];
+        walls[b] = w;
+      }
+    }
+    for (var c = 0; c < crossings.length; c++) {
+      final t = crossings[c];
+      add(
+        Offset(
+          previous.dx + (current.dx - previous.dx) * t,
+          previous.dy + (current.dy - previous.dy) * t,
+        ),
+        walls[c],
+      );
+    }
+    if (keeps(i)) add(current, -1);
+  }
+
+  if (points.length < 3) return const [];
+  final out = <Offset>[];
+  for (var i = 0; i < points.length; i++) {
+    out.add(points[i]);
+    final next = (i + 1) % points.length;
+    final from = onWall[i];
+    final to = onWall[next];
+    if (from < 0 || to < 0 || from == to) continue;
+    // The corners of the slot lying between the wall the walk left on and the
+    // wall it came back on, in the order it passes them. One of them where the
+    // walk crossed into the slot and out of the next wall along; both where it
+    // went in one side and out the other, which is the plank with a bay in it.
+    if (from < to) {
+      for (var w = from; w < to; w++) {
+        out.add(apexes[w]);
+      }
+    } else {
+      for (var w = from - 1; w >= to; w--) {
+        out.add(apexes[w]);
+      }
+    }
+  }
+  assert(() {
+    // A corner of the slot put back outside the piece it was put into means the
+    // slot went clean through rather than reaching an edge, and what is drawn
+    // then is one ring bridged across a hole instead of the two pieces there
+    // really are. Laying across the notched wall is what rules it out.
+    var left = double.infinity, top = double.infinity;
+    var right = double.negativeInfinity, bottom = double.negativeInfinity;
+    for (final p in polygon) {
+      left = math.min(left, p.dx);
+      right = math.max(right, p.dx);
+      top = math.min(top, p.dy);
+      bottom = math.max(bottom, p.dy);
+    }
+    for (final apex in apexes) {
+      if (!out.contains(apex)) continue;
+      if (apex.dx < left - _crumbMm ||
+          apex.dx > right + _crumbMm ||
+          apex.dy < top - _crumbMm ||
+          apex.dy > bottom + _crumbMm) {
+        return false;
+      }
+    }
+    return true;
+  }(), 'the notch cut this plank in two: it must not be laid across the slot');
   return out;
 }
 

@@ -232,6 +232,57 @@ void main() {
       expect(plan.lengths, [...List.filled(11, 3980), ...List.filled(5, 2480)]);
       expect(plan.startU, List.filled(16, 0));
       expect(plan.isUniform, isFalse);
+
+      // And what the row is laid long *over*. The strip runs 1910..2100 and the
+      // floor steps at 1990, so past the cut at u = 2480 there is 80 mm of
+      // floor under a 190 mm row. That is the number the cut list prints
+      // against the planks out there, and the only place it exists.
+      expect(plan.steps,
+          [const RowStep(row: 10, fromMm: 2480, toMm: 3980, width: 80)]);
+    });
+
+    test('a row the walls run straight through has no step in it', () {
+      // The predicate under the whole feature. Every room here is cut, so every
+      // plan has a step somewhere — but in one row only, and the fifteen others
+      // must come out as plain as a rectangle's or the cut list will tell a
+      // fitter to rip boards that need no ripping.
+      for (final room in _rooms) {
+        for (final w in _widths) {
+          for (final corner in RoomCorner.values) {
+            for (final direction in [Direction.length, Direction.width]) {
+              final shape = _cut(room[0], room[1], 800, 400, corner);
+              final floor = shape.floor(10);
+              final laid = direction == Direction.width ? shape.turned(floor) : floor;
+              final plan =
+                  rectilinearPlan(floor: laid, laminateLength: 1380, laminateWidth: w);
+              final why = '$room $corner $direction plank $w';
+              expect(plan.steps.map((s) => s.row).toSet(), hasLength(1),
+                  reason: '$why: one cut, one row stepped');
+              for (final step in plan.steps) {
+                expect(step.width, lessThan(plan.widths[step.row]),
+                    reason: '$why: a step no narrower than the row it is in');
+                expect(step.width, greaterThan(0), reason: why);
+                expect(step.fromMm, lessThan(step.toMm), reason: why);
+                // Inside the row, and measured from the row's own start, which
+                // is what lets the cut list walk planks and steps together.
+                expect(step.toMm, lessThanOrEqualTo(plan.lengths[step.row]), reason: why);
+                expect(step.fromMm, greaterThanOrEqualTo(0), reason: why);
+              }
+            }
+          }
+        }
+      }
+    });
+
+    test('a rectangle has no steps at all', () {
+      for (final room in _rooms) {
+        final plan = rectilinearPlan(
+          floor: RoomShape.rectangle(room[0], room[1]).floor(10),
+          laminateLength: 1380,
+          laminateWidth: 190,
+        );
+        expect(plan.steps, isEmpty, reason: '$room');
+      }
     });
 
     test('a cut on the starting side moves the rows instead of shortening them', () {
@@ -248,6 +299,47 @@ void main() {
       expect(plan.startU.toSet(), {0, 1500});
       expect(plan.lengths.toSet(), {3980, 2480});
       expect(plan.shift.any((s) => s != 0), isTrue);
+    });
+
+    test('a row with a step at each end is laid across both of them', () {
+      // The one row a second cut adds that a single cut never produced, and the
+      // reason the stress test no longer insists a row be one of the lengths the
+      // floor has: a Z whose two inside corners land in the same strip.
+      //
+      // 4000 x 3000, a 10 mm gap, a 190 mm plank. 800 x 1990 out of the near
+      // left corner and 1200 x 1000 out of the far right, which puts the right
+      // edge's step at v = 1990 and the left edge's at v = 2000 — ten
+      // millimetres apart, and both inside the eleventh strip (1910..2100).
+      //
+      // The floor is 3180 mm across below that strip and 2780 above it, and
+      // 1980 in the sliver between the steps. The row is 3980: it starts at the
+      // left wall the floor has above the step and ends at the right wall it has
+      // below it, and no single height in the strip is that wide. Laid to either
+      // of those lengths it would leave a ribbon of real floor bare against one
+      // wall or the other; laid to 3980 the board is notched at both ends, which
+      // is what a fitter already does at one.
+      final floor = CutCornersRoomShape(
+        length: 4000,
+        width: 3000,
+        cut: CornerCut.notch,
+        cuts: const {
+          RoomCorner.nearLeft: CornerSize(along: 800, across: 1990),
+          RoomCorner.farRight: CornerSize(along: 1200, across: 1000),
+        },
+      ).floor(10);
+      final plan = rectilinearPlan(
+        floor: floor,
+        laminateLength: 1380,
+        laminateWidth: 190,
+      );
+      expect(plan.numberOfRows, 16);
+      expect(plan.lengths,
+          [...List.filled(10, 3180), 3980, ...List.filled(5, 2780)]);
+      expect(plan.startU, [...List.filled(10, 800), ...List.filled(6, 0)]);
+      expect(_reaches(floor), {3180, 1980, 2780},
+          reason: 'no height in the room is 3980 mm across');
+      expect(plan.lengths[10], greaterThan(_reaches(floor).reduce(math.max)),
+          reason: 'the row that holds both steps is longer than the floor ever is');
     });
 
     test('a cut shallower than the last row changes nothing but the drawing', () {
@@ -270,6 +362,66 @@ void main() {
       expect(plan.widths, rectangle.widths);
       expect(plan.startU, rectangle.startU);
       expect(plan.isUniform, isTrue);
+    });
+  });
+
+  group('a notch in the middle of a wall', () {
+    // 4000 x 3000, a notch 1000 wide and 700 deep in the middle of the near
+    // wall, a 10 mm gap and a 190 mm plank.
+    const room = WallNotchRoomShape(
+      length: 4000,
+      width: 3000,
+      wall: RoomWall.near,
+      offsetFirst: 1500,
+      offsetSecond: 1500,
+      depth: 700,
+    );
+
+    test('laid across the notched wall it is rows of two lengths, nothing new',
+        () {
+      // The claim the whole shape rests on: across the notch the engine needs
+      // nothing it does not already do. The quarter turn puts the notched wall
+      // at the far end of the rows, so the rows against the notch simply run
+      // short — two reaches, like a room with one corner cut away, and the
+      // same builder produces them.
+      final plan = planFor(
+        shape: room,
+        indentFromWall: 10,
+        laminateLength: 1380,
+        laminateWidth: 190,
+        direction: Direction.width,
+      );
+      expect(plan.numberOfRows, 21);
+      expect(plan.lengths,
+          [...List.filled(8, 2980), ...List.filled(5, 2280), ...List.filled(8, 2980)]);
+      expect(plan.startU, List.filled(21, 0),
+          reason: 'the notch takes off the far end of a row, not its start');
+      expect(plan.widths, [...List.filled(20, 190), 180]);
+      expect(plan.isUniform, isFalse);
+
+      // The rows that hold a step are laid to the longer reach and notched
+      // round the corner, which is what a fitter does — rows 7 and 13 here.
+      expect(plan.lengths[7], 2980);
+      expect(plan.lengths[13], 2980);
+    });
+
+    test('the rows cover the floor and overshoot by the two steps at most', () {
+      final plan = planFor(
+        shape: room,
+        indentFromWall: 10,
+        laminateLength: 1380,
+        laminateWidth: 190,
+        direction: Direction.width,
+      );
+      var covered = 0;
+      for (var i = 0; i < plan.numberOfRows; i++) {
+        covered += plan.lengths[i] * plan.widths[i];
+      }
+      final floor = _area(room.floor(10));
+      expect(covered, greaterThanOrEqualTo(floor.round() - plan.numberOfRows),
+          reason: 'no ribbon of floor is left bare');
+      // Two rows hold a step, and each may run the step's own depth past it.
+      expect(covered, lessThanOrEqualTo((floor + 2 * 700 * 190).round() + plan.numberOfRows));
     });
   });
 

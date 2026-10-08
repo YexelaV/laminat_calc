@@ -497,6 +497,162 @@ void main() {
           RoomProblem.notchLeavesNoRoom);
     });
 
+    test('two cuts across the room may not reach each other', () {
+      // The pair that shares no wall, and so nothing on either wall bounds it.
+      // Each cut is held off the far side of the room exactly as a lone cut is,
+      // and two of those reach past one another — but reaching past is not
+      // meeting. They take the same floor twice only when they overlap along
+      // the length *and* across the width, and that is the only arrangement
+      // refused, because any other one is a Z somebody is standing in.
+      const arm = CutCornersRoomShape.minArmMm;
+      CutCornersRoomShape diagonal(int a1, int b1, int a2, int b2) =>
+          shaped(CornerCut.notch, {
+            RoomCorner.nearLeft: size(a1, b1),
+            RoomCorner.farRight: size(a2, b2),
+          });
+
+      expect(diagonal(1000, 800, 1200, 900).problem, isNull);
+      // Both pairs of numbers over: the two rectangles share floor.
+      expect(diagonal(1800, 1300, 1800, 1300).problem, RoomProblem.cutsOverlap);
+      // One pair over and the other exactly at the bound, each way round.
+      expect(diagonal(1800, 1250, 1800, 1250).problem, isNull);
+      expect(diagonal(1750, 1300, 1750, 1300).problem, isNull);
+      // The other diagonal is bounded the same way.
+      expect(
+          shaped(CornerCut.notch, {
+            RoomCorner.nearRight: size(1800, 1300),
+            RoomCorner.farLeft: size(1800, 1300),
+          }).problem,
+          RoomProblem.cutsOverlap);
+
+      // And the far end of what is allowed: two cuts as deep along the room as
+      // a lone cut may be, passing each other across it. A long thin Z, and
+      // still one unbroken run in every row — which is the whole of why the
+      // bound is the pair of sums together rather than either on its own.
+      final thin = diagonal(length - arm, 1000, length - arm, 1000);
+      expect(thin.problem, isNull);
+      expect(thin.corners().length, 8);
+      expect(reflexCorners(thin.corners()).length, 2);
+      expect(_area(thin.corners()),
+          closeTo(length * width - 2 * (length - arm) * 1000, 1e-9));
+      for (var v = 1.0; v < width; v += 7.3) {
+        final span = spanAt(thin.corners(), v);
+        expect(span, isNotNull, reason: 'at $v');
+        expect(span!.length, greaterThan(0), reason: 'at $v');
+      }
+    });
+
+    test('a notch in the middle of a wall is laid one way and not the other',
+        () {
+      // The whole argument for the shape, and the reason it is offered in one
+      // direction only. A piece taken out of a corner eats into one *end* of
+      // every row it meets, so the row stays one unbroken run whichever way the
+      // rows go. A notch in the middle of a wall eats into the middle of the
+      // rows that run along that wall — those come back in two pieces with a
+      // hole between them, and a row in two is a thing [RowPlan] cannot hold.
+      //
+      // 4000 by 3000, a notch 1000 wide and 700 deep in the middle of the near
+      // wall, with 1500 of floor to its left and 1500 to its right.
+      const room = WallNotchRoomShape(
+        length: 4000,
+        width: 3000,
+        wall: RoomWall.near,
+        offsetFirst: 1500,
+        offsetSecond: 1500,
+        depth: 700,
+      );
+      expect(room.problem, isNull);
+      expect(room.notchWidth, 1000);
+      expect(room.corners().length, 8);
+      expect(reflexCorners(room.corners()).length, 2);
+      expect(room.wallLengths(), [1500, 700, 1000, 700, 1500, 3000, 4000, 3000]);
+      expect(_area(room.corners()), closeTo(4000 * 3000 - 1000 * 700, 1e-9));
+
+      // Along the room: at the height of the notch the floor is two runs, and
+      // [spanAt] hands back the pair of them with the hole included.
+      final along = room.corners();
+      final cut = spanAt(along, 300)!;
+      expect(cut.lo, 0);
+      expect(cut.hi, 4000, reason: 'leftmost to rightmost, notch and all');
+      expect(spansOver(along, 200, 400).length, 1,
+          reason: 'and nothing in this file can say it is really two');
+
+      // Across the room: every row is one unbroken run, every time. The quarter
+      // turn puts the near wall at the far end of the rows, so the rows against
+      // the notch run 700 short of the others rather than starting 700 late —
+      // which is the same thing a corner cut already does to the rows beside
+      // it, and needs nothing of the engine it does not already do.
+      final across = room.turned(room.corners());
+      final reaches = <double>{};
+      for (var v = 1.0; v < 4000; v += 7.3) {
+        final span = spanAt(across, v);
+        expect(span, isNotNull, reason: 'at $v');
+        expect(span!.lo, 0, reason: 'at $v');
+        reaches.add(span.hi);
+      }
+      expect(reaches, {2300.0, 3000.0},
+          reason: 'two reaches and no third: a row is whole or it is short');
+      expect(room.takesAlongLength, isFalse);
+      expect(room.takesAcrossWidth, isTrue);
+      expect(room.takesDiagonal, isFalse);
+      expect(room.isRectilinear, isTrue);
+      expect(room.isRectangular, isFalse);
+    });
+
+    test('the notch turns with the wall it is cut into', () {
+      // Four walls, four rooms, and the direction follows the wall round: the
+      // rows always cross the notch rather than run into it.
+      for (final wall in RoomWall.values) {
+        final room = WallNotchRoomShape(
+          length: 4000,
+          width: 3000,
+          wall: wall,
+          offsetFirst: 900,
+          offsetSecond: 1100,
+          depth: 600,
+        );
+        final along = wall.runsAlongLength ? 4000 : 3000;
+        expect(room.problem, isNull, reason: '$wall');
+        expect(room.notchWidth, along - 2000, reason: '$wall');
+        expect(room.corners().length, 8, reason: '$wall');
+        expect(reflexCorners(room.corners()).length, 2, reason: '$wall');
+        expect(_area(room.corners()),
+            closeTo(4000 * 3000 - (along - 2000) * 600, 1e-9),
+            reason: '$wall');
+        expect(room.takesAlongLength, !wall.runsAlongLength, reason: '$wall');
+        expect(room.takesAcrossWidth, wall.runsAlongLength, reason: '$wall');
+        // Every wall carries a measurement that is a typed number or a
+        // difference of two, and they add up to the way round twice.
+        expect(room.wallLengths().reduce((a, b) => a + b),
+            2 * (4000 + 3000) + 2 * 600, reason: '$wall');
+      }
+    });
+
+    test('a notch that is no notch, or leaves no room, is rejected', () {
+      WallNotchRoomShape sized(int first, int second, int depth) =>
+          WallNotchRoomShape(
+            length: 4000,
+            width: 3000,
+            wall: RoomWall.near,
+            offsetFirst: first,
+            offsetSecond: second,
+            depth: depth,
+          );
+      expect(sized(1500, 1500, 700).problem, isNull);
+      // The two offsets leave less than the smallest cut there is between them.
+      expect(sized(2000, 1950, 700).problem, RoomProblem.notchNotCut);
+      expect(sized(2000, 1900, 700).problem, isNull, reason: 'and exactly 100 is a notch');
+      expect(sized(1500, 1500, MIN_NOTCH_MM - 1).problem, RoomProblem.notchNotCut);
+      // Deeper than the room less the narrowest room there is.
+      expect(sized(1500, 1500, 3000 - MIN_ROOM_MM).problem, isNull);
+      expect(sized(1500, 1500, 3000 - MIN_ROOM_MM + 1).problem,
+          RoomProblem.notchLeavesNoRoom);
+      // An end narrower than the smallest cut is not an end: the notch has
+      // reached the corner, and that room is the Г-shaped one.
+      expect(sized(MIN_NOTCH_MM - 1, 1500, 700).problem, RoomProblem.notchLeavesNoRoom);
+      expect(sized(1500, MIN_NOTCH_MM - 1, 700).problem, RoomProblem.notchLeavesNoRoom);
+    });
+
     test('a notch gives up the 45° layout and a chamfer keeps it', () {
       final notched = shaped(CornerCut.notch, {RoomCorner.farRight: size(900, 800)});
       final chamfered = shaped(CornerCut.chamfer, {RoomCorner.farRight: size(900, 800)});

@@ -78,7 +78,7 @@ void main() {
   late PdfFonts fonts;
   setUpAll(() async => fonts = await PdfFonts.load(rootBundle));
 
-  Future<List<String>> report(Result result, MeasurementSystem system, String locale) async =>
+  Future<List<CutLine>> report(Result result, MeasurementSystem system, String locale) async =>
       cutList(result, 1, system, await AppLocalizations.delegate.load(Locale(locale)));
 
   for (final direction in Direction.values) {
@@ -103,7 +103,7 @@ void main() {
     for (final locale in AppLocalizations.supportedLocales) {
       for (final system in MeasurementSystem.values) {
         final lines = await report(result, system, locale.languageCode);
-        final unprintable = lines.where((line) => !fonts.canPrint(line));
+        final unprintable = lines.map((line) => line.text).where((t) => !fonts.canPrint(t));
         expect(unprintable, isEmpty,
             reason: '${locale.languageCode} in $system: $unprintable');
       }
@@ -128,7 +128,11 @@ void main() {
     test('$direction in a room with a corner cut away saves', () async {
       final result = laidCutCorner(direction);
       final report_ = await report(result, MeasurementSystem.metric, 'ru');
-      expect(report_.where((line) => line.startsWith('Ряд') && line.contains('выреза')).length, 1,
+      expect(
+          report_
+              .where((line) => line.text.startsWith('Ряд') && line.text.contains('выреза'))
+              .length,
+          1,
           reason: 'the row across the cut is called out');
       final pdf = schemePdf(result, MeasurementSystem.metric, fonts, cutList: report_);
       final bytes = await pdf.save();
@@ -178,7 +182,7 @@ void main() {
       expect(fonts.canPrint(unsettable), isFalse);
       final result = laid(Direction.length);
       final pdf = schemePdf(result, MeasurementSystem.metric, fonts,
-          cutList: ['Cut list', unsettable]);
+          cutList: [CutLine.plain('Cut list'), CutLine.plain(unsettable)]);
       expect(pdf.document.pdfPageList.pages, hasLength(1));
     });
 
@@ -187,8 +191,8 @@ void main() {
         final lines = await report(laid(Direction.length), MeasurementSystem.metric,
             locale.languageCode);
         for (final line in lines) {
-          expect(fonts.canPrint(line), isTrue,
-              reason: '${locale.languageCode}: the font cannot set "$line"');
+          expect(fonts.canPrint(line.text), isTrue,
+              reason: '${locale.languageCode}: the font cannot set "${line.text}"');
         }
       }
     });

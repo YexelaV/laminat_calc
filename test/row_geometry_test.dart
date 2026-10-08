@@ -6,7 +6,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:floor_calculator/calculate.dart';
-import 'package:floor_calculator/cubit/calculate_state.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/row_plan.dart';
@@ -38,11 +37,10 @@ void main() {
     test('the size the user typed reaches the geometry unchanged', () {
       for (var mm = 2000; mm <= 24000; mm++) {
         for (final indent in [0, 5, 10]) {
-          final state = CalculateState(roomLength: mm, roomWidth: 3000, indentFromWall: indent);
           expect(
             rowLengthMm(
-              roomLength: state.roomLength!,
-              roomWidth: state.roomWidth!,
+              roomLength: mm,
+              roomWidth: 3000,
               indentFromWall: indent,
               direction: Direction.length,
             ),

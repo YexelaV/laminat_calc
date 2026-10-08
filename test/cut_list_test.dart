@@ -31,6 +31,11 @@ Result fixture() => fixtures().first;
 /// The strings the sheet renders, without a widget tree to render them in.
 final ru = lookupAppLocalizations(const Locale('ru'));
 
+/// The report as plain text. The sizes in it are set in bold on screen and in
+/// the PDF, which is a property of each line's pieces; what the line *says* is
+/// the pieces run together, and that is what these tests are about.
+List<String> textOf(List<CutLine> lines) => [for (final line in lines) line.text];
+
 Future<void> pumpRu(WidgetTester tester, Widget child, Size size) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -142,8 +147,11 @@ void main() {
       // not.
       expect(find.text('Ряд 1 (×115 мм): №1 1199, №2 1200, №3 581'), findsOneWidget);
       // Row 3 opens with the offcut of plank 3, so the numbering is not a
-      // running count and the list must carry the plank's own number.
-      expect(find.text('Ряд 3 (×190 мм): №3 599, №7 1200 (целые), №8 1181'), findsOneWidget);
+      // running count and the list must carry the plank's own number. And it
+      // says no width: 190 mm is the plank as bought, and a width printed down
+      // every row would hide the two rows above that have to be ripped. Plank 7
+      // is not measured at all — it comes out of the pack and goes down.
+      expect(find.text('Ряд 3: №3 599, №7 целая, №8 1181'), findsOneWidget);
       expect(find.text('Ряд 7 (×115 мм): №17 1199, №18 1200, №19 581'), findsOneWidget);
       expect(find.text('Остатки: 619 мм × 1, 319 мм × 2, 301 мм × 2'), findsOneWidget);
       expect(find.text('Отходы (28%): 20 мм × 2, 19 мм × 2, 1 мм × 3'), findsOneWidget);
@@ -171,12 +179,46 @@ void main() {
         rowOffset: 300,
         direction: Direction.length,
       ).calculate().first;
-      final lines = cutList(result, 1, MeasurementSystem.metric, ru);
-      expect(lines, contains('Ряд 1 (×270 мм): №1 1199, №2–№9 1270 (целые), №10 621'));
-      // The last row is ripped to 90 mm. Its planks are still full length and
-      // still consecutive, so they are still one run — but nothing about them
-      // is whole any more, and the marker goes.
+      final lines = textOf(cutList(result, 1, MeasurementSystem.metric, ru));
+      // No width in front of a row laid at the width of a plank: there is
+      // nothing to rip it to, and the number is on the pack. Nor any length
+      // against the eight planks that go down untouched — the whole line is
+      // what the fitter has to cut, and those are not cut.
+      //
+      // "целые" and not "целых": the word stands against a range of numbers,
+      // not against a count, so there is no numeral for it to agree with and
+      // the genitive a Russian numeral would take is wrong.
+      expect(lines, contains('Ряд 1: №1 1199, №2–№9 целые, №10 621'));
+      // The last row is ripped to 90 mm, and that is a measurement the fitter
+      // has to act on, so it is written in front of the row. Its planks are
+      // still full length and still consecutive, so they are still one run —
+      // but nothing about them is whole any more, so their length comes back.
       expect(lines, contains('Ряд 8 (×90 мм): №69 899, №70–№77 1270, №78 921'));
+    });
+
+    test('the sizes are set in bold and the plank numbers are not', () {
+      // What a fitter reads a row for is the measurements; the numbers are how
+      // they find the board afterwards. Pinned here because nothing else would
+      // notice the day a line is built out of one piece again — it would read
+      // the same and print flat.
+      final lines = cutList(fixture(), 1, MeasurementSystem.metric, ru);
+      // Ряд 3: №3 599, №7 целая, №8 1181. The two cut lengths are bold, and so
+      // is "целая": it stands where a size would and says what to set the saw
+      // to — nothing. The numbers naming the planks are not.
+      final row = lines.firstWhere((l) => l.text.startsWith('Ряд 3: '));
+      expect([for (final span in row.spans) if (span.bold) span.text],
+          ['599', 'целая', '1181']);
+      expect(row.spans.where((span) => span.text.contains('№3')).single.bold, isFalse);
+
+      // The row's own rip width, said once in front of the row.
+      final ripped = lines.firstWhere((l) => l.text.startsWith('Ряд 1 '));
+      expect([for (final span in ripped.spans) if (span.bold) span.text],
+          ['115 мм', '1199', '1200', '581']);
+
+      // And the stocktake at the foot is flat: it is what is left over, not
+      // anything to cut.
+      expect(lines.where((l) => l.text.startsWith('Остатки')).single.spans.any((s) => s.bold),
+          isFalse);
     });
 
     test('the row that crosses a cut-away corner says so', () {
@@ -200,15 +242,25 @@ void main() {
         rowOffset: 300,
         direction: Direction.length,
       ).calculate().first;
-      expect(result.steppedRows.length, 1, reason: 'one cut, one row across it');
-      final lines = cutList(result, 1, MeasurementSystem.metric, ru);
-      expect(
-          lines.where((l) => l.startsWith('Ряд ${result.steppedRows.first + 1} идёт через')).length,
-          1);
+      expect(result.rowSteps.length, 1, reason: 'one cut, one step across one row');
+      final step = result.rowSteps.single;
+      final lines = textOf(cutList(result, 1, MeasurementSystem.metric, ru));
+      expect(lines.where((l) => l.startsWith('Ряд ${step.row + 1} идёт через')).length, 1);
+
+      // The cut is 1000 mm deep, so the row that straddles its inside corner
+      // has that much less floor under it where the cut is — and the planks out
+      // there are ripped to what is left rather than to the row's own width.
+      final row = result.lines.firstWhere((l) => l.number == step.row);
+      expect(step.width, lessThan(row.planks.first.width));
+      // Written on the plank as a size, length by width: it is a second cut to
+      // make, not a note about the first.
+      expect(lines.where((l) => l.startsWith('Ряд ${step.row + 1}: ')).single,
+          contains('×${step.width}'));
 
       // And a room with no cut says nothing of the kind.
-      expect(fixture().steppedRows, isEmpty);
-      expect(cutList(fixture(), 1, MeasurementSystem.metric, ru).where((l) => l.contains('вырез')),
+      expect(fixture().rowSteps, isEmpty);
+      expect(textOf(cutList(fixture(), 1, MeasurementSystem.metric, ru))
+              .where((l) => l.contains('вырез')),
           isEmpty);
     });
   });

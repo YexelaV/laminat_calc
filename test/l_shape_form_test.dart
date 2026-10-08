@@ -11,7 +11,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/laying_cubit.dart';
+import 'package:floor_calculator/cubit/room_cubit.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/models.dart';
 import 'package:floor_calculator/room_kind.dart';
@@ -19,14 +20,14 @@ import 'package:floor_calculator/room_shape.dart';
 import 'package:floor_calculator/utils/units.dart';
 import 'package:floor_calculator/widgets/room_sketch.dart';
 
-late CalculateCubit cubit;
+late RoomCubit cubit;
 
 
 /// The one cubit the app runs on, fetched out of the tree the provider in
 /// `main.dart` put it in. The test used to reach for a global; now it asks
 /// the widget that owns it, which is also what every screen does.
-CalculateCubit cubitIn(WidgetTester tester) =>
-    BlocProvider.of<CalculateCubit>(tester.element(find.byType(MaterialApp)));
+RoomCubit cubitIn(WidgetTester tester) =>
+    BlocProvider.of<RoomCubit>(tester.element(find.byType(MaterialApp)));
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -65,7 +66,7 @@ void main() {
     await pickShape(tester, RoomKind.lShaped);
     // The cut arrives empty and the button stays grey: the shape is something
     // the user says about the room, not two measurements the form takes for
-    // them. The sketch has an L to draw all the same — see [CalculateState
+    // them. The sketch has an L to draw all the same — see [RoomState
     // .shape], where a cut nobody has typed is a third of the room — so the
     // boxes below it are the only place that admits to a guess.
     expect(cubit.state.notchLength, isNull);
@@ -109,7 +110,7 @@ void main() {
     expect(cubit.state.shape!.isRectangular, isFalse);
 
     await pickShape(tester, RoomKind.rectangle);
-    expect(cubit.state.lShaped, isFalse);
+    expect(cubit.state.roomKind, RoomKind.rectangle);
     // The cut is still in the state, but it is off screen and out of the room.
     final shape = cubit.state.shape! as RoomShape;
     expect(shape.isRectangular, isTrue);
@@ -157,10 +158,21 @@ void main() {
   testWidgets('the sketch is on screen to say which corner is cut', (tester) async {
     await pumpForm(tester);
     await fill(tester, ['4000', '3000']);
-    expect(find.byType(RoomSketch), findsNothing);
+
+    // The drawing is there for a rectangle too, as soon as there are two sizes
+    // to draw — but it is a picture and nothing more: a rectangle has no corner
+    // to choose, so there is nothing to tap and nothing telling the user to.
+    RoomSketch sketch() => tester.widget<RoomSketch>(find.byType(RoomSketch));
+    expect(find.byType(RoomSketch), findsOneWidget);
+    expect(sketch().onCorner, isNull);
+    expect(sketch().cutCorner, isNull);
+    expect(find.text('Tap the corner that is notched'), findsNothing);
+
     await pickShape(tester, RoomKind.lShaped);
     expect(find.byType(RoomSketch), findsOneWidget);
-    expect(find.text('Tap the corner that is cut away'), findsOneWidget);
+    expect(sketch().onCorner, isNotNull);
+    expect(find.text('Tap the corner that is notched'), findsOneWidget,
+        reason: 'notched and not "cut away": a 45° cut is the one called a cut');
   });
 
   testWidgets('in feet and inches the cut keeps its own pair of boxes', (tester) async {
@@ -196,13 +208,18 @@ void main() {
     await fill(tester, ['4000', '3000']);
 
     // Chosen while the room was still a rectangle...
-    cubit.setDirection(Direction.diagonal);
-    expect(cubit.state.direction, Direction.diagonal);
+    final laying =
+        BlocProvider.of<LayingCubit>(tester.element(find.byType(MaterialApp)));
+    laying.setDirection(Direction.diagonal);
+    expect(laying.state.direction, Direction.diagonal);
 
-    // ...and un-chosen by the room, not merely greyed out on the next screen:
-    // the direction is read by the row plan and the validators too.
+    // ...and not acted on once the room has a corner out of it. The answer is
+    // kept where the user gave it — the room screen does not reach two screens
+    // forward to rewrite one — and the laying screen reads it through the room,
+    // so the row plan, the validators and the drawing all see "along the room"
+    // whatever is stored. What is below proves it on the screen; that the
+    // engine agrees is test/rectilinear_plan_test.dart's.
     await pickShape(tester, RoomKind.lShaped);
-    expect(cubit.state.direction, Direction.length);
 
     // The cut itself, which nothing fills in for the user.
     await fill(tester, ['1500', '1000'], from: 2);
@@ -214,11 +231,22 @@ void main() {
     await fill(tester, ['1200', '190', '8']);
     await tester.tap(find.widgetWithText(TextButton, 'Next'));
     await tester.pumpAndSettle();
-    final segments = tester
-        .widget<SegmentedButton<Direction>>(find.byType(SegmentedButton<Direction>))
-        .segments;
-    expect(segments.firstWhere((s) => s.value == Direction.diagonal).enabled, isFalse);
-    expect(segments.firstWhere((s) => s.value == Direction.length).enabled, isTrue);
+    bool enabled(Direction direction) =>
+        tester
+            .widget<Radio<Direction>>(find.byWidgetPredicate(
+                (w) => w is Radio<Direction> && w.value == direction))
+            .enabled ??
+        true;
+    expect(enabled(Direction.diagonal), isFalse);
+    expect(enabled(Direction.length), isTrue);
+    expect(
+        tester
+            .widget<RadioGroup<Direction>>(find.byType(RadioGroup<Direction>))
+            .groupValue,
+        Direction.length,
+        reason: 'the 45° stored from when the room was a rectangle is not acted on');
+    expect(laying.state.direction, Direction.diagonal,
+        reason: 'but it is still what the user said, and comes back with the room');
     expect(find.textContaining('Diagonal laying is not supported'), findsOneWidget);
   });
 }

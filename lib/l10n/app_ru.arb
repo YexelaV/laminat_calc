@@ -16,38 +16,14 @@
     "length_mm": "Длина (мм)",
     "width_mm": "Ширина (мм)",
     "uneven_walls": "Стены разной длины",
-    "wall_length": "Длина {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Ширина {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Длина {number} (мм)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Ширина {number} (мм)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Длина (верх)",
+    "wall_length_far": "Длина (низ)",
+    "wall_width_left": "Ширина (слева)",
+    "wall_width_right": "Ширина (справа)",
+    "wall_length_near_mm": "Длина (верх) мм",
+    "wall_length_far_mm": "Длина (низ) мм",
+    "wall_width_left_mm": "Ширина (слева) мм",
+    "wall_width_right_mm": "Ширина (справа) мм",
     "wall_diagonal": "Диагональ",
     "wall_diagonal_mm": "Диагональ (мм)",
     "walls_do_not_close": "Стены не сходятся",
@@ -57,43 +33,22 @@
     "shape_chamfer": "Срезанный угол",
     "shape_chamfer_pair": "Два среза",
     "shape_t": "Т-образное",
-    "shoulder": "Срез {number}",
-    "@shoulder": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "shoulder_mm": "Срез {number} (мм)",
-    "@shoulder_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "chamfer_leg": "Срез (45°)",
-    "chamfer_leg_mm": "Срез под 45° (мм)",
-    "notch": "Вырез {number}",
-    "@notch": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "notch_mm": "Вырез {number} (мм)",
-    "@notch_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "cut_depth": "Глубина вырезов",
-    "cut_depth_mm": "Глубина вырезов (мм)",
+    "shape_z": "Z-образное",
+    "shape_u": "П-образное",
+    "chamfer_leg": "Длина среза",
+    "chamfer_leg_mm": "Длина среза (мм)",
+    "chamfer_leg_left": "Срез слева",
+    "chamfer_leg_left_mm": "Срез слева (мм)",
+    "chamfer_leg_right": "Срез справа",
+    "chamfer_leg_right_mm": "Срез справа (мм)",
+    "chamfer_leg_near": "Срез сверху",
+    "chamfer_leg_near_mm": "Срез сверху (мм)",
+    "chamfer_leg_far": "Срез снизу",
+    "chamfer_leg_far_mm": "Срез снизу (мм)",
     "tap_wall_to_cut": "Коснитесь стены, чтобы перенести вырезы",
+    "tap_wall_notch": "Коснитесь стены, в которой вырез",
+    "notch_depth": "Глубина выреза",
+    "notch_depth_mm": "Глубина выреза (мм)",
     "overall_length": "Общая длина",
     "overall_width": "Общая ширина",
     "overall_length_mm": "Общая длина (мм)",
@@ -102,7 +57,77 @@
     "notch_width": "Ширина выреза",
     "notch_length_mm": "Длина выреза (мм)",
     "notch_width_mm": "Ширина выреза (мм)",
+    "notch_length_n": "Длина выреза {number}",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Длина выреза {number} (мм)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Ширина выреза {number}",
+    "symmetric_cut": "Симметрично",
+    "stub_length": "Длина выступа",
+    "stub_length_mm": "Длина выступа (мм)",
+    "stub_width": "Ширина выступа",
+    "stub_width_mm": "Ширина выступа (мм)",
+    "stub_length_n": "Длина выступа {number}",
+    "stub_length_n_mm": "Длина выступа {number} (мм)",
+    "stub_width_n": "Ширина выступа {number}",
+    "stub_width_n_mm": "Ширина выступа {number} (мм)",
+    "@stub_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "@stub_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "@stub_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "@stub_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Ширина выреза {number} (мм)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "Вырез не оставляет помещения",
+    "notches_overlap": "Вырезы перекрывают друг друга",
     "row_steps_at_notch": "Ряд {number} идёт через угол выреза: крайние панели режутся по ступеньке, размер по схеме",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -112,7 +137,11 @@
         }
     },
     "tap_corner_to_cut": "Нажмите на угол, который срезан",
-    "diagonal_not_for_l_shape": "Диагональная укладка в Г-образном помещении пока не поддерживается",
+    "tap_corner_notched": "Нажмите на угол, который вырезан",
+    "tap_corner_to_move": "Нажмите на угол, чтобы перенести вырезы",
+    "tap_wall_stem": "Нажмите на стену с выступом",
+    "diagonal_not_for_notch": "Диагональная укладка в помещении с вырезом пока не поддерживается",
+    "direction_across_notch_only": "В помещении с вырезом в стене укладка возможна только поперёк этой стены",
     "corner_top_left": "Верхний левый",
     "corner_top_right": "Верхний правый",
     "corner_bottom_right": "Нижний правый",
@@ -123,12 +152,14 @@
     "wall_left": "Левая стена",
     "pieces_per_package": "В упаковке (штук)",
     "laying": "Укладка",
-    "laying_direction": "Направление укладки",
     "along_length": "По длине",
     "along_width": "По ширине",
     "diagonally": "По диагонали",
     "expansion_gap_mm": "Отступ от стен (мм)",
     "joint_offset": "Смещение стыков",
+    "laying_direction": "Направление укладки",
+    "expansion_gap": "Отступ от стен",
+    "min_piece_length": "Минимальная длина панели",
     "exact_offset": "точно",
     "joint_offset_mm": "Смещение рядов (мм)",
     "minimal_piece_length": "Минимальная длина панели (мм)",
@@ -171,7 +202,14 @@
             }
         }
     },
-    "whole": "целые",
+    "whole": "{count, plural, one{целая} other{целые}}",
+    "@whole": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
     "leftovers": "Остатки",
     "waste": "Отходы"
 }

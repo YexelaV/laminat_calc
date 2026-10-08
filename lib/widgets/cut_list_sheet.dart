@@ -34,7 +34,10 @@ class CutListSheet extends StatelessWidget {
                 ),
                 IconButton(
                   icon: Icon(Icons.share_rounded, size: 24, color: Colors.black),
-                  onPressed: () => SharePlus.instance.share(ShareParams(text: lines.join('\n'))),
+                  // Unset: the share sheet hands the text to whatever the user
+                  // picks, and most of those have nowhere to put a weight.
+                  onPressed: () => SharePlus.instance
+                      .share(ShareParams(text: lines.map((line) => line.text).join('\n'))),
                 ),
               ],
             ),
@@ -47,7 +50,16 @@ class CutListSheet extends StatelessWidget {
               itemCount: lines.length,
               itemBuilder: (context, i) => Padding(
                 padding: EdgeInsets.symmetric(vertical: 2),
-                child: Text(lines[i], style: TextStyle(fontSize: 15)),
+                child: Text.rich(
+                  TextSpan(children: [
+                    for (final span in lines[i].spans)
+                      TextSpan(
+                        text: span.text,
+                        style: span.bold ? TextStyle(fontWeight: FontWeight.w700) : null,
+                      ),
+                  ]),
+                  style: TextStyle(fontSize: 15),
+                ),
               ),
             ),
           ),

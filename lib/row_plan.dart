@@ -73,15 +73,16 @@ class RowPlan {
   final List<Bevel> startBevel;
   final List<Bevel> endBevel;
 
-  /// Rows the floor steps sideways inside, so that the row runs out level with
-  /// one wall at one edge of itself and another at the other.
+  /// Where the floor steps sideways inside a row, so that the row runs out
+  /// level with one wall at one edge of itself and another at the other.
   ///
   /// There is at most one per cut-away corner, and nothing else in this class
   /// can say so: the row is one length, laid to the longer of the two, and
   /// what the cut takes off it is a step rather than an end. The list exists
-  /// because the cut list has to warn about that plank — everything else on
-  /// the drawing shows it.
-  final List<bool> stepped;
+  /// because the cut list has to say how wide the row is out past the step and
+  /// warn about the plank the step falls inside — everything else, the drawing
+  /// shows.
+  final List<RowStep> steps;
 
   RowPlan._({
     required this.lengths,
@@ -93,7 +94,7 @@ class RowPlan {
     required this.capWhole,
     required this.startBevel,
     required this.endBevel,
-    required this.stepped,
+    required this.steps,
   });
 
   /// The caps follow from the ends, so no plan works them out for itself: a
@@ -107,7 +108,7 @@ class RowPlan {
     required List<Bevel> endBevel,
     required int laminateLength,
     required int laminateWidth,
-    List<bool>? stepped,
+    List<RowStep> steps = const [],
   }) {
     final rows = lengths.length;
     return RowPlan._(
@@ -115,7 +116,7 @@ class RowPlan {
       widths: widths,
       startU: startU,
       shift: shift,
-      stepped: stepped ?? List.filled(rows, false),
+      steps: steps,
       capFirst: [
         for (var i = 0; i < rows; i++) laminateLength - startBevel[i].reachMm(laminateWidth)
       ],
@@ -187,6 +188,9 @@ RowPlan planFor({
   if (shape.isRectilinear) {
     assert(direction != Direction.diagonal,
         'a 45° row crosses a notched-out corner twice and is two rows, not one');
+    assert(
+        direction == Direction.length ? shape.takesAlongLength : shape.takesAcrossWidth,
+        'a row running along a notched wall is parted in two by the notch');
     return rectilinearPlan(
       floor: laid,
       laminateLength: laminateLength,
@@ -291,21 +295,22 @@ RowPlan rectilinearPlan({
   final startU = <int>[];
   final startBevel = <Bevel>[];
   final endBevel = <Bevel>[];
-  final stepped = <bool>[];
+  final steps = <RowStep>[];
   var v = vMin;
   for (var i = 0; i < widths.length; i++) {
     final vLo = v;
     final vHi = v + widths[i];
     v = vHi;
-    final runs = spansOver(floor, vLo, vHi);
+    final strips = stripsOver(floor, vLo, vHi);
     final span = widestSpanOver(floor, vLo, vHi);
     // The floor reaches one distance through part of this row and another
-    // through the rest of it — which happens in exactly one row per cut. That
-    // row is notched round the inside corner rather than cut straight across,
-    // and the cut list has to say so, because nothing in a list of lengths
-    // can.
-    stepped.add(runs.any((run) =>
-        (run.lo - runs.first.lo).abs() > 0.5 || (run.hi - runs.first.hi).abs() > 0.5));
+    // through the rest of it — which happens in exactly one row per cut. The
+    // row is laid to the enclosure of the two, so out past the step it is
+    // ripped to whatever width the floor still has there, and the one plank
+    // the step falls inside is notched round the inside corner rather than cut
+    // straight across. Neither is anywhere in a list of lengths, so both are
+    // worked out here and carried to the cut list.
+    if (span != null) steps.addAll(_stepsIn(strips, span, i, widths[i]));
     lengths.add(span == null ? 0 : math.max(0, span.length.round()));
     startU.add(span == null ? 0 : (span.lo - uMin).round());
     // Square, every one of them: every wall of this room is square to the
@@ -328,10 +333,58 @@ RowPlan rectilinearPlan({
     shift: shift,
     startBevel: startBevel,
     endBevel: endBevel,
-    stepped: stepped,
+    steps: steps,
     laminateLength: laminateLength,
     laminateWidth: laminateWidth,
   );
+}
+
+/// The stretches of row [row] the floor does not reach the whole width of.
+///
+/// The row is laid to [span], the enclosure of its runs. How much floor it has
+/// at a given point along it is the total height of the runs that reach that
+/// far — the full width of the row everywhere the walls run straight through
+/// it, and less past an inside corner. Walking the ends of the runs gives every
+/// point where that total changes and no point where it does not, so the row
+/// comes back as a staircase measured exactly rather than sampled.
+///
+/// Usually one tread, against one end of one row. A room cut at both ends of
+/// the same row has one at each, and a Z with both of its inside corners inside
+/// one row has two at the same end — neither is a special case here, which is
+/// the reason for walking the runs rather than taking the widest and the
+/// narrowest and calling the difference the step.
+List<RowStep> _stepsIn(List<RowStrip> strips, RowSpan span, int row, int rowWidth) {
+  final edges = <double>{span.lo, span.hi};
+  for (final strip in strips) {
+    edges.add(strip.span.lo);
+    edges.add(strip.span.hi);
+  }
+  final points = edges.toList()..sort();
+  final out = <RowStep>[];
+  for (var i = 0; i + 1 < points.length; i++) {
+    final mid = (points[i] + points[i + 1]) / 2;
+    var covered = 0.0;
+    for (final strip in strips) {
+      if (strip.span.lo <= mid && mid <= strip.span.hi) covered += strip.width;
+    }
+    // Rounded to the millimetre the row was, so that a row whose walls are
+    // square to it does not report a step a tenth of a millimetre deep.
+    final width = covered.round();
+    if (width >= rowWidth || width <= 0) continue;
+    final from = (points[i] - span.lo).round();
+    final to = (points[i + 1] - span.lo).round();
+    if (to <= from) continue;
+    // Treads of equal depth that touch are one tread. They arise where two
+    // runs happen to end at the same place, which says nothing about the floor.
+    final last = out.isEmpty ? null : out.last;
+    if (last != null && last.toMm == from && last.width == width) {
+      out[out.length - 1] =
+          RowStep(row: row, fromMm: last.fromMm, toMm: to, width: width);
+    } else {
+      out.add(RowStep(row: row, fromMm: from, toMm: to, width: width));
+    }
+  }
+  return out;
 }
 
 /// The rows a floor of any shape is laid in, found by walking a strip across

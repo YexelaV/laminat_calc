@@ -6,16 +6,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/room_cubit.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/utils/units.dart';
 
 
-/// The one cubit the app runs on, fetched out of the tree the provider in
-/// `main.dart` put it in. The test used to reach for a global; now it asks
-/// the widget that owns it, which is also what every screen does.
-CalculateCubit cubitIn(WidgetTester tester) =>
-    BlocProvider.of<CalculateCubit>(tester.element(find.byType(MaterialApp)));
+/// The room's cubit, fetched out of the tree the providers in `main.dart` put
+/// it in. The test used to reach for a global; now it asks the widget that owns
+/// it, which is also what every screen does.
+RoomCubit cubitIn(WidgetTester tester) =>
+    BlocProvider.of<RoomCubit>(tester.element(find.byType(MaterialApp)));
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));

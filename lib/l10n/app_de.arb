@@ -16,38 +16,14 @@
     "length_mm": "Länge (mm)",
     "width_mm": "Breite (mm)",
     "uneven_walls": "Wände unterschiedlicher Länge",
-    "wall_length": "Länge {number}",
-    "@wall_length": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width": "Breite {number}",
-    "@wall_width": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_length_mm": "Länge {number} (mm)",
-    "@wall_length_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
-    "wall_width_mm": "Breite {number} (mm)",
-    "@wall_width_mm": {
-        "placeholders": {
-            "number": {
-                "type": "int"
-            }
-        }
-    },
+    "wall_length_near": "Länge (oben)",
+    "wall_length_far": "Länge (unten)",
+    "wall_width_left": "Breite (links)",
+    "wall_width_right": "Breite (rechts)",
+    "wall_length_near_mm": "Länge (oben) mm",
+    "wall_length_far_mm": "Länge (unten) mm",
+    "wall_width_left_mm": "Breite (links) mm",
+    "wall_width_right_mm": "Breite (rechts) mm",
     "wall_diagonal": "Diagonale",
     "wall_diagonal_mm": "Diagonale (mm)",
     "walls_do_not_close": "Die Wände schließen nicht",
@@ -57,15 +33,22 @@
     "shape_chamfer": "Ecke abgeschrägt",
     "shape_chamfer_pair": "Zwei Abschrägungen",
     "shape_t": "T-förmig",
-    "shoulder": "Schnitt {number}",
-    "shoulder_mm": "Schnitt {number} (mm)",
-    "chamfer_leg": "Abschrägung (45°)",
-    "chamfer_leg_mm": "45°-Abschrägung (mm)",
-    "notch": "Aussparung {number}",
-    "notch_mm": "Aussparung {number} (mm)",
-    "cut_depth": "Tiefe der Aussparungen",
-    "cut_depth_mm": "Tiefe der Aussparungen (mm)",
+    "shape_z": "Z-förmig",
+    "shape_u": "U-förmig",
+    "chamfer_leg": "Länge der Abschrägung",
+    "chamfer_leg_mm": "Länge der Abschrägung (mm)",
+    "chamfer_leg_left": "Abschrägung links",
+    "chamfer_leg_left_mm": "Abschrägung links (mm)",
+    "chamfer_leg_right": "Abschrägung rechts",
+    "chamfer_leg_right_mm": "Abschrägung rechts (mm)",
+    "chamfer_leg_near": "Abschrägung oben",
+    "chamfer_leg_near_mm": "Abschrägung oben (mm)",
+    "chamfer_leg_far": "Abschrägung unten",
+    "chamfer_leg_far_mm": "Abschrägung unten (mm)",
     "tap_wall_to_cut": "Auf eine Wand tippen, um die Aussparungen zu versetzen",
+    "tap_wall_notch": "Tippen Sie auf die Wand mit der Aussparung",
+    "notch_depth": "Tiefe der Aussparung",
+    "notch_depth_mm": "Tiefe der Aussparung (mm)",
     "overall_length": "Gesamtlänge",
     "overall_width": "Gesamtbreite",
     "overall_length_mm": "Gesamtlänge (mm)",
@@ -74,7 +57,49 @@
     "notch_width": "Breite der Aussparung",
     "notch_length_mm": "Länge der Aussparung (mm)",
     "notch_width_mm": "Breite der Aussparung (mm)",
+    "notch_length_n": "Länge der Aussparung {number}",
+    "@notch_length_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_length_n_mm": "Länge der Aussparung {number} (mm)",
+    "@notch_length_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n": "Breite der Aussparung {number}",
+    "symmetric_cut": "Symmetrisch",
+    "stub_length": "Länge des Vorsprungs",
+    "stub_length_mm": "Länge des Vorsprungs (mm)",
+    "stub_width": "Breite des Vorsprungs",
+    "stub_width_mm": "Breite des Vorsprungs (mm)",
+    "stub_length_n": "Länge des Vorsprungs {number}",
+    "stub_length_n_mm": "Länge des Vorsprungs {number} (mm)",
+    "stub_width_n": "Breite des Vorsprungs {number}",
+    "stub_width_n_mm": "Breite des Vorsprungs {number} (mm)",
+    "@notch_width_n": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "notch_width_n_mm": "Breite der Aussparung {number} (mm)",
+    "@notch_width_n_mm": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
     "notch_does_not_fit": "Die Aussparung lässt keinen Raum übrig",
+    "notches_overlap": "Die Aussparungen überschneiden sich",
     "row_steps_at_notch": "Reihe {number} verläuft über die ausgesparte Ecke: die Dielen an ihrem Ende werden um die Ecke ausgeklinkt, Form siehe Zeichnung",
     "@row_steps_at_notch": {
         "placeholders": {
@@ -84,7 +109,11 @@
         }
     },
     "tap_corner_to_cut": "Tippen Sie auf die ausgesparte Ecke",
-    "diagonal_not_for_l_shape": "Diagonale Verlegung wird in einem L-förmigen Raum noch nicht unterstützt",
+    "tap_corner_notched": "Tippen Sie auf die ausgesparte Ecke",
+    "tap_corner_to_move": "Tippen Sie auf eine Ecke, um die Aussparungen zu versetzen",
+    "tap_wall_stem": "Tippen Sie auf die Wand mit dem Vorsprung",
+    "diagonal_not_for_notch": "Diagonale Verlegung wird in einem Raum mit ausgesparter Ecke noch nicht unterstützt",
+    "direction_across_notch_only": "Ein Raum mit einer Aussparung in der Wand lässt sich nur quer zu dieser Wand verlegen",
     "corner_top_left": "Oben links",
     "corner_top_right": "Oben rechts",
     "corner_bottom_right": "Unten rechts",
@@ -95,12 +124,14 @@
     "wall_left": "Linke Wand",
     "pieces_per_package": "Stück pro Paket",
     "laying": "Verlegung",
-    "laying_direction": "Verlegerichtung",
     "along_length": "Längs",
     "along_width": "Quer",
     "diagonally": "Diagonal",
     "expansion_gap_mm": "Dehnungsfuge (mm)",
     "joint_offset": "Fugenversatz",
+    "laying_direction": "Verlegerichtung",
+    "expansion_gap": "Dehnungsfuge",
+    "min_piece_length": "Mindestlänge der Diele",
     "exact_offset": "genau",
     "joint_offset_mm": "Fugenversatz (mm)",
     "minimal_piece_length": "Minimale Paneellänge (mm)",
@@ -122,7 +153,7 @@
     "variant": "Nr. {number}",
     "cut_list": "Zuschnittliste",
     "row": "Reihe {number}",
-    "whole": "ganz",
+    "whole": "{count, plural, one{ganz} other{ganz}}",
     "leftovers": "Reststücke",
     "waste": "Verschnitt"
 }

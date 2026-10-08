@@ -1,4 +1,4 @@
-import 'package:floor_calculator/cubit/calculate_cubit.dart';
+import 'package:floor_calculator/cubit/settings_cubit.dart';
 import 'package:floor_calculator/l10n/app_localizations.dart';
 import 'package:floor_calculator/main.dart';
 import 'package:floor_calculator/utils/languages.dart';
@@ -25,7 +25,7 @@ class SettingsSheet extends StatefulWidget {
 
 class _SettingsSheetState extends State<SettingsSheet> {
   Future<void> _pickLanguage(String code) async {
-    MyApp.of(context)?.setLocale(Locale(code));
+    context.read<SettingsCubit>().setLocale(Locale(code));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(LOCALE_PREF_KEY, code);
   }
@@ -44,7 +44,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
       );
 
   Widget systemOption(MeasurementSystem system, String label) {
-    final selected = system == context.read<CalculateCubit>().state.system;
+    final selected = system == context.read<SettingsCubit>().state.system;
     return GestureDetector(
       onTap: () => _pickSystem(system),
       child: Container(

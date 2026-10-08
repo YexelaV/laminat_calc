@@ -220,29 +220,53 @@ abstract class AppLocalizations {
   /// **'Стены разной длины'**
   String get uneven_walls;
 
-  /// No description provided for @wall_length.
+  /// No description provided for @wall_length_near.
   ///
   /// In ru, this message translates to:
-  /// **'Длина {number}'**
-  String wall_length(int number);
+  /// **'Длина (верх)'**
+  String get wall_length_near;
 
-  /// No description provided for @wall_width.
+  /// No description provided for @wall_length_far.
   ///
   /// In ru, this message translates to:
-  /// **'Ширина {number}'**
-  String wall_width(int number);
+  /// **'Длина (низ)'**
+  String get wall_length_far;
 
-  /// No description provided for @wall_length_mm.
+  /// No description provided for @wall_width_left.
   ///
   /// In ru, this message translates to:
-  /// **'Длина {number} (мм)'**
-  String wall_length_mm(int number);
+  /// **'Ширина (слева)'**
+  String get wall_width_left;
 
-  /// No description provided for @wall_width_mm.
+  /// No description provided for @wall_width_right.
   ///
   /// In ru, this message translates to:
-  /// **'Ширина {number} (мм)'**
-  String wall_width_mm(int number);
+  /// **'Ширина (справа)'**
+  String get wall_width_right;
+
+  /// No description provided for @wall_length_near_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина (верх) мм'**
+  String get wall_length_near_mm;
+
+  /// No description provided for @wall_length_far_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина (низ) мм'**
+  String get wall_length_far_mm;
+
+  /// No description provided for @wall_width_left_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина (слева) мм'**
+  String get wall_width_left_mm;
+
+  /// No description provided for @wall_width_right_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина (справа) мм'**
+  String get wall_width_right_mm;
 
   /// No description provided for @wall_diagonal.
   ///
@@ -298,59 +322,101 @@ abstract class AppLocalizations {
   /// **'Т-образное'**
   String get shape_t;
 
-  /// No description provided for @shoulder.
+  /// No description provided for @shape_z.
   ///
   /// In ru, this message translates to:
-  /// **'Срез {number}'**
-  String shoulder(int number);
+  /// **'Z-образное'**
+  String get shape_z;
 
-  /// No description provided for @shoulder_mm.
+  /// No description provided for @shape_u.
   ///
   /// In ru, this message translates to:
-  /// **'Срез {number} (мм)'**
-  String shoulder_mm(int number);
+  /// **'П-образное'**
+  String get shape_u;
 
   /// No description provided for @chamfer_leg.
   ///
   /// In ru, this message translates to:
-  /// **'Срез (45°)'**
+  /// **'Длина среза'**
   String get chamfer_leg;
 
   /// No description provided for @chamfer_leg_mm.
   ///
   /// In ru, this message translates to:
-  /// **'Срез под 45° (мм)'**
+  /// **'Длина среза (мм)'**
   String get chamfer_leg_mm;
 
-  /// No description provided for @notch.
+  /// No description provided for @chamfer_leg_left.
   ///
   /// In ru, this message translates to:
-  /// **'Вырез {number}'**
-  String notch(int number);
+  /// **'Срез слева'**
+  String get chamfer_leg_left;
 
-  /// No description provided for @notch_mm.
+  /// No description provided for @chamfer_leg_left_mm.
   ///
   /// In ru, this message translates to:
-  /// **'Вырез {number} (мм)'**
-  String notch_mm(int number);
+  /// **'Срез слева (мм)'**
+  String get chamfer_leg_left_mm;
 
-  /// No description provided for @cut_depth.
+  /// No description provided for @chamfer_leg_right.
   ///
   /// In ru, this message translates to:
-  /// **'Глубина вырезов'**
-  String get cut_depth;
+  /// **'Срез справа'**
+  String get chamfer_leg_right;
 
-  /// No description provided for @cut_depth_mm.
+  /// No description provided for @chamfer_leg_right_mm.
   ///
   /// In ru, this message translates to:
-  /// **'Глубина вырезов (мм)'**
-  String get cut_depth_mm;
+  /// **'Срез справа (мм)'**
+  String get chamfer_leg_right_mm;
+
+  /// No description provided for @chamfer_leg_near.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез сверху'**
+  String get chamfer_leg_near;
+
+  /// No description provided for @chamfer_leg_near_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез сверху (мм)'**
+  String get chamfer_leg_near_mm;
+
+  /// No description provided for @chamfer_leg_far.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез снизу'**
+  String get chamfer_leg_far;
+
+  /// No description provided for @chamfer_leg_far_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез снизу (мм)'**
+  String get chamfer_leg_far_mm;
 
   /// No description provided for @tap_wall_to_cut.
   ///
   /// In ru, this message translates to:
   /// **'Коснитесь стены, чтобы перенести вырезы'**
   String get tap_wall_to_cut;
+
+  /// No description provided for @tap_wall_notch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Коснитесь стены, в которой вырез'**
+  String get tap_wall_notch;
+
+  /// No description provided for @notch_depth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Глубина выреза'**
+  String get notch_depth;
+
+  /// No description provided for @notch_depth_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Глубина выреза (мм)'**
+  String get notch_depth_mm;
 
   /// No description provided for @overall_length.
   ///
@@ -400,11 +466,95 @@ abstract class AppLocalizations {
   /// **'Ширина выреза (мм)'**
   String get notch_width_mm;
 
+  /// No description provided for @notch_length_n.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина выреза {number}'**
+  String notch_length_n(int number);
+
+  /// No description provided for @notch_length_n_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина выреза {number} (мм)'**
+  String notch_length_n_mm(int number);
+
+  /// No description provided for @notch_width_n.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина выреза {number}'**
+  String notch_width_n(int number);
+
+  /// No description provided for @symmetric_cut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Симметрично'**
+  String get symmetric_cut;
+
+  /// No description provided for @stub_length.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина выступа'**
+  String get stub_length;
+
+  /// No description provided for @stub_length_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина выступа (мм)'**
+  String get stub_length_mm;
+
+  /// No description provided for @stub_width.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина выступа'**
+  String get stub_width;
+
+  /// No description provided for @stub_width_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина выступа (мм)'**
+  String get stub_width_mm;
+
+  /// No description provided for @stub_length_n.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина выступа {number}'**
+  String stub_length_n(int number);
+
+  /// No description provided for @stub_length_n_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Длина выступа {number} (мм)'**
+  String stub_length_n_mm(int number);
+
+  /// No description provided for @stub_width_n.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина выступа {number}'**
+  String stub_width_n(int number);
+
+  /// No description provided for @stub_width_n_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина выступа {number} (мм)'**
+  String stub_width_n_mm(int number);
+
+  /// No description provided for @notch_width_n_mm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ширина выреза {number} (мм)'**
+  String notch_width_n_mm(int number);
+
   /// No description provided for @notch_does_not_fit.
   ///
   /// In ru, this message translates to:
   /// **'Вырез не оставляет помещения'**
   String get notch_does_not_fit;
+
+  /// No description provided for @notches_overlap.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вырезы перекрывают друг друга'**
+  String get notches_overlap;
 
   /// No description provided for @row_steps_at_notch.
   ///
@@ -418,11 +568,35 @@ abstract class AppLocalizations {
   /// **'Нажмите на угол, который срезан'**
   String get tap_corner_to_cut;
 
-  /// No description provided for @diagonal_not_for_l_shape.
+  /// No description provided for @tap_corner_notched.
   ///
   /// In ru, this message translates to:
-  /// **'Диагональная укладка в Г-образном помещении пока не поддерживается'**
-  String get diagonal_not_for_l_shape;
+  /// **'Нажмите на угол, который вырезан'**
+  String get tap_corner_notched;
+
+  /// No description provided for @tap_corner_to_move.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите на угол, чтобы перенести вырезы'**
+  String get tap_corner_to_move;
+
+  /// No description provided for @tap_wall_stem.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите на стену с выступом'**
+  String get tap_wall_stem;
+
+  /// No description provided for @diagonal_not_for_notch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Диагональная укладка в помещении с вырезом пока не поддерживается'**
+  String get diagonal_not_for_notch;
+
+  /// No description provided for @direction_across_notch_only.
+  ///
+  /// In ru, this message translates to:
+  /// **'В помещении с вырезом в стене укладка возможна только поперёк этой стены'**
+  String get direction_across_notch_only;
 
   /// No description provided for @corner_top_left.
   ///
@@ -484,12 +658,6 @@ abstract class AppLocalizations {
   /// **'Укладка'**
   String get laying;
 
-  /// No description provided for @laying_direction.
-  ///
-  /// In ru, this message translates to:
-  /// **'Направление укладки'**
-  String get laying_direction;
-
   /// No description provided for @along_length.
   ///
   /// In ru, this message translates to:
@@ -519,6 +687,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Смещение стыков'**
   String get joint_offset;
+
+  /// No description provided for @laying_direction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Направление укладки'**
+  String get laying_direction;
+
+  /// No description provided for @expansion_gap.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отступ от стен'**
+  String get expansion_gap;
+
+  /// No description provided for @min_piece_length.
+  ///
+  /// In ru, this message translates to:
+  /// **'Минимальная длина панели'**
+  String get min_piece_length;
 
   /// No description provided for @exact_offset.
   ///
@@ -649,8 +835,8 @@ abstract class AppLocalizations {
   /// No description provided for @whole.
   ///
   /// In ru, this message translates to:
-  /// **'целые'**
-  String get whole;
+  /// **'{count, plural, one{целая} other{целые}}'**
+  String whole(int count);
 
   /// No description provided for @leftovers.
   ///

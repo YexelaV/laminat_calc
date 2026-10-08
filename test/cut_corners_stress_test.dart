@@ -30,18 +30,33 @@ import 'package:floor_calculator/utils/units.dart';
 
 final violations = <String>[];
 
-/// Every length the floor takes across the rows, and so every length a row may
-/// come out. One per band between corners; a room with n notches has at most
-/// n + 1 of them.
-List<double> _reaches(List<Point<double>> floor) {
-  final out = <double>{};
+/// Where the floor starts, where it ends and how far it reaches, in each band
+/// between corners. One band per step; a room with n notches has at most n + 1
+/// of them.
+class _Bands {
+  final List<double> lefts;
+  final List<double> rights;
+  final List<double> reaches;
+
+  const _Bands(this.lefts, this.rights, this.reaches);
+
+  bool get isEmpty => reaches.isEmpty;
+}
+
+_Bands _bands(List<Point<double>> floor) {
+  final lefts = <double>{};
+  final rights = <double>{};
+  final reaches = <double>{};
   final vs = floor.map((p) => p.y).toSet().toList()..sort();
   for (var i = 0; i + 1 < vs.length; i++) {
     final span = spanAt(floor, (vs[i] + vs[i + 1]) / 2);
-    if (span != null) out.add(span.length);
+    if (span == null) continue;
+    lefts.add(span.lo);
+    rights.add(span.hi);
+    reaches.add(span.length);
   }
-  final list = out.toList()..sort();
-  return list;
+  return _Bands(lefts.toList()..sort(), rights.toList()..sort(),
+      reaches.toList()..sort());
 }
 
 void checkResult(String cfg, Calculation c, Result r, RowPlan plan, bool square) {
@@ -114,13 +129,14 @@ void checkResult(String cfg, Calculation c, Result r, RowPlan plan, bool square)
   }
 
   if (square) {
-    // Every wall is square to the rows, so the floor takes a handful of
-    // discrete lengths across and each row must be laid to one of them.
-    final reaches = _reaches(rotated);
-    if (reaches.isEmpty) {
+    // Every wall is square to the rows, so the floor starts, ends and reaches a
+    // handful of discrete distances across, one per band between steps.
+    final bands = _bands(rotated);
+    if (bands.isEmpty) {
       bad('the floor has no reach at all');
       return;
     }
+    final reaches = bands.reaches;
     // What the drawing may leave uncovered: a strip one millimetre deep along
     // the far wall, the width of the room. [rowWidths] halves the shortfall
     // between the first row and the last, and half of an odd number of
@@ -135,11 +151,31 @@ void checkResult(String cfg, Calculation c, Result r, RowPlan plan, bool square)
       bad('coverage: rows reach ${covered.round()} mm² of a ${floor.round()} mm² floor, '
           'so some of it is left bare');
     }
+    // A row begins at a wall the floor has and ends at one — each end on its
+    // own, which is the whole of what a room of square walls allows.
+    //
+    // Not "the row is one of the reaches the floor has", which is what this
+    // said while every room tried had its steps at one end or spread far apart.
+    // A row whose strip holds a step at *each* end — a Z with its two inside
+    // corners a plank's width apart — reaches from the left wall of one band to
+    // the right wall of another, and is longer than the floor is at any single
+    // height in it. That is the only row that covers the strip: laid to either
+    // band's reach it leaves a ribbon of real floor bare against a wall, and the
+    // coverage bounds above are what say so. The board is notched at both ends
+    // instead, which is what a fitter does at one.
+    // [RowPlan.startU] is measured from the leftmost the floor reaches, so the
+    // walls it is compared against are measured from there too.
+    final uMin = rotated.map((p) => p.x).reduce(min);
     for (var i = 0; i < plan.numberOfRows; i++) {
-      final length = plan.lengths[i].toDouble();
-      if (!reaches.any((reach) => (length - reach).abs() <= 1)) {
-        bad('row $i: ${plan.lengths[i]} mm is no reach the floor has '
-            '(${reaches.map((reach) => reach.round()).join(" / ")})');
+      final from = uMin + plan.startU[i];
+      final to = from + plan.lengths[i];
+      if (!bands.lefts.any((wall) => (from - wall).abs() <= 1)) {
+        bad('row $i: starts at ${from.round()} mm, where the floor has no wall '
+            '(${bands.lefts.map((w) => w.round()).join(" / ")})');
+      }
+      if (!bands.rights.any((wall) => (to - wall).abs() <= 1)) {
+        bad('row $i: ends at ${to.round()} mm, where the floor has no wall '
+            '(${bands.rights.map((w) => w.round()).join(" / ")})');
       }
     }
     // Each step may cost one row an overshoot, and none may cost more: a row
@@ -204,10 +240,15 @@ void checkResult(String cfg, Calculation c, Result r, RowPlan plan, bool square)
   }
 }
 
-int run(CutCornersRoomShape shape, String name, Direction direction, int lamLength,
+/// Lays one room one way and holds the result to the invariants.
+///
+/// Takes an outline rather than a [CutCornersRoomShape] so that the room whose
+/// piece is out of a *wall* can be run through the same stand: what the checks
+/// need of a room is that every wall be square to the rows, and that is
+/// [RoomOutline.isRectilinear], which both kinds answer for themselves.
+int run(RoomOutline shape, String name, Direction direction, int lamLength,
     int lamWidth, int indent, int minLen, int offset) {
-  final cfg = 'room=${shape.length}x${shape.width} $name '
-      '${shape.cut.name}, $direction, laminate=${lamLength}x$lamWidth, '
+  final cfg = '$name, $direction, laminate=${lamLength}x$lamWidth, '
       'min=$minLen, offset=$offset, indent=$indent';
   if (shape.problem != null) {
     violations.add('the fixture is not a room: ${shape.problem}  [$cfg]');
@@ -233,7 +274,7 @@ int run(CutCornersRoomShape shape, String name, Direction direction, int lamLeng
   try {
     final results = c.calculate();
     for (final r in results) {
-      checkResult(cfg, c, r, plan, shape.cut == CornerCut.notch);
+      checkResult(cfg, c, r, plan, shape.isRectilinear);
     }
     return results.isEmpty ? 0 : 1;
   } catch (e) {
@@ -291,7 +332,7 @@ void main() {
           tried++;
           laid += run(
               make(room, entry.value, CornerCut.notch, room[2], room[3]),
-              entry.key,
+              'room=${room[0]}x${room[1]} ${entry.key} notch',
               direction,
               1380,
               190,
@@ -304,6 +345,95 @@ void main() {
     expect(violations, isEmpty, reason: report());
     expect(laid, greaterThan(tried ~/ 2),
         reason: 'most of these rooms must actually lay out');
+  });
+
+  test('a Z lays out however its two cuts are sized', () {
+    // The pair that shares no wall, which is the shape the form grew a tile for
+    // and the one [make] cannot build: its two cuts are their own sizes, and
+    // nothing on any wall holds them apart. The third fixture is the far end of
+    // what that allows — two cuts as deep along the room as a lone cut may be,
+    // passing each other across it — and it is the one most likely to break a
+    // row, because the rows beside either cut are as short as a room gets.
+    var laid = 0;
+    for (final room in const [
+      // length, width, then along and across for each of the two cuts
+      [4000, 3000, 900, 700, 1500, 1100],
+      [5200, 3400, 1600, 900, 800, 1300],
+      [6000, 4000, 5500, 900, 5500, 900],
+      [3000, 2400, 700, 1900, 1200, 400],
+    ]) {
+      for (final pair in const [
+        [RoomCorner.nearLeft, RoomCorner.farRight],
+        [RoomCorner.nearRight, RoomCorner.farLeft],
+      ]) {
+        final shape = CutCornersRoomShape(
+          length: room[0],
+          width: room[1],
+          cut: CornerCut.notch,
+          cuts: {
+            pair[0]: CornerSize(along: room[2], across: room[3]),
+            pair[1]: CornerSize(along: room[4], across: room[5]),
+          },
+        );
+        expect(shape.problem, isNull, reason: '$room $pair');
+        for (final direction in [Direction.length, Direction.width]) {
+          laid += run(shape, 'room=${room[0]}x${room[1]} a Z', direction, 1380, 190, 10, 300, 300);
+        }
+      }
+    }
+    expect(violations, isEmpty, reason: report());
+    expect(laid, greaterThan(0), reason: 'a Z must actually lay out');
+  });
+
+  test('a notch in the middle of a wall lays out across that wall', () {
+    // The room the whole shape was added for, and the one claim it rests on:
+    // laid across the notched wall the engine needs nothing it does not already
+    // do. Every wall, both ends of the notch apart, and depths from a nick to
+    // most of the room.
+    final rnd = Random(20261008);
+    var laid = 0;
+    var refused = 0;
+    for (var i = 0; i < 200; i++) {
+      final length = 1500 + rnd.nextInt(6000);
+      final width = 1200 + rnd.nextInt(4000);
+      final wall = RoomWall.values[rnd.nextInt(4)];
+      final along = wall.runsAlongLength ? length : width;
+      final across = wall.runsAlongLength ? width : length;
+      // The two ends share the wall with the notch between them, so a third of
+      // it each leaves a third for the notch whatever lands where.
+      int end() => MIN_NOTCH_MM + rnd.nextInt(max(1, along ~/ 3 - MIN_NOTCH_MM) + 1);
+      final shape = WallNotchRoomShape(
+        length: length,
+        width: width,
+        wall: wall,
+        offsetFirst: end(),
+        offsetSecond: end(),
+        depth: MIN_NOTCH_MM +
+            rnd.nextInt(max(1, across - MIN_ROOM_MM - MIN_NOTCH_MM) + 1),
+      );
+      if (shape.problem != null) {
+        refused++;
+        continue;
+      }
+      // The one direction such a room takes. The other parts every row that
+      // meets the notch in two, which is why it is not offered.
+      final direction =
+          shape.takesAlongLength ? Direction.length : Direction.width;
+      expect(shape.takesAlongLength, isNot(shape.takesAcrossWidth),
+          reason: 'exactly one of the two, always');
+      laid += run(
+          shape,
+          'room=${length}x$width notch in the $wall',
+          direction,
+          1200 + rnd.nextInt(600),
+          120 + rnd.nextInt(120),
+          8 + rnd.nextInt(5),
+          250 + rnd.nextInt(150),
+          250 + rnd.nextInt(200));
+    }
+    expect(violations, isEmpty, reason: report());
+    expect(laid, greaterThan(100), reason: 'most of these rooms must lay out');
+    expect(refused, lessThan(60), reason: 'and the generator must mostly make rooms');
   });
 
   test('a chamfered room lays out, and at 45° as well', () {
@@ -322,7 +452,7 @@ void main() {
       ]) {
         for (final direction in Direction.values) {
           laid += run(make(room, corners, CornerCut.chamfer, room[2], room[3]),
-              'chamfer', direction, 1380, 190, 10, 300, 300);
+              'room=${room[0]}x${room[1]} chamfer', direction, 1380, 190, 10, 300, 300);
         }
       }
     }
@@ -332,7 +462,9 @@ void main() {
 
   test('random rooms hold the invariants', () {
     final rnd = Random(20261004);
-    for (var i = 0; i < 160; i++) {
+    var tried = 0;
+    var refused = 0;
+    for (var i = 0; i < 240; i++) {
       final length = 1500 + rnd.nextInt(6000);
       final width = 1200 + rnd.nextInt(4000);
       final cut = CornerCut.values[rnd.nextInt(2)];
@@ -341,25 +473,40 @@ void main() {
         if (rnd.nextBool()) corners.add(corner);
       }
       if (corners.isEmpty) corners.add(RoomCorner.values[rnd.nextInt(4)]);
-      // Each wall carries at most two cuts, so a quarter of it each leaves the
-      // arm every bound asks for whatever lands where.
-      final a = MIN_NOTCH_MM + rnd.nextInt((length ~/ 4) - MIN_NOTCH_MM + 1);
-      final b = MIN_NOTCH_MM + rnd.nextInt((width ~/ 4) - MIN_NOTCH_MM + 1);
+      // A size of its own per cut, drawn from the whole of what a lone cut may
+      // be. This used to be one size for all of them, capped at a quarter of
+      // the side, which kept every pair clear of every other by construction —
+      // and so never generated the thing worth generating: cuts that reach past
+      // one another, and cuts that reach too far. [problem] is what sorts the
+      // two, so a shape it turns down is counted and skipped rather than laid.
+      int leg(int side) =>
+          MIN_NOTCH_MM + rnd.nextInt(side - MIN_ROOM_MM - MIN_NOTCH_MM + 1);
       final shape = CutCornersRoomShape(
         length: length,
         width: width,
         cut: cut,
         cuts: {
-          for (final corner in corners) corner: CornerSize(along: a, across: b)
+          for (final corner in corners)
+            corner: CornerSize(along: leg(length), across: leg(width))
         },
       );
+      if (shape.problem != null) {
+        refused++;
+        continue;
+      }
+      tried++;
       final direction = cut == CornerCut.chamfer
           ? Direction.values[rnd.nextInt(3)]
           : [Direction.length, Direction.width][rnd.nextInt(2)];
-      run(shape, 'random ${corners.length} cut', direction, 1200 + rnd.nextInt(600),
+      run(shape, 'room=${length}x$width random ${corners.length} cut', direction,
+          1200 + rnd.nextInt(600),
           120 + rnd.nextInt(120), 8 + rnd.nextInt(5), 250 + rnd.nextInt(150),
           250 + rnd.nextInt(200));
     }
     expect(violations, isEmpty, reason: report());
+    // Both counts, so that the run cannot go quiet by refusing everything or by
+    // never putting two cuts near enough to each other to be refused.
+    expect(tried, greaterThan(40), reason: 'too few rooms survived the bounds');
+    expect(refused, greaterThan(40), reason: 'the bounds were never reached');
   });
 }

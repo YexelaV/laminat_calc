@@ -58,6 +58,11 @@ const double _labelSize = 13;
 /// — and the walls of a cut-away corner put two of them side by side.
 const double _labelGap = 6;
 
+/// How far a measurement looking for somewhere clear moves each try. Small
+/// enough that it stops close to its own wall, large enough that walking the
+/// width of the sketch is a few dozen tries and not a few hundred.
+const double _labelStep = 8;
+
 /// What stands in for a measurement nobody has typed. Short, so that it never
 /// crowds its neighbours out of the drawing the way a number would.
 const String _unknown = '?';
@@ -164,6 +169,21 @@ class RoomSketch extends StatelessWidget {
   /// Whether the cursor is in the diagonal's box.
   final bool litDiagonal;
 
+  /// Whether the diagonal is a measurement somebody took.
+  ///
+  /// A room measured wall by wall is drawn with it, because four walls are one
+  /// measurement short of a shape and the diagonal is the one that closes them
+  /// — see [RoomShape]. A rectangle has a diagonal too and nobody measured it:
+  /// it is the hypotenuse, worked out by the form so that the outline is an
+  /// outline at all. Drawing it would be the sketch handing the user back a
+  /// number it invented, dashed across their room.
+  ///
+  /// Asked for rather than worked out from the shape, because the two are not
+  /// the same question: a user on the wall-by-wall form who types four equal
+  /// walls has a rectangle *and* a diagonal box they filled in, and the number
+  /// they typed belongs on the drawing.
+  final bool withDiagonal;
+
   const RoomSketch({
     super.key,
     required this.shape,
@@ -176,6 +196,7 @@ class RoomSketch extends StatelessWidget {
     this.unknownDiagonal = false,
     this.litWalls = const {},
     this.litDiagonal = false,
+    this.withDiagonal = false,
   });
 
   /// The outline to draw. Measurements that describe no room are drawn as the
@@ -198,10 +219,10 @@ class RoomSketch extends StatelessWidget {
       // halves at least stay put while the digits arrive.
       final cut = shape as CutCornersRoomShape;
       int room(int side, bool shared) => math.max(1, (shared ? side ~/ 2 : side) - 1);
-      bool sharesAlong(RoomCorner corner) => cut.cuts.keys.any((other) =>
-          other != corner && _sameLengthWall(other, corner));
-      bool sharesAcross(RoomCorner corner) => cut.cuts.keys.any((other) =>
-          other != corner && _sameWidthWall(other, corner));
+      bool sharesAlong(RoomCorner corner) =>
+          cut.cuts.keys.any((other) => other != corner && _sharesLength(other, corner));
+      bool sharesAcross(RoomCorner corner) =>
+          cut.cuts.keys.any((other) => other != corner && _sharesWidth(other, corner));
       drawable = CutCornersRoomShape(
         length: cut.length,
         width: cut.width,
@@ -214,6 +235,24 @@ class RoomSketch extends StatelessWidget {
             ),
         },
       );
+    } else if (shape is WallNotchRoomShape) {
+      // The same courtesy, for the room whose piece is out of a wall. Each end
+      // is held inside half the wall it is measured on, which leaves a notch
+      // between them whatever the two are doing; the depth is held inside the
+      // room. Halves rather than what the other end leaves, for the reason
+      // above: mid-typing both are nonsense and halves at least stay put.
+      final notch = shape as WallNotchRoomShape;
+      final along = notch.wall.runsAlongLength ? notch.length : notch.width;
+      final across = notch.wall.runsAlongLength ? notch.width : notch.length;
+      int held(int value, int most) => value.clamp(1, math.max(1, most));
+      drawable = WallNotchRoomShape(
+        length: notch.length,
+        width: notch.width,
+        wall: notch.wall,
+        offsetFirst: held(notch.offsetFirst, along ~/ 2 - 1),
+        offsetSecond: held(notch.offsetSecond, along ~/ 2 - 1),
+        depth: held(notch.depth, across - 1),
+      );
     } else {
       final quadrilateral = shape as RoomShape;
       drawable = RoomShape.rectangle(quadrilateral.lengthNear, quadrilateral.widthLeft);
@@ -225,9 +264,15 @@ class RoomSketch extends StatelessWidget {
   /// a wall whose box is still empty.
   List<String> _labels() {
     final walls = shape.wallLengths();
+    final repeated = shape.repeatedWalls;
     return [
       for (var i = 0; i < walls.length; i++)
-        if (unknownWalls.contains(i)) _unknown else sizeLabel(walls[i], system)
+        if (repeated.contains(i))
+          ''
+        else if (unknownWalls.contains(i))
+          _unknown
+        else
+          sizeLabel(walls[i], system)
     ];
   }
 
@@ -235,7 +280,10 @@ class RoomSketch extends StatelessWidget {
   Widget build(BuildContext context) {
     final closes = shape.problem == null;
     final corners = _outline();
-    final quadrilateral = shape is RoomShape ? shape as RoomShape : null;
+    // The one shape that has a diagonal to draw, and only where the form asked
+    // the user for it — see [withDiagonal].
+    final quadrilateral =
+        withDiagonal && shape is RoomShape ? shape as RoomShape : null;
     return SizedBox(
       height: _height,
       width: double.infinity,
@@ -326,20 +374,19 @@ class RoomSketch extends StatelessWidget {
   }
 }
 
-/// Whether two corners sit at the two ends of the same near or far wall, and so
-/// share the room's length between their cuts.
-bool _sameLengthWall(RoomCorner a, RoomCorner b) =>
-    (a == RoomCorner.nearLeft && b == RoomCorner.nearRight) ||
-    (a == RoomCorner.nearRight && b == RoomCorner.nearLeft) ||
-    (a == RoomCorner.farLeft && b == RoomCorner.farRight) ||
-    (a == RoomCorner.farRight && b == RoomCorner.farLeft);
+/// Whether two corners sit at opposite ends of the room's length, and so have
+/// to share it between their cuts.
+///
+/// Opposite ends of the axis rather than ends of the same wall. The two are the
+/// same question for a pair standing on one wall, and only that pair existed
+/// when this was written; a pair across the room stands on no shared wall and
+/// still eats into the length from both ends, and two cuts clamped as if they
+/// had it each to themselves reach past one another while the digits are being
+/// typed.
+bool _sharesLength(RoomCorner a, RoomCorner b) => a.isRight != b.isRight;
 
-/// The same, for the left and right walls and the room's width.
-bool _sameWidthWall(RoomCorner a, RoomCorner b) =>
-    (a == RoomCorner.nearLeft && b == RoomCorner.farLeft) ||
-    (a == RoomCorner.farLeft && b == RoomCorner.nearLeft) ||
-    (a == RoomCorner.nearRight && b == RoomCorner.farRight) ||
-    (a == RoomCorner.farRight && b == RoomCorner.nearRight);
+/// The same, for the near and far ends of the room's width.
+bool _sharesWidth(RoomCorner a, RoomCorner b) => a.isFar != b.isFar;
 
 /// The middle of each wall of the bounding rectangle — where its handle sits
 /// and where it is tapped.
@@ -493,6 +540,11 @@ class _RoomSketchPainter extends CustomPainter {
     // nothing: the floor is empty, and it is the biggest empty thing here.
     final normals = inwardNormals([for (final p in corners) Point(p.dx, p.dy)]);
     final drawn = [for (final corner in corners) px(corner)];
+    // Where the drawing ends and the margin begins.
+    var outline = Rect.fromPoints(drawn.first, drawn.first);
+    for (final corner in drawn.skip(1)) {
+      outline = outline.expandToInclude(Rect.fromPoints(corner, corner));
+    }
     // Unless the room drawn is too small to hold them, which is decided per
     // direction. A room ten times as long as it is deep comes out a strip:
     // across it there is room for the two numbers pushed in from the sides, and
@@ -506,6 +558,26 @@ class _RoomSketchPainter extends CustomPainter {
     final insideSideways = drawnWidth >= 2 * (_labelPush + widest) + _labelGap;
     final insideUpDown = drawnHeight >= 2 * (_labelPush + line) + _labelGap &&
         drawnWidth >= widest + _labelGap;
+    // And out in the margin wherever the drawing has left one, which beats
+    // inside rather than merely rescuing it.
+    //
+    // The room is fitted to the sketch box, and it fits by whichever of the two
+    // runs out first; what the other one does not use is margin nobody paid
+    // for. A room twelve metres by sixteen fits by height and comes out a third
+    // of the box wide, leaving a hundred pixels of nothing down each side. A
+    // number written there costs the drawing not one pixel — which was the whole
+    // argument for writing numbers over the floor in the first place — and buys
+    // back the floor, where the cut's own measurements have to crowd together
+    // whether the margin is used or not.
+    //
+    // Per direction again, and the two are unalike: the sketch reserves
+    // [_marginY] top and bottom for its own sake, and that is not enough to
+    // write in, so an up-and-down measurement goes out only in a room that
+    // leaves slack beyond it.
+    final spareX = (size.width - drawnWidth) / 2;
+    final spareY = (size.height - drawnHeight) / 2;
+    final marginSideways = spareX >= _labelPush + widest + _labelGap;
+    final marginUpDown = spareY >= _labelPush + line + _labelGap;
     // The handles are drawn last but claimed first: a measurement that lands on
     // one reads as a number with a dot through it, and the handle is the
     // control the caption underneath tells the user to press.
@@ -527,6 +599,9 @@ class _RoomSketchPainter extends CustomPainter {
                 .inflate(_labelGap),
     ];
     for (var i = 0; i < corners.length && i < labels.length; i++) {
+      // A wall whose number is written beside another one carries nothing of
+      // its own — see [RoomOutline.repeatedWalls].
+      if (labels[i].isEmpty) continue;
       final middle = (px(corners[i]) + px(corners[(i + 1) % corners.length])) / 2;
       final outward = -Offset(normals[i].x, normals[i].y);
       // Which way the label is pushed decides which of the two bounds it has
@@ -534,8 +609,13 @@ class _RoomSketchPainter extends CustomPainter {
       // the room, and one it runs along carries it down the room. A chamfer
       // leans equally both ways and is counted with the second, which is the
       // kinder of the two for a cut that short.
-      final inside =
-          outward.dx.abs() > outward.dy.abs() ? insideSideways : insideUpDown;
+      final sideways = outward.dx.abs() > outward.dy.abs();
+      // Out in the margin where there is one, inside where the room holds it,
+      // and out anyway where neither is true — the search below sorts the last
+      // case out.
+      final inside = sideways
+          ? !marginSideways && insideSideways
+          : !marginUpDown && insideUpDown;
       final span = _box(labels[i], Offset.zero);
 
       /// How far a label pushed [way] reaches back towards its wall: half its
@@ -564,7 +644,7 @@ class _RoomSketchPainter extends CustomPainter {
         for (var step = 0; step < 4; step++) {
           for (final slide in const [0.0, 10.0, -10.0, 20.0, -20.0]) {
             final candidate =
-                middle + way * (_labelPush + reach + step * 8) + along * slide;
+                middle + way * (_labelPush + reach + step * _labelStep) + along * slide;
             // The clearance is what a measurement keeps from its neighbours and
             // from the walls, not from the edge of the drawing: counted against
             // the edge as well, it turned the last few pixels of the margin
@@ -584,13 +664,55 @@ class _RoomSketchPainter extends CustomPainter {
         return null;
       }
 
+      /// Out in the margin beside the drawing, on whichever side of it this
+      /// wall is nearest to, level with the wall itself.
+      ///
+      /// Reached in one move rather than walked to. A wall deep inside the
+      /// outline — the leg of a notch, the side of a cut too small for its own
+      /// numbers to sit beside it — has nowhere near itself to put anything,
+      /// and stepping outward from it only arrives at somebody else's wall. An
+      /// earlier draft let the walk run as far as the canvas allowed, and the
+      /// depth of a notch's right-hand leg duly crossed the whole room and came
+      /// out in the margin down the left of it.
+      ///
+      /// Level with its wall and on the nearest side, so that a number out in
+      /// the margin still lines up with the thing it measures.
+      Offset? marginSpot() {
+        final starts = <Offset>[
+          Offset(outline.left - _labelPush - span.width / 2, middle.dy),
+          Offset(outline.right + _labelPush + span.width / 2, middle.dy),
+          Offset(middle.dx, outline.top - _labelPush - span.height / 2),
+          Offset(middle.dx, outline.bottom + _labelPush + span.height / 2),
+        ]..sort((a, b) => (a - middle).distance.compareTo((b - middle).distance));
+        for (final start in starts) {
+          final along =
+              start.dy == middle.dy ? const Offset(0, 1) : const Offset(1, 0);
+          for (var slide = 0.0; slide <= 60; slide += _labelStep) {
+            for (final sign in slide == 0 ? const [1.0] : const [1.0, -1.0]) {
+              final candidate = start + along * (slide * sign);
+              final box = _box(labels[i], candidate);
+              if (!(Offset.zero & size).contains(box.topLeft) ||
+                  !(Offset.zero & size).contains(box.bottomRight)) {
+                continue;
+              }
+              final padded = box.inflate(_labelGap);
+              if (!taken.any(padded.overlaps) && !_crossesOutline(padded, drawn)) {
+                return candidate;
+              }
+            }
+          }
+        }
+        return null;
+      }
+
       // Inside if that is where this wall's measurements go, and out in the
       // margin if there is nowhere inside for this one. A room with barely
       // room between its walls for its own numbers — an L six metres deep and
       // three across comes out ninety pixels wide — is better off with one of
       // them in the margin than with two of them on top of each other.
       final want = inside ? -outward : outward;
-      final at = clearSpot(want) ?? clearSpot(-want) ?? settledAt(want);
+      final at =
+          clearSpot(want) ?? clearSpot(-want) ?? marginSpot() ?? settledAt(want);
       taken.add(_box(labels[i], at).inflate(_labelGap));
       // A number over the floor has the diagonal to cross, and the diagonal is
       // the one line on the drawing that runs where nothing else does.

@@ -60,24 +60,28 @@ class AppLocalizationsCs extends AppLocalizations {
   String get uneven_walls => 'Stěny různé délky';
 
   @override
-  String wall_length(int number) {
-    return 'Délka $number';
-  }
+  String get wall_length_near => 'Délka (nahoře)';
 
   @override
-  String wall_width(int number) {
-    return 'Šířka $number';
-  }
+  String get wall_length_far => 'Délka (dole)';
 
   @override
-  String wall_length_mm(int number) {
-    return 'Délka $number (mm)';
-  }
+  String get wall_width_left => 'Šířka (vlevo)';
 
   @override
-  String wall_width_mm(int number) {
-    return 'Šířka $number (mm)';
-  }
+  String get wall_width_right => 'Šířka (vpravo)';
+
+  @override
+  String get wall_length_near_mm => 'Délka (nahoře) mm';
+
+  @override
+  String get wall_length_far_mm => 'Délka (dole) mm';
+
+  @override
+  String get wall_width_left_mm => 'Šířka (vlevo) mm';
+
+  @override
+  String get wall_width_right_mm => 'Šířka (vpravo) mm';
 
   @override
   String get wall_diagonal => 'Úhlopříčka';
@@ -107,39 +111,52 @@ class AppLocalizationsCs extends AppLocalizations {
   String get shape_t => 'Ve tvaru T';
 
   @override
-  String shoulder(int number) {
-    return 'Řez $number';
-  }
+  String get shape_z => 'Ve tvaru Z';
 
   @override
-  String shoulder_mm(int number) {
-    return 'Řez $number (mm)';
-  }
+  String get shape_u => 'Ve tvaru U';
 
   @override
-  String get chamfer_leg => 'Zkosení (45°)';
+  String get chamfer_leg => 'Délka zkosení';
 
   @override
-  String get chamfer_leg_mm => 'Zkosení 45° (mm)';
+  String get chamfer_leg_mm => 'Délka zkosení (mm)';
 
   @override
-  String notch(int number) {
-    return 'Výřez $number';
-  }
+  String get chamfer_leg_left => 'Zkosení vlevo';
 
   @override
-  String notch_mm(int number) {
-    return 'Výřez $number (mm)';
-  }
+  String get chamfer_leg_left_mm => 'Zkosení vlevo (mm)';
 
   @override
-  String get cut_depth => 'Hloubka výřezů';
+  String get chamfer_leg_right => 'Zkosení vpravo';
 
   @override
-  String get cut_depth_mm => 'Hloubka výřezů (mm)';
+  String get chamfer_leg_right_mm => 'Zkosení vpravo (mm)';
+
+  @override
+  String get chamfer_leg_near => 'Zkosení nahoře';
+
+  @override
+  String get chamfer_leg_near_mm => 'Zkosení nahoře (mm)';
+
+  @override
+  String get chamfer_leg_far => 'Zkosení dole';
+
+  @override
+  String get chamfer_leg_far_mm => 'Zkosení dole (mm)';
 
   @override
   String get tap_wall_to_cut => 'Klepnutím na stěnu přesunete výřezy';
+
+  @override
+  String get tap_wall_notch => 'Klepněte na stěnu s výřezem';
+
+  @override
+  String get notch_depth => 'Hloubka výřezu';
+
+  @override
+  String get notch_depth_mm => 'Hloubka výřezu (mm)';
 
   @override
   String get overall_length => 'Celková délka';
@@ -166,7 +183,65 @@ class AppLocalizationsCs extends AppLocalizations {
   String get notch_width_mm => 'Šířka výřezu (mm)';
 
   @override
+  String notch_length_n(int number) {
+    return 'Délka výřezu $number';
+  }
+
+  @override
+  String notch_length_n_mm(int number) {
+    return 'Délka výřezu $number (mm)';
+  }
+
+  @override
+  String notch_width_n(int number) {
+    return 'Šířka výřezu $number';
+  }
+
+  @override
+  String get symmetric_cut => 'Symetricky';
+
+  @override
+  String get stub_length => 'Délka výstupku';
+
+  @override
+  String get stub_length_mm => 'Délka výstupku (mm)';
+
+  @override
+  String get stub_width => 'Šířka výstupku';
+
+  @override
+  String get stub_width_mm => 'Šířka výstupku (mm)';
+
+  @override
+  String stub_length_n(int number) {
+    return 'Délka výstupku $number';
+  }
+
+  @override
+  String stub_length_n_mm(int number) {
+    return 'Délka výstupku $number (mm)';
+  }
+
+  @override
+  String stub_width_n(int number) {
+    return 'Šířka výstupku $number';
+  }
+
+  @override
+  String stub_width_n_mm(int number) {
+    return 'Šířka výstupku $number (mm)';
+  }
+
+  @override
+  String notch_width_n_mm(int number) {
+    return 'Šířka výřezu $number (mm)';
+  }
+
+  @override
   String get notch_does_not_fit => 'Výřez nenechává žádnou plochu';
+
+  @override
+  String get notches_overlap => 'Výřezy se překrývají';
 
   @override
   String row_steps_at_notch(int number) {
@@ -177,8 +252,21 @@ class AppLocalizationsCs extends AppLocalizations {
   String get tap_corner_to_cut => 'Klepněte na roh, který je vyříznutý';
 
   @override
-  String get diagonal_not_for_l_shape =>
-      'Diagonální pokládka v místnosti tvaru L zatím není podporována';
+  String get tap_corner_notched => 'Klepněte na roh, který je vyříznutý';
+
+  @override
+  String get tap_corner_to_move => 'Klepnutím na roh přesunete výřezy';
+
+  @override
+  String get tap_wall_stem => 'Klepněte na stěnu s výstupkem';
+
+  @override
+  String get diagonal_not_for_notch =>
+      'Diagonální pokládka v místnosti s vyříznutým rohem zatím není podporována';
+
+  @override
+  String get direction_across_notch_only =>
+      'Místnost s výřezem ve stěně lze pokládat jen napříč touto stěnou';
 
   @override
   String get corner_top_left => 'Vlevo nahoře';
@@ -211,9 +299,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get laying => 'Pokládka';
 
   @override
-  String get laying_direction => 'Směr pokládky';
-
-  @override
   String get along_length => 'Po délce';
 
   @override
@@ -227,6 +312,15 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get joint_offset => 'Převazba spár';
+
+  @override
+  String get laying_direction => 'Směr pokládky';
+
+  @override
+  String get expansion_gap => 'Dilatační spára';
+
+  @override
+  String get min_piece_length => 'Minimální délka lamely';
 
   @override
   String get exact_offset => 'přesně';
@@ -259,7 +353,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get maximum => 'Nejvýše';
 
   @override
-  String get calculate => 'Spočítat';
+  String get calculate => 'Vypočítat';
 
   @override
   String get result => 'Výsledek výpočtu';
@@ -307,7 +401,15 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get whole => 'celé';
+  String whole(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'celé',
+      one: 'celá',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get leftovers => 'Zbytky';
