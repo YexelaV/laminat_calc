@@ -9,7 +9,7 @@ class AppLocalizationsSv extends AppLocalizations {
   AppLocalizationsSv([String locale = 'sv']) : super(locale);
 
   @override
-  String get title => 'Laminatkalkylator';
+  String get title => 'Golvkalkylator';
 
   @override
   String get mm => 'mm';
@@ -48,7 +48,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get width => 'Bredd';
 
   @override
-  String get laminate => 'Laminat';
+  String get laminate => 'Golv';
 
   @override
   String get length_mm => 'Längd (mm)';
@@ -414,4 +414,9 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get waste => 'Spill';
+
+  @override
+  String made_with_app(String app) {
+    return 'Skapat med $app';
+  }
 }

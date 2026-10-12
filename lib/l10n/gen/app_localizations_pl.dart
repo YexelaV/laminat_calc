@@ -9,7 +9,7 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
-  String get title => 'Kalkulator Laminatu';
+  String get title => 'Kalkulator Podłogi';
 
   @override
   String get mm => 'mm';
@@ -48,7 +48,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get width => 'Szerokość';
 
   @override
-  String get laminate => 'Laminat';
+  String get laminate => 'Podłoga';
 
   @override
   String get length_mm => 'Długość (mm)';
@@ -416,4 +416,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get waste => 'Odpady';
+
+  @override
+  String made_with_app(String app) {
+    return 'Wykonano w aplikacji „$app”';
+  }
 }

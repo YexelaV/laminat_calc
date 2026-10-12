@@ -1,5 +1,5 @@
 {
-    "title": "Laminate Calculator",
+    "title": "Flooring Calculator",
     "mm": "mm",
     "pcs": "pcs",
     "ft": "ft",
@@ -12,7 +12,7 @@
     "room": "Room",
     "length": "Length",
     "width": "Width",
-    "laminate": "Laminate",
+    "laminate": "Flooring",
     "length_mm": "Length (mm)",
     "width_mm": "Width (mm)",
     "uneven_walls": "Walls of different lengths",
@@ -155,5 +155,6 @@
     "row": "Row {number}",
     "whole": "{count, plural, one{whole} other{whole}}",
     "leftovers": "Leftovers",
-    "waste": "Waste"
+    "waste": "Waste",
+    "made_with_app": "Made in {app}"
 }

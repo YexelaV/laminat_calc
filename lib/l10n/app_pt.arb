@@ -1,5 +1,5 @@
 {
-    "title": "Calculadora de Laminado",
+    "title": "Calculadora de Piso",
     "mm": "mm",
     "pcs": "pçs",
     "ft": "ft",
@@ -12,7 +12,7 @@
     "room": "Ambiente",
     "length": "Comprimento",
     "width": "Largura",
-    "laminate": "Laminado",
+    "laminate": "Piso",
     "length_mm": "Comprimento (mm)",
     "width_mm": "Largura (mm)",
     "uneven_walls": "Paredes de comprimentos diferentes",
@@ -155,5 +155,6 @@
     "row": "Fileira {number}",
     "whole": "{count, plural, one{inteira} other{inteiras}}",
     "leftovers": "Sobras",
-    "waste": "Descarte"
+    "waste": "Descarte",
+    "made_with_app": "Feito com {app}"
 }

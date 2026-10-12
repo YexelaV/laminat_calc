@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../cubit/settings_cubit.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/gen/app_localizations.dart';
 import '../models.dart';
 import '../scheme_geometry.dart';
 import '../scheme_pdf.dart';
@@ -70,9 +71,9 @@ class _SchemeScreenState extends State<SchemeScreen> {
     super.dispose();
   }
 
-  Future<void> shareResult(String caption, List<CutLine> cutList) async {
+  Future<void> shareResult(String caption, List<CutLine> cutList, AppLocalizations s) async {
     final pdf = schemePdf(result, system, await PdfFonts.load(rootBundle),
-        cutList: cutList, rowMark: rowMark);
+        cutList: cutList, rowMark: rowMark, credit: s.made_with_app(s.title));
     final dir = await getApplicationDocumentsDirectory();
     // Colons and spaces out of DateTime.toString() break the name on the
     // receiving side, and the extension has to be last for viewers to open it.
@@ -121,7 +122,7 @@ class _SchemeScreenState extends State<SchemeScreen> {
               child: IconButton(
                   icon: Icon(Icons.share_rounded, size: 24, color: Colors.black),
                   onPressed: () async =>
-                      await shareResult(caption, cutList(result, number, system, s))),
+                      await shareResult(caption, cutList(result, number, system, s), s)),
             ),
           ],
         ),

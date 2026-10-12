@@ -1,5 +1,5 @@
 {
-    "title": "Laminat-Rechner",
+    "title": "Bodenbelag-Rechner",
     "mm": "mm",
     "pcs": "Stk.",
     "ft": "ft",
@@ -12,7 +12,7 @@
     "room": "Raum",
     "length": "Länge",
     "width": "Breite",
-    "laminate": "Laminat",
+    "laminate": "Bodenbelag",
     "length_mm": "Länge (mm)",
     "width_mm": "Breite (mm)",
     "uneven_walls": "Wände unterschiedlicher Länge",
@@ -155,5 +155,6 @@
     "row": "Reihe {number}",
     "whole": "{count, plural, one{ganz} other{ganz}}",
     "leftovers": "Reststücke",
-    "waste": "Verschnitt"
+    "waste": "Verschnitt",
+    "made_with_app": "Erstellt mit {app}"
 }

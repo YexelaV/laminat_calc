@@ -849,6 +849,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Отходы'**
   String get waste;
+
+  /// The credit at the foot of every PDF page. {app} is [title] verbatim, so the name in it is the name on the icon — the phrase is built round the name rather than declining it.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выполнено в приложении «{app}»'**
+  String made_with_app(String app);
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,5 @@
 {
-    "title": "Laminat Hesaplayıcı",
+    "title": "Zemin Hesaplayıcı",
     "mm": "mm",
     "pcs": "adet",
     "ft": "ft",
@@ -12,7 +12,7 @@
     "room": "Oda",
     "length": "Uzunluk",
     "width": "Genişlik",
-    "laminate": "Laminat",
+    "laminate": "Zemin kaplama",
     "length_mm": "Uzunluk (mm)",
     "width_mm": "Genişlik (mm)",
     "uneven_walls": "Farklı uzunlukta duvarlar",
@@ -155,5 +155,6 @@
     "row": "Sıra {number}",
     "whole": "{count, plural, one{tam} other{tam}}",
     "leftovers": "Artan parçalar",
-    "waste": "Fire"
+    "waste": "Fire",
+    "made_with_app": "{app} ile oluşturuldu"
 }

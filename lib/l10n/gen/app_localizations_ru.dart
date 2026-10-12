@@ -416,4 +416,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get waste => 'Отходы';
+
+  @override
+  String made_with_app(String app) {
+    return 'Выполнено в приложении «$app»';
+  }
 }

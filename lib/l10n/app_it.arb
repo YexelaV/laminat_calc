@@ -1,5 +1,5 @@
 {
-    "title": "Calcolatore Laminato",
+    "title": "Calcolatore Pavimenti",
     "mm": "mm",
     "pcs": "pz",
     "ft": "ft",
@@ -12,7 +12,7 @@
     "room": "Stanza",
     "length": "Lunghezza",
     "width": "Larghezza",
-    "laminate": "Laminato",
+    "laminate": "Pavimento",
     "length_mm": "Lunghezza (mm)",
     "width_mm": "Larghezza (mm)",
     "uneven_walls": "Pareti di lunghezze diverse",
@@ -155,5 +155,6 @@
     "row": "Fila {number}",
     "whole": "{count, plural, one{intera} other{intere}}",
     "leftovers": "Sfridi riutilizzabili",
-    "waste": "Scarto"
+    "waste": "Scarto",
+    "made_with_app": "Realizzato con {app}"
 }

@@ -9,7 +9,7 @@ class AppLocalizationsBg extends AppLocalizations {
   AppLocalizationsBg([String locale = 'bg']) : super(locale);
 
   @override
-  String get title => 'Калкулатор за ламинат';
+  String get title => 'Калкулатор за настилка';
 
   @override
   String get mm => 'мм';
@@ -48,7 +48,7 @@ class AppLocalizationsBg extends AppLocalizations {
   String get width => 'Широчина';
 
   @override
-  String get laminate => 'Ламинат';
+  String get laminate => 'Настилка';
 
   @override
   String get length_mm => 'Дължина (мм)';
@@ -415,4 +415,9 @@ class AppLocalizationsBg extends AppLocalizations {
 
   @override
   String get waste => 'Отпадъци';
+
+  @override
+  String made_with_app(String app) {
+    return 'Направено с $app';
+  }
 }

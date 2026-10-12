@@ -1,5 +1,5 @@
 {
-    "title": "Kalkulator Laminatu",
+    "title": "Kalkulator Podłogi",
     "mm": "mm",
     "pcs": "szt.",
     "ft": "ft",
@@ -12,7 +12,7 @@
     "room": "Pomieszczenie",
     "length": "Długość",
     "width": "Szerokość",
-    "laminate": "Laminat",
+    "laminate": "Podłoga",
     "length_mm": "Długość (mm)",
     "width_mm": "Szerokość (mm)",
     "uneven_walls": "Ściany o różnej długości",
@@ -155,5 +155,6 @@
     "row": "Rząd {number}",
     "whole": "{count, plural, one{cały} other{całe}}",
     "leftovers": "Pozostałości",
-    "waste": "Odpady"
+    "waste": "Odpady",
+    "made_with_app": "Wykonano w aplikacji „{app}”"
 }

@@ -1,5 +1,5 @@
 {
-    "title": "Calculateur de Stratifié",
+    "title": "Calculateur de Sol",
     "mm": "mm",
     "pcs": "pcs",
     "ft": "ft",
@@ -12,7 +12,7 @@
     "room": "Pièce",
     "length": "Longueur",
     "width": "Largeur",
-    "laminate": "Stratifié",
+    "laminate": "Sol",
     "length_mm": "Longueur (mm)",
     "width_mm": "Largeur (mm)",
     "uneven_walls": "Murs de longueurs différentes",
@@ -155,5 +155,6 @@
     "row": "Rangée {number}",
     "whole": "{count, plural, one{entière} other{entières}}",
     "leftovers": "Chutes réutilisables",
-    "waste": "Déchets"
+    "waste": "Déchets",
+    "made_with_app": "Réalisé avec {app}"
 }

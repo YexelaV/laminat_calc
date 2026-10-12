@@ -18,6 +18,17 @@ import 'utils/units.dart';
 // and the ladder in buildScheme drops it.
 const double _minTextPt = 3.5;
 
+// The size of [schemePdf]'s credit line. Bigger than a footnote — it is read
+// at arm's length off a phone screen or a printed sheet, not proofread.
+const double _creditPt = 9;
+
+/// Where a PDF a user saves and hands on points back to. A scheme on paper or
+/// a screen the app never opened on is the one copy of it that reaches
+/// someone else, and this is the line that brings it back — the only thing
+/// that changes if the listing ever moves.
+const PLAY_STORE_URL =
+    'https://play.google.com/store/apps/details?id=com.floor_calculator.host';
+
 /// The face the page is set in, in plain and bold.
 ///
 /// The pdf package cannot reach the app's fonts, and its built-in Type 1 ones
@@ -67,7 +78,33 @@ pw.Document schemePdf(
   PdfFonts fonts, {
   List<CutLine> cutList = const [],
   String Function(int)? rowMark,
+  // What made this: just the sentence, already localised, the same way
+  // [cutList] arrives already built — this file draws a report, it does not
+  // write one. The link itself is added here, set apart in blue so it reads
+  // as one, and printed at the foot of every page: PDF pages are the one copy
+  // of a scheme that leaves the app in someone else's hands.
+  String? credit,
 }) {
+  // Built before it is tested, so the guard is run over the characters that
+  // actually reach the page — the dash between the two halves included.
+  final said = credit == null ? null : '$credit — ';
+  final showCredit = said != null && fonts.canPrint(said + PLAY_STORE_URL);
+  pw.Widget footer(pw.Context context) => pw.UrlLink(
+        destination: PLAY_STORE_URL,
+        child: pw.RichText(
+          text: pw.TextSpan(children: [
+            pw.TextSpan(
+              text: said,
+              style: pw.TextStyle(font: fonts.plain, fontSize: _creditPt, color: PdfColors.grey700),
+            ),
+            pw.TextSpan(
+              text: PLAY_STORE_URL,
+              style: pw.TextStyle(font: fonts.plain, fontSize: _creditPt, color: PdfColors.blue),
+            ),
+          ]),
+        ),
+      );
+
   // The bounds barely move with the text floor, so measure with no floor, fix
   // the scale, then build the scheme the page actually gets.
   final measured = buildScheme(result,
@@ -87,16 +124,31 @@ pw.Document schemePdf(
   final pdf = pw.Document();
   pdf.addPage(pw.Page(
     pageFormat: format,
-    build: (context) => pw.CustomPaint(
-      size: PdfPoint(scheme.bounds.width * scale, scheme.bounds.height * scale),
-      painter: (canvas, size) => _paint(
-        canvas,
-        size,
-        scheme,
-        scale,
-        fonts.plain.getFont(context),
-        fonts.bold.getFont(context),
-      ),
+    build: (context) => pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        // Expanded rather than sized to the drawing, so the credit line below
+        // it lands on the page's own bottom edge and not wherever the scheme
+        // happens to end — the two are turned to match each other's aspect,
+        // not each other's height.
+        pw.Expanded(
+          child: pw.Align(
+            alignment: pw.Alignment.topLeft,
+            child: pw.CustomPaint(
+              size: PdfPoint(scheme.bounds.width * scale, scheme.bounds.height * scale),
+              painter: (canvas, size) => _paint(
+                canvas,
+                size,
+                scheme,
+                scale,
+                fonts.plain.getFont(context),
+                fonts.bold.getFont(context),
+              ),
+            ),
+          ),
+        ),
+        if (showCredit) footer(context),
+      ],
     ),
   ));
 
@@ -108,6 +160,7 @@ pw.Document schemePdf(
     final bold = pw.TextStyle(font: fonts.bold, fontSize: 10);
     pdf.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
+      footer: showCredit ? footer : null,
       build: (context) => [
         pw.Text(cutList.first.text, style: pw.TextStyle(font: fonts.bold, fontSize: 14)),
         pw.SizedBox(height: 12),

@@ -9,7 +9,7 @@ class AppLocalizationsCs extends AppLocalizations {
   AppLocalizationsCs([String locale = 'cs']) : super(locale);
 
   @override
-  String get title => 'Kalkulačka laminátu';
+  String get title => 'Kalkulačka podlahy';
 
   @override
   String get mm => 'mm';
@@ -48,7 +48,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get width => 'Šířka';
 
   @override
-  String get laminate => 'Laminát';
+  String get laminate => 'Podlaha';
 
   @override
   String get length_mm => 'Délka (mm)';
@@ -416,4 +416,9 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get waste => 'Odpad';
+
+  @override
+  String made_with_app(String app) {
+    return 'Vytvořeno v aplikaci „$app“';
+  }
 }

@@ -58,6 +58,26 @@ void main() {
     expect(locales.toSet(), pluralCategories.keys.toSet());
   });
 
+  // The name under the icon and the name across the first screen are the same
+  // name, and nothing but agreement between two files keeps them that way:
+  // Android reads its own, off the phone's language, and never asks the app.
+  // They drifted apart once already, when the app stopped being about laminate
+  // in every language but the one it started in.
+  test('the launcher name is the title, word for word', () {
+    for (final locale in locales) {
+      // English is the default resource folder — the fallback Android falls
+      // back to for every language the app does not name.
+      final dir = 'android/app/src/main/res/values${locale == 'en' ? '' : '-$locale'}';
+      final xml = File('$dir/strings.xml');
+      expect(xml.existsSync(), isTrue, reason: '$locale has no $dir/strings.xml');
+      final named = RegExp(r'<string name="app_name">(.*?)</string>', dotAll: true)
+          .firstMatch(xml.readAsStringSync())
+          ?.group(1);
+      expect(named, messagesOf(locale)['title'],
+          reason: '$dir/strings.xml and app_$locale.arb disagree on the name');
+    }
+  });
+
   test('every locale defines exactly the template keys', () {
     final expected = messagesOf(templateLocale).keys.toSet();
     for (final locale in locales) {
@@ -72,10 +92,10 @@ void main() {
       if (cyrillicLocales.contains(locale)) {
         // A language written in the template's own alphabet cannot be told
         // apart from it one message at a time: Bulgarian really does say
-        // «Настройки», «Ламинат» and «мм». What a file nobody translated
+        // «Настройки», «Помещение» and «мм». What a file nobody translated
         // looks like is every message matching, so that is what this measures.
-        // Seven of Bulgarian's seventy-four coincide; a fifth leaves room for
-        // a few more without letting a copy through.
+        // Six of Bulgarian's hundred and twenty-three coincide; a fifth leaves
+        // room for a good many more without letting a copy through.
         final same = messages.entries.where((e) => e.value == template[e.key]).length;
         expect(same * 5, lessThan(messages.length),
             reason: 'app_$locale.arb reads like a copy of the template');

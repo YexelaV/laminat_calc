@@ -211,5 +211,14 @@
         }
     },
     "leftovers": "Остатки",
-    "waste": "Отходы"
+    "waste": "Отходы",
+    "made_with_app": "Выполнено в приложении «{app}»",
+    "@made_with_app": {
+        "description": "The credit at the foot of every PDF page. {app} is [title] verbatim, so the name in it is the name on the icon — the phrase is built round the name rather than declining it.",
+        "placeholders": {
+            "app": {
+                "type": "String"
+            }
+        }
+    }
 }

@@ -210,6 +210,68 @@ void main() {
     }
   });
 
+  group('the credit line', () {
+    // The name in the credit is the name on the icon: [title], which
+    // android/app/src/main/res/values*/strings.xml repeats word for word. The
+    // phrase is built round the name rather than declining it — "в
+    // Калькуляторе Ламината" against an icon reading "Калькулятор Ламината"
+    // is a second app as far as the reader is concerned. Hence the
+    // placeholder, and hence this: a translation that spelt the name out
+    // instead of taking it would read fine and still drift.
+    test('names the app exactly as the app is named', () async {
+      for (final locale in AppLocalizations.supportedLocales) {
+        final s = await AppLocalizations.delegate.load(locale);
+        expect(s.made_with_app(s.title), contains(s.title),
+            reason: '${locale.languageCode}: "${s.made_with_app(s.title)}" '
+                'does not carry "${s.title}"');
+      }
+    });
+
+    // The quotes the name is set in are the only characters in the app that
+    // no other string uses, and a glyph Roboto lacked would drop the whole
+    // footer in silence — the same trade the cut list makes.
+    test('every language the app ships can be set in the PDF font', () async {
+      for (final locale in AppLocalizations.supportedLocales) {
+        final s = await AppLocalizations.delegate.load(locale);
+        final line = '${s.made_with_app(s.title)} — $PLAY_STORE_URL';
+        expect(fonts.canPrint(line), isTrue,
+            reason: '${locale.languageCode}: the font cannot set "$line"');
+      }
+    });
+
+    test('sits in the foot of the scheme page without adding one', () async {
+      final pdf = schemePdf(laid(Direction.length), MeasurementSystem.metric, fonts,
+          credit: 'Made in Laminate Calculator');
+      expect(pdf.document.pdfPageList.pages, hasLength(1));
+      final bytes = await pdf.save();
+      expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+    });
+
+    test('repeats in the foot of every page of the cut list too', () async {
+      final result = laid(Direction.length);
+      final pdf = schemePdf(result, MeasurementSystem.metric, fonts,
+          cutList: await report(result, MeasurementSystem.metric, 'ru'),
+          credit: 'Made in Laminate Calculator');
+      expect(pdf.document.pdfPageList.pages.length, greaterThan(1));
+      final bytes = await pdf.save();
+      expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+    });
+
+    // The same guard as the cut list itself: a glyph Roboto does not carry
+    // would print as an empty box, so the line is left off rather than set
+    // broken — on the scheme page and out of the cut list's own footer alike.
+    test('is left off every page when the font cannot set it', () async {
+      const unsettable = 'पंक्ति 1: 980 मिमी';
+      expect(fonts.canPrint(unsettable), isFalse);
+      final result = laid(Direction.length);
+      final pdf = schemePdf(result, MeasurementSystem.metric, fonts,
+          cutList: await report(result, MeasurementSystem.metric, 'ru'), credit: unsettable);
+      expect(pdf.document.pdfPageList.pages.length, greaterThan(1));
+      final bytes = await pdf.save();
+      expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+    });
+  });
+
   // The scale is fixed from a scheme measured with no text floor, and then the
   // page is built with one. A room whose bounds come out degenerate would make
   // that scale infinite and every font size with it.

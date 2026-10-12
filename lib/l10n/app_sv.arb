@@ -1,5 +1,5 @@
 {
-    "title": "Laminatkalkylator",
+    "title": "Golvkalkylator",
     "mm": "mm",
     "pcs": "st",
     "ft": "fot",
@@ -12,7 +12,7 @@
     "room": "Rum",
     "length": "Längd",
     "width": "Bredd",
-    "laminate": "Laminat",
+    "laminate": "Golv",
     "length_mm": "Längd (mm)",
     "width_mm": "Bredd (mm)",
     "uneven_walls": "Väggar av olika längd",
@@ -155,5 +155,6 @@
     "row": "Rad {number}",
     "whole": "{count, plural, one{hel} other{hela}}",
     "leftovers": "Rester",
-    "waste": "Spill"
+    "waste": "Spill",
+    "made_with_app": "Skapat med {app}"
 }

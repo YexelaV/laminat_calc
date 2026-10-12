@@ -1,5 +1,5 @@
 {
-    "title": "Kalkulačka laminátu",
+    "title": "Kalkulačka podlahy",
     "mm": "mm",
     "pcs": "ks",
     "ft": "stopa",
@@ -12,7 +12,7 @@
     "room": "Místnost",
     "length": "Délka",
     "width": "Šířka",
-    "laminate": "Laminát",
+    "laminate": "Podlaha",
     "length_mm": "Délka (mm)",
     "width_mm": "Šířka (mm)",
     "uneven_walls": "Stěny různé délky",
@@ -155,5 +155,6 @@
     "row": "Řada {number}",
     "whole": "{count, plural, one{celá} other{celé}}",
     "leftovers": "Zbytky",
-    "waste": "Odpad"
+    "waste": "Odpad",
+    "made_with_app": "Vytvořeno v aplikaci „{app}“"
 }

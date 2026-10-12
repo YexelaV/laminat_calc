@@ -1,5 +1,5 @@
 {
-    "title": "Calculadora de Laminado",
+    "title": "Calculadora de Suelos",
     "mm": "mm",
     "pcs": "uds",
     "ft": "ft",
@@ -12,7 +12,7 @@
     "room": "Habitación",
     "length": "Longitud",
     "width": "Ancho",
-    "laminate": "Laminado",
+    "laminate": "Suelo",
     "length_mm": "Longitud (mm)",
     "width_mm": "Ancho (mm)",
     "uneven_walls": "Paredes de distinta longitud",
@@ -155,5 +155,6 @@
     "row": "Fila {number}",
     "whole": "{count, plural, one{entera} other{enteras}}",
     "leftovers": "Sobrantes",
-    "waste": "Desperdicio"
+    "waste": "Desperdicio",
+    "made_with_app": "Hecho con {app}"
 }

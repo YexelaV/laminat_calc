@@ -9,7 +9,7 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
-  String get title => 'Laminat Hesaplayıcı';
+  String get title => 'Zemin Hesaplayıcı';
 
   @override
   String get mm => 'mm';
@@ -48,7 +48,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get width => 'Genişlik';
 
   @override
-  String get laminate => 'Laminat';
+  String get laminate => 'Zemin kaplama';
 
   @override
   String get length_mm => 'Uzunluk (mm)';
@@ -415,4 +415,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get waste => 'Fire';
+
+  @override
+  String made_with_app(String app) {
+    return '$app ile oluşturuldu';
+  }
 }

@@ -55,7 +55,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(1), '3000');
     await tester.pumpAndSettle();
     await next(tester);
-    expect(find.text('Laminate'), findsOneWidget);
+    expect(find.text('Flooring'), findsOneWidget);
     expect(backArrows(), 1,
         reason: 'the plank and the laying are pushed on top of the room');
 
@@ -100,7 +100,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await next(tester);
-    expect(find.text('Laminate'), findsOneWidget);
+    expect(find.text('Flooring'), findsOneWidget);
     expect([textAt(0), textAt(1), textAt(2)], ['1380', '190', '8'],
         reason: 'the plank was typed once');
     expect([textAt(3), textAt(4)], ['10', '300'],
